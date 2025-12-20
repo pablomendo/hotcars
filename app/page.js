@@ -2,7 +2,7 @@
 import React, { useState, useMemo, memo, useCallback, useEffect } from 'react';
 // IMPORTANTE: Para Vercel usar: import { createClient } from '@supabase/supabase-js';
 // Usamos la CDN aquí para que la vista previa del chat funcione al 100%
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { createClient } from "@supabase/supabase-js";
 import { 
   Search, ShieldCheck, Gauge, Loader2, UserPlus, X, 
   CheckCircle2, AlertCircle, MessageCircle, Info, Plus, 
