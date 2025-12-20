@@ -24,7 +24,7 @@ const supabaseUrl = 'https://xkwkgcjgxjvidiwthwbr.supabase.co';
 const supabaseAnonKey = 'sb_publishable_Ou5RH-wPn0_LDs3F8hd-5w_5gSWvlDF';
 const WHATSAPP_NUMBER = "5491123456789";
 
-// --- COMPONENTE BUSCADOR (FIX TECLADO) ---
+// --- COMPONENTE BUSCADOR (SOLUCIÓN TECLADO) ---
 const GlobalSearch = memo(({ onSearch }) => {
   const [val, setVal] = useState("");
 
@@ -90,56 +90,57 @@ export default function Page() {
 
   const [statusMsg, setStatusMsg] = useState({ text: "", type: "" });
 
-  // --- CARGA ULTRA-ROBUSTA DE SUPABASE (FIX VISTA PREVIA) ---
+  // --- CARGA ULTRA-ROBUSTA DE SUPABASE ---
   useEffect(() => {
     document.title = "HotCars | Red de Stock";
     
-    const loadScript = () => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      script.async = true;
-      script.onload = () => {
-        if (window.supabase) {
-          try {
-            const client = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-            setSupabase(client);
-          } catch (e) {
-            console.error("Error al crear cliente Supabase", e);
-          }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    script.async = true;
+    script.onload = () => {
+      if (window.supabase) {
+        try {
+          const client = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+          setSupabase(client);
+        } catch (e) {
+          console.error("Error al crear cliente Supabase:", e);
         }
-      };
-      document.head.appendChild(script);
+      }
     };
-
-    loadScript();
+    document.head.appendChild(script);
   }, []);
 
-  // --- TRAER AUTOS ---
+  // --- TRAER AUTOS (Con Guardia de Seguridad) ---
   const fetchCars = useCallback(async () => {
     if (!supabase) return;
     setLoading(true);
     try {
       let query = supabase.from("cars").select("*");
-      if (view === "office" && user) {
+      if (view === "office" && user?.id) {
         query = query.eq("user_id", user.id);
       }
       const { data, error } = await query.order("created_at", { ascending: false });
       if (!error) setInventory(data || []);
       else setInventory([]);
-    } catch {
+    } catch (err) {
+      console.error("Fetch error:", err);
       setInventory([]);
     } finally {
       setLoading(false);
     }
   }, [supabase, view, user]);
 
-  // --- GESTIÓN DE SESIÓN ---
+  // --- GESTIÓN DE SESIÓN (Con Guardia de Seguridad) ---
   useEffect(() => {
     if (!supabase) return;
 
     const getSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setUser(data.session?.user ?? null);
+      try {
+        const { data } = await supabase.auth.getSession();
+        setUser(data?.session?.user ?? null);
+      } catch (e) {
+        console.error("Session error:", e);
+      }
     };
     getSession();
 
@@ -148,15 +149,18 @@ export default function Page() {
       if (!session) setView("marketplace");
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
   }, [supabase]);
 
   useEffect(() => {
-    fetchCars();
-  }, [fetchCars]);
+    if (supabase) fetchCars();
+  }, [supabase, fetchCars]);
 
   const filteredCars = useMemo(() => {
     const t = filter.toLowerCase().trim();
+    if (!inventory) return [];
     return inventory.filter(
       (c) =>
         c.brand?.toLowerCase().includes(t) ||
@@ -170,14 +174,18 @@ export default function Page() {
     if (!supabase) return;
     setLoading(true);
     setStatusMsg({ text: "", type: "" });
-    const { error } = await supabase.auth.signInWithPassword(authData);
-    if (error) {
-      const signup = await supabase.auth.signUp(authData);
-      if (signup.error) setStatusMsg({ text: signup.error.message, type: "error" });
-      else setStatusMsg({ text: "Cuenta creada. Confirmá tu mail.", type: "success" });
-    } else {
-      setShowAuthModal(false);
-      setAuthData({ email: "", password: "" });
+    try {
+      const { error } = await supabase.auth.signInWithPassword(authData);
+      if (error) {
+        const signup = await supabase.auth.signUp(authData);
+        if (signup.error) setStatusMsg({ text: signup.error.message, type: "error" });
+        else setStatusMsg({ text: "Cuenta creada. Confirmá tu mail.", type: "success" });
+      } else {
+        setShowAuthModal(false);
+        setAuthData({ email: "", password: "" });
+      }
+    } catch (err) {
+      setStatusMsg({ text: "Error de conexión", type: "error" });
     }
     setLoading(false);
   };
@@ -186,17 +194,22 @@ export default function Page() {
     e.preventDefault();
     if (!user || !supabase) return;
     setLoading(true);
-    const { error } = await supabase.from("cars").insert([{ ...newCar, user_id: user.id }]);
-    if (error) setStatusMsg({ text: error.message, type: "error" });
-    else {
-      setShowAddModal(false);
-      fetchCars();
-      setNewCar({ brand: "", model: "", year: "", price: "", km: "", image: "", status: "Disponible" });
+    try {
+      const { error } = await supabase.from("cars").insert([{ ...newCar, user_id: user.id }]);
+      if (error) setStatusMsg({ text: error.message, type: "error" });
+      else {
+        setShowAddModal(false);
+        fetchCars();
+        setNewCar({ brand: "", model: "", year: "", price: "", km: "", image: "", status: "Disponible" });
+      }
+    } catch (err) {
+      setStatusMsg({ text: "Error al guardar", type: "error" });
     }
     setLoading(false);
   };
 
   const openWhatsApp = (car) => {
+    if (!car) return;
     const msg = `¡Hola HotCars! Me interesa el ${car.brand} ${car.model} (${car.year}) publicado por $${Number(car.price).toLocaleString()}.`;
     if (typeof window !== "undefined") {
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
@@ -211,7 +224,7 @@ export default function Page() {
            <Loader2 className="animate-spin text-orange-600" size={48} />
            <Car className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" size={16} />
         </div>
-        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 animate-pulse">Conectando con Red HotCars</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 animate-pulse">Iniciando Red HotCars</p>
       </div>
     );
   }
@@ -238,7 +251,7 @@ export default function Page() {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-5">
-              <span className="hidden md:block text-[10px] font-black text-slate-500 uppercase tracking-widest">{user.email}</span>
+              <span className="hidden md:block text-[10px] font-black text-slate-500 uppercase tracking-widest">{user?.email}</span>
               <button onClick={() => supabase.auth.signOut()} className="text-slate-500 hover:text-orange-600 transition-colors p-2 bg-white/5 rounded-lg">
                 <LogOut size={20}/>
               </button>
@@ -276,12 +289,12 @@ export default function Page() {
                         {car.status}
                       </div>
                     </div>
-                    <div className="p-10 flex-1 flex flex-col">
+                    <div className="p-10 flex-1 flex flex-col text-left">
                       <span className="text-orange-600 text-[11px] font-black uppercase tracking-[0.2em] mb-2">{car.brand}</span>
                       <h3 className="text-3xl font-black uppercase italic text-white mb-6 leading-none tracking-tight">{car.model}</h3>
                       
                       <div className="flex items-center justify-between mb-8">
-                        <span className="text-4xl font-black text-white">${Number(car.price).toLocaleString()}</span>
+                        <span className="text-4xl font-black text-white">${Number(car.price || 0).toLocaleString()}</span>
                         <div className="bg-white/5 px-3 py-1 rounded-lg text-slate-500 font-black text-[11px] italic uppercase tracking-tighter">{car.year}</div>
                       </div>
 
@@ -317,7 +330,7 @@ export default function Page() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 mb-16">
               <div className="text-left">
                 <h2 className="text-5xl md:text-6xl font-black uppercase italic leading-[0.9]">MI OFICINA <br/><span className="text-orange-600">VIRTUAL</span></h2>
-                <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.3em] mt-5 px-1">{user.email}</p>
+                <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.3em] mt-5 px-1">{user?.email}</p>
               </div>
               <button onClick={() => setShowAddModal(true)} className="bg-white text-black px-10 py-5 rounded-[2rem] font-black uppercase text-[11px] tracking-widest flex items-center gap-3 hover:bg-orange-600 hover:text-white transition-all shadow-2xl active:scale-95">
                 <Plus size={22}/> Cargar Vehículo
@@ -326,7 +339,7 @@ export default function Page() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
                <StatCard title="UNIDADES EN RED" value={inventory.length} icon={<Car size={20}/>} />
-               <StatCard title="STOCK TOTAL" value={`$${inventory.reduce((acc, c) => acc + Number(c.price), 0).toLocaleString()}`} icon={<Wallet size={20}/>} />
+               <StatCard title="STOCK TOTAL" value={`$${inventory.reduce((acc, c) => acc + Number(c.price || 0), 0).toLocaleString()}`} icon={<Wallet size={20}/>} />
                <StatCard title="VISITAS" value="1.2k" icon={<TrendingUp size={20}/>} />
                <StatCard title="LEADS" value="24" icon={<Users size={20}/>} />
                <StatCard title="PENDIENTES" value="3" icon={<Clock size={20}/>} />
@@ -336,7 +349,7 @@ export default function Page() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {inventory.length > 0 ? (
               inventory.map(car => (
-                <div key={car.id} className="bg-slate-900 border border-white/5 p-7 rounded-[2.5rem] group hover:border-orange-600/20 transition-all">
+                <div key={car.id} className="bg-slate-900 border border-white/5 p-7 rounded-[2.5rem] group hover:border-orange-600/20 transition-all text-left">
                   <div className="h-40 mb-6 rounded-2xl overflow-hidden bg-slate-800 relative">
                     <img src={car.image} className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity" alt="" />
                     <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 rounded-md text-[8px] font-black uppercase tracking-tighter">{car.status}</div>
@@ -344,8 +357,7 @@ export default function Page() {
                   <h4 className="font-black uppercase italic text-sm text-white truncate mb-1">{car.brand}</h4>
                   <p className="font-black uppercase text-[10px] text-slate-500 mb-4">{car.model} {car.year}</p>
                   <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                    <span className="text-orange-600 font-black text-xl">${Number(car.price).toLocaleString()}</span>
-                    <button className="p-2 text-slate-700 hover:text-white transition-colors"><X size={16}/></button>
+                    <span className="text-orange-600 font-black text-xl">${Number(car.price || 0).toLocaleString()}</span>
                   </div>
                 </div>
               ))
@@ -390,12 +402,12 @@ export default function Page() {
             <button onClick={() => setShowAddModal(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white transition-colors"><X size={28} /></button>
             <h2 className="text-4xl font-black italic uppercase text-white mb-10 leading-none">NUEVA <span className="text-orange-600">UNIDAD</span></h2>
             <form onSubmit={handleAddCar} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-black">Marca</label><input type="text" placeholder="Ej: Toyota" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.brand} onChange={e => setNewCar({...newCar, brand: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-black">Modelo</label><input type="text" placeholder="Ej: Hilux" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.model} onChange={e => setNewCar({...newCar, model: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-black">Año</label><input type="number" placeholder="2024" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.year} onChange={e => setNewCar({...newCar, year: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-black">Precio (USD)</label><input type="number" placeholder="55000" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.price} onChange={e => setNewCar({...newCar, price: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-black">Kilómetros</label><input type="text" placeholder="0" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.km} onChange={e => setNewCar({...newCar, km: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-black">URL de Imagen</label><input type="text" placeholder="https://..." required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.image} onChange={e => setNewCar({...newCar, image: e.target.value})} /></div>
+              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Marca</label><input type="text" placeholder="Ej: Toyota" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.brand} onChange={e => setNewCar({...newCar, brand: e.target.value})} /></div>
+              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Modelo</label><input type="text" placeholder="Ej: Hilux" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.model} onChange={e => setNewCar({...newCar, model: e.target.value})} /></div>
+              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Año</label><input type="number" placeholder="2024" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.year} onChange={e => setNewCar({...newCar, year: e.target.value})} /></div>
+              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Precio (USD)</label><input type="number" placeholder="55000" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.price} onChange={e => setNewCar({...newCar, price: e.target.value})} /></div>
+              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Kilómetros</label><input type="text" placeholder="0" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.km} onChange={e => setNewCar({...newCar, km: e.target.value})} /></div>
+              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">URL de Imagen</label><input type="text" placeholder="https://..." required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.image} onChange={e => setNewCar({...newCar, image: e.target.value})} /></div>
               <button disabled={loading} className="col-span-full mt-10 bg-orange-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-[13px] shadow-2xl flex items-center justify-center gap-4 hover:bg-orange-700 transition-all active:scale-95">
                 {loading ? <Loader2 className="animate-spin" size={24}/> : <><Send size={20}/> PUBLICAR EN STOCK</>}
               </button>
