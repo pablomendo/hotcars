@@ -14,10 +14,10 @@ import {
   Send,
 } from "lucide-react";
 
-// --- CONEXIÓN SUPABASE ---
-const supabaseUrl = "https://xkwkgcjgxjvidiwthwbr.supabase.co";
-const supabaseAnonKey =
-  "sb_publishable_Ou5RH-wPn0_LDs3F8hd-5w_5gSWvlDF";
+// --- CONEXIÓN SUPABASE (desde env) ---
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- BUSCADOR GLOBAL ---
@@ -190,10 +190,12 @@ export default function Page() {
     const msg = `¡Hola HotCars! Me interesa el ${car.brand} ${car.model} (${car.year}) por $${Number(
       car.price
     ).toLocaleString()}.`;
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`,
-      "_blank"
-    );
+    if (typeof window !== "undefined") {
+      window.open(
+        `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`,
+        "_blank"
+      );
+    }
   };
 
   const handleFilterUpdate = useCallback((val) => {
@@ -202,7 +204,8 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-[#020617] text-white">
-      {/* 🔥 Tu JSX completo va acá (no lo cambié, solo ajusté lógica arriba) */}
+      {/* Acá va tu JSX */}
+      <h1 className="text-3xl font-bold p-6">HotCars</h1>
     </div>
   );
 }
