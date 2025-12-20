@@ -9,7 +9,7 @@ import {
 // --- CONFIGURACIÓN DE SUPABASE ---
 const supabaseUrl = 'https://xkwkgcjgxjvidiwthwbr.supabase.co';
 const supabaseAnonKey = 'sb_publishable_Ou5RH-wPn0_LDs3F8hd-5w_5gSWvlDF';
-const WHATSAPP_NUMBER = "5491123456789"; 
+const WHATSAPP_NUMBER = "54919123456789"; 
 
 // --- COMPONENTE BUSCADOR (SOLUCIÓN TECLADO) ---
 // Definido fuera para que React no lo destruya al filtrar, manteniendo el teclado abierto.
