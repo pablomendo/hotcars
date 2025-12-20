@@ -19,7 +19,10 @@ import {
   Users
 } from "lucide-react";
 
-// --- CONFIGURACIÓN DE CONEXIÓN ---
+/**
+ * CONFIGURACIÓN DE CONEXIÓN
+ * Supabase y WhatsApp
+ */
 const supabaseUrl = 'https://xkwkgcjgxjvidiwthwbr.supabase.co';
 const supabaseAnonKey = 'sb_publishable_Ou5RH-wPn0_LDs3F8hd-5w_5gSWvlDF';
 const WHATSAPP_NUMBER = "5491123456789";
@@ -52,20 +55,20 @@ const GlobalSearch = memo(({ onSearch }) => {
   );
 });
 
-// Componente para las tarjetas de métricas en la oficina
-const StatCard = ({ title, value, icon }) => (
+// Componente para las tarjetas de métricas
+const StatCard = memo(({ title, value, icon }) => (
   <div className="bg-slate-900/50 p-5 rounded-3xl border border-white/5 flex flex-col gap-3 hover:border-orange-600/20 transition-all text-left">
     <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-orange-600">
       {icon}
     </div>
-    <div>
+    <div className="text-left">
       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{title}</p>
       <p className="text-2xl font-black text-white leading-tight italic uppercase">{value}</p>
     </div>
   </div>
-);
+));
 
-export default function Page() {
+export default function App() {
   const [supabase, setSupabase] = useState(null);
   const [view, setView] = useState("marketplace");
   const [user, setUser] = useState(null);
@@ -90,7 +93,7 @@ export default function Page() {
 
   const [statusMsg, setStatusMsg] = useState({ text: "", type: "" });
 
-  // --- CARGA ULTRA-ROBUSTA DE SUPABASE ---
+  // --- CARGA DE SUPABASE ---
   useEffect(() => {
     document.title = "HotCars | Red de Stock";
     
@@ -99,18 +102,18 @@ export default function Page() {
     script.async = true;
     script.onload = () => {
       if (window.supabase) {
-        try {
-          const client = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-          setSupabase(client);
-        } catch (e) {
-          console.error("Error al crear cliente Supabase:", e);
-        }
+        const client = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+        setSupabase(client);
       }
     };
     document.head.appendChild(script);
   }, []);
 
-  // --- TRAER AUTOS (Con Guardia de Seguridad) ---
+  // --- HANDLERS Y CALLBACKS (Ubicación correcta de Hooks) ---
+  const handleFilterUpdate = useCallback((val) => {
+    setFilter(val);
+  }, []);
+
   const fetchCars = useCallback(async () => {
     if (!supabase) return;
     setLoading(true);
@@ -123,14 +126,13 @@ export default function Page() {
       if (!error) setInventory(data || []);
       else setInventory([]);
     } catch (err) {
-      console.error("Fetch error:", err);
       setInventory([]);
     } finally {
       setLoading(false);
     }
   }, [supabase, view, user]);
 
-  // --- GESTIÓN DE SESIÓN (Con Guardia de Seguridad) ---
+  // --- GESTIÓN DE SESIÓN ---
   useEffect(() => {
     if (!supabase) return;
 
@@ -139,7 +141,7 @@ export default function Page() {
         const { data } = await supabase.auth.getSession();
         setUser(data?.session?.user ?? null);
       } catch (e) {
-        console.error("Session error:", e);
+        console.error("Error sesión:", e);
       }
     };
     getSession();
@@ -168,7 +170,6 @@ export default function Page() {
     );
   }, [filter, inventory]);
 
-  // --- ACCIONES ---
   const handleAuth = async (e) => {
     e.preventDefault();
     if (!supabase) return;
@@ -203,20 +204,20 @@ export default function Page() {
         setNewCar({ brand: "", model: "", year: "", price: "", km: "", image: "", status: "Disponible" });
       }
     } catch (err) {
-      setStatusMsg({ text: "Error al guardar", type: "error" });
+      setStatusMsg({ text: "Error al guardar vehículo", type: "error" });
     }
     setLoading(false);
   };
 
   const openWhatsApp = (car) => {
     if (!car) return;
-    const msg = `¡Hola HotCars! Me interesa el ${car.brand} ${car.model} (${car.year}) publicado por $${Number(car.price).toLocaleString()}.`;
+    const msg = `¡Hola HotCars! Me interesa el ${car.brand} ${car.model} (${car.year}) publicado por $${Number(car.price || 0).toLocaleString()}.`;
     if (typeof window !== "undefined") {
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
     }
   };
 
-  // --- PANTALLA DE CARGA INICIAL ---
+  // --- PANTALLA DE CARGA ---
   if (!supabase) {
     return (
       <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center gap-6">
@@ -224,7 +225,7 @@ export default function Page() {
            <Loader2 className="animate-spin text-orange-600" size={48} />
            <Car className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" size={16} />
         </div>
-        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 animate-pulse">Iniciando Red HotCars</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 animate-pulse">Conectando con Red HotCars</p>
       </div>
     );
   }
@@ -232,7 +233,7 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-orange-600 overflow-x-hidden text-left">
       
-      {/* BARRA DE NAVEGACIÓN */}
+      {/* NAVBAR */}
       <nav className="h-20 bg-[#020617] border-b border-white/5 flex items-center justify-between px-6 md:px-12 sticky top-0 z-50 backdrop-blur-xl">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setView('marketplace')}>
@@ -248,7 +249,7 @@ export default function Page() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 text-left">
           {user ? (
             <div className="flex items-center gap-5">
               <span className="hidden md:block text-[10px] font-black text-slate-500 uppercase tracking-widest">{user?.email}</span>
@@ -262,17 +263,17 @@ export default function Page() {
         </div>
       </nav>
 
-      {/* VISTA: MARKETPLACE (PÚBLICO) */}
+      {/* VISTA: MARKETPLACE */}
       {view === 'marketplace' && (
         <>
-          <header className="py-24 px-6 bg-gradient-to-b from-slate-900 to-[#020617] border-b border-white/5 relative overflow-hidden">
+          <header className="py-24 px-6 bg-gradient-to-b from-slate-900 to-[#020617] border-b border-white/5 relative overflow-hidden text-left">
             <div className="absolute top-0 right-0 w-1/2 h-full bg-orange-600/5 blur-[120px] rounded-full -translate-y-1/2"></div>
-            <div className="max-w-6xl mx-auto relative">
+            <div className="max-w-6xl mx-auto relative text-left">
               <h1 className="text-6xl md:text-9xl font-black mb-12 leading-[0.85] tracking-tighter uppercase italic text-left">
                 RED DE STOCK <br/>
                 <span className="text-orange-600">HOTCARS.</span>
               </h1>
-              <GlobalSearch onSearch={useCallback((v) => setFilter(v), [])} />
+              <GlobalSearch onSearch={handleFilterUpdate} />
             </div>
           </header>
 
@@ -282,15 +283,15 @@ export default function Page() {
                 <div className="col-span-full py-20 flex justify-center"><Loader2 className="animate-spin text-orange-600" size={40}/></div>
               ) : filteredCars.length > 0 ? (
                 filteredCars.map(car => (
-                  <div key={car.id} className="group bg-slate-900/40 rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl hover:border-orange-600/30 transition-all duration-500 flex flex-col">
+                  <div key={car.id} className="group bg-slate-900/40 rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl hover:border-orange-600/30 transition-all duration-500 flex flex-col text-left">
                     <div className="h-64 relative overflow-hidden cursor-pointer" onClick={() => setSelectedCar(car)}>
                       <img src={car.image || 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={car.model} />
-                      <div className="absolute top-5 right-5 px-4 py-1.5 bg-orange-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-xl">
+                      <div className="absolute top-5 right-5 px-4 py-1.5 bg-orange-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-xl font-bold italic">
                         {car.status}
                       </div>
                     </div>
                     <div className="p-10 flex-1 flex flex-col text-left">
-                      <span className="text-orange-600 text-[11px] font-black uppercase tracking-[0.2em] mb-2">{car.brand}</span>
+                      <span className="text-orange-600 text-[11px] font-black uppercase tracking-[0.2em] mb-2 font-bold">{car.brand}</span>
                       <h3 className="text-3xl font-black uppercase italic text-white mb-6 leading-none tracking-tight">{car.model}</h3>
                       
                       <div className="flex items-center justify-between mb-8">
@@ -298,16 +299,16 @@ export default function Page() {
                         <div className="bg-white/5 px-3 py-1 rounded-lg text-slate-500 font-black text-[11px] italic uppercase tracking-tighter">{car.year}</div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 mb-10 pt-8 border-t border-white/5">
-                        <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase">
+                      <div className="grid grid-cols-2 gap-4 mb-10 pt-8 border-t border-white/5 text-left font-bold uppercase">
+                        <div className="flex items-center gap-2 text-slate-400 font-black text-[10px]">
                           <Gauge size={16} className="text-orange-600"/> {car.km} KM
                         </div>
-                        <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase">
+                        <div className="flex items-center gap-2 text-slate-400 font-black text-[10px]">
                           <ShieldCheck size={16} className="text-orange-600"/> GARANTÍA
                         </div>
                       </div>
 
-                      <button onClick={() => openWhatsApp(car)} className="w-full bg-orange-600 text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.15em] flex items-center justify-center gap-3 active:bg-orange-700 hover:shadow-lg hover:shadow-orange-600/20 transition-all">
+                      <button onClick={() => openWhatsApp(car)} className="w-full bg-orange-600 text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.15em] flex items-center justify-center gap-3 active:bg-orange-700 hover:shadow-lg hover:shadow-orange-600/20 transition-all font-bold">
                         <MessageCircle size={20}/> Consultar WhatsApp
                       </button>
                     </div>
@@ -315,7 +316,7 @@ export default function Page() {
                 ))
               ) : (
                 <div className="col-span-full text-center py-32 border-2 border-dashed border-white/5 rounded-[3rem]">
-                  <p className="text-slate-700 font-black uppercase tracking-[0.4em] italic text-sm">No hay unidades encontradas</p>
+                  <p className="text-slate-700 font-black uppercase tracking-[0.4em] italic text-sm text-left">No hay unidades encontradas</p>
                 </div>
               )}
             </div>
@@ -323,21 +324,21 @@ export default function Page() {
         </>
       )}
 
-      {/* VISTA: MI OFICINA (PRIVADO) */}
+      {/* VISTA: MI OFICINA */}
       {view === 'office' && user && (
-        <main className="max-w-7xl mx-auto py-16 px-6">
-          <div className="mb-16 border-b border-white/5 pb-16">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 mb-16">
+        <main className="max-w-7xl mx-auto py-16 px-6 text-left">
+          <div className="mb-16 border-b border-white/5 pb-16 text-left">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 mb-16 text-left">
               <div className="text-left">
-                <h2 className="text-5xl md:text-6xl font-black uppercase italic leading-[0.9]">MI OFICINA <br/><span className="text-orange-600">VIRTUAL</span></h2>
-                <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.3em] mt-5 px-1">{user?.email}</p>
+                <h2 className="text-5xl md:text-6xl font-black uppercase italic leading-[0.9] text-left">MI OFICINA <br/><span className="text-orange-600">VIRTUAL</span></h2>
+                <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.3em] mt-5 px-1 font-bold">{user?.email}</p>
               </div>
-              <button onClick={() => setShowAddModal(true)} className="bg-white text-black px-10 py-5 rounded-[2rem] font-black uppercase text-[11px] tracking-widest flex items-center gap-3 hover:bg-orange-600 hover:text-white transition-all shadow-2xl active:scale-95">
+              <button onClick={() => setShowAddModal(true)} className="bg-white text-black px-10 py-5 rounded-[2rem] font-black uppercase text-[11px] tracking-widest flex items-center gap-3 hover:bg-orange-600 hover:text-white transition-all shadow-2xl active:scale-95 font-bold">
                 <Plus size={22}/> Cargar Vehículo
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 text-left">
                <StatCard title="UNIDADES EN RED" value={inventory.length} icon={<Car size={20}/>} />
                <StatCard title="STOCK TOTAL" value={`$${inventory.reduce((acc, c) => acc + Number(c.price || 0), 0).toLocaleString()}`} icon={<Wallet size={20}/>} />
                <StatCard title="VISITAS" value="1.2k" icon={<TrendingUp size={20}/>} />
@@ -346,25 +347,25 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-left">
             {inventory.length > 0 ? (
               inventory.map(car => (
                 <div key={car.id} className="bg-slate-900 border border-white/5 p-7 rounded-[2.5rem] group hover:border-orange-600/20 transition-all text-left">
                   <div className="h-40 mb-6 rounded-2xl overflow-hidden bg-slate-800 relative">
                     <img src={car.image} className="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-opacity" alt="" />
-                    <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 rounded-md text-[8px] font-black uppercase tracking-tighter">{car.status}</div>
+                    <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 rounded-md text-[8px] font-black uppercase tracking-tighter italic font-bold">{car.status}</div>
                   </div>
-                  <h4 className="font-black uppercase italic text-sm text-white truncate mb-1">{car.brand}</h4>
-                  <p className="font-black uppercase text-[10px] text-slate-500 mb-4">{car.model} {car.year}</p>
-                  <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                    <span className="text-orange-600 font-black text-xl">${Number(car.price || 0).toLocaleString()}</span>
+                  <h4 className="font-black uppercase italic text-sm text-white truncate mb-1 text-left">{car.brand}</h4>
+                  <p className="font-black uppercase text-[10px] text-slate-500 mb-4 text-left">{car.model} {car.year}</p>
+                  <div className="pt-4 border-t border-white/5 flex justify-between items-center text-left">
+                    <span className="text-orange-600 font-black text-xl text-left">${Number(car.price || 0).toLocaleString()}</span>
                   </div>
                 </div>
               ))
             ) : (
               <div className="col-span-full py-32 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
                 <Car className="mx-auto text-slate-800 mb-8" size={64} />
-                <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] italic leading-loose">Tu oficina está vacía.<br/>Cargá tu primera unidad para publicarla.</p>
+                <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.4em] italic leading-loose font-bold">Tu oficina está vacía.<br/>Cargá tu primera unidad para publicarla.</p>
               </div>
             )}
           </div>
@@ -376,17 +377,17 @@ export default function Page() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
           <div className="bg-slate-900 border border-white/10 w-full max-w-md rounded-[3rem] p-12 relative text-left shadow-2xl">
             <button onClick={() => setShowAuthModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
-            <h2 className="text-4xl font-black italic uppercase text-white leading-[0.9] mb-12">ACCESO <br/><span className="text-orange-600">RED HOTCARS</span></h2>
-            <form onSubmit={handleAuth} className="space-y-6">
-              <div className="space-y-1">
-                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] ml-2">Email Profesional</label>
+            <h2 className="text-4xl font-black italic uppercase text-white leading-[0.9] mb-12 text-left font-bold">ACCESO <br/><span className="text-orange-600">RED HOTCARS</span></h2>
+            <form onSubmit={handleAuth} className="space-y-6 text-left font-bold uppercase">
+              <div className="space-y-1 text-left">
+                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] ml-2 font-bold">Email Profesional</label>
                  <input type="email" placeholder="email@ejemplo.com" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={authData.email} onChange={e => setAuthData({...authData, email: e.target.value})} />
               </div>
-              <div className="space-y-1">
-                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] ml-2">Contraseña</label>
+              <div className="space-y-1 text-left">
+                 <label className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] ml-2 font-bold">Contraseña</label>
                  <input type="password" placeholder="••••••••" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={authData.password} onChange={e => setAuthData({...authData, password: e.target.value})} />
               </div>
-              <button disabled={loading} className="w-full bg-orange-600 text-white py-6 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] shadow-xl shadow-orange-600/20 active:scale-95 transition-all mt-4">
+              <button disabled={loading} className="w-full bg-orange-600 text-white py-6 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] shadow-xl shadow-orange-600/20 active:scale-95 transition-all mt-4 font-bold">
                 {loading ? <Loader2 className="animate-spin mx-auto" size={20}/> : 'Entrar / Registrarme'}
               </button>
             </form>
@@ -400,15 +401,15 @@ export default function Page() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
           <div className="bg-slate-900 border border-white/10 w-full max-w-3xl rounded-[3.5rem] p-12 relative text-left shadow-2xl overflow-y-auto max-h-[90vh]">
             <button onClick={() => setShowAddModal(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white transition-colors"><X size={28} /></button>
-            <h2 className="text-4xl font-black italic uppercase text-white mb-10 leading-none">NUEVA <span className="text-orange-600">UNIDAD</span></h2>
-            <form onSubmit={handleAddCar} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Marca</label><input type="text" placeholder="Ej: Toyota" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.brand} onChange={e => setNewCar({...newCar, brand: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Modelo</label><input type="text" placeholder="Ej: Hilux" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.model} onChange={e => setNewCar({...newCar, model: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Año</label><input type="number" placeholder="2024" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.year} onChange={e => setNewCar({...newCar, year: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Precio (USD)</label><input type="number" placeholder="55000" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.price} onChange={e => setNewCar({...newCar, price: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">Kilómetros</label><input type="text" placeholder="0" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.km} onChange={e => setNewCar({...newCar, km: e.target.value})} /></div>
-              <div className="space-y-2"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest">URL de Imagen</label><input type="text" placeholder="https://..." required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600" value={newCar.image} onChange={e => setNewCar({...newCar, image: e.target.value})} /></div>
-              <button disabled={loading} className="col-span-full mt-10 bg-orange-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-[13px] shadow-2xl flex items-center justify-center gap-4 hover:bg-orange-700 transition-all active:scale-95">
+            <h2 className="text-4xl font-black italic uppercase text-white mb-10 leading-none text-left font-bold">NUEVA <span className="text-orange-600">UNIDAD</span></h2>
+            <form onSubmit={handleAddCar} className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left font-bold uppercase">
+              <div className="space-y-2 text-left"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-bold">Marca</label><input type="text" placeholder="Ej: Toyota" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600 font-bold" value={newCar.brand} onChange={e => setNewCar({...newCar, brand: e.target.value})} /></div>
+              <div className="space-y-2 text-left"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-bold">Modelo</label><input type="text" placeholder="Ej: Hilux" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600 font-bold" value={newCar.model} onChange={e => setNewCar({...newCar, model: e.target.value})} /></div>
+              <div className="space-y-2 text-left"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-bold">Año</label><input type="number" placeholder="2024" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600 font-bold" value={newCar.year} onChange={e => setNewCar({...newCar, year: e.target.value})} /></div>
+              <div className="space-y-2 text-left"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-bold">Precio (USD)</label><input type="number" placeholder="55000" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600 font-bold" value={newCar.price} onChange={e => setNewCar({...newCar, price: e.target.value})} /></div>
+              <div className="space-y-2 text-left"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-bold font-bold">Kilómetros</label><input type="text" placeholder="0" required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600 font-bold" value={newCar.km} onChange={e => setNewCar({...newCar, km: e.target.value})} /></div>
+              <div className="space-y-2 text-left"><label className="text-[10px] font-black uppercase text-slate-500 ml-2 tracking-widest font-bold font-bold">URL de Imagen</label><input type="text" placeholder="https://..." required className="w-full p-5 bg-slate-800 border-none rounded-2xl text-white font-bold outline-none focus:ring-2 focus:ring-orange-600 font-bold" value={newCar.image} onChange={e => setNewCar({...newCar, image: e.target.value})} /></div>
+              <button disabled={loading} className="col-span-full mt-10 bg-orange-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-[13px] shadow-2xl flex items-center justify-center gap-4 hover:bg-orange-700 transition-all active:scale-95 font-bold">
                 {loading ? <Loader2 className="animate-spin" size={24}/> : <><Send size={20}/> PUBLICAR EN STOCK</>}
               </button>
             </form>
@@ -419,19 +420,19 @@ export default function Page() {
       {/* MODAL: FICHA DETALLE */}
       {selectedCar && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
-           <div className="bg-slate-900 border border-white/10 w-full max-w-xl rounded-[3rem] overflow-hidden relative shadow-2xl text-left animate-in fade-in zoom-in duration-300">
+           <div className="bg-slate-900 border border-white/10 w-full max-w-xl rounded-[3rem] overflow-hidden relative shadow-2xl text-left animate-in fade-in zoom-in duration-300 text-left">
               <button onClick={() => setSelectedCar(null)} className="absolute top-6 right-6 z-10 bg-black/60 p-3 rounded-full text-white hover:bg-orange-600 transition-colors"><X size={20} /></button>
               <div className="h-80 overflow-hidden">
                 <img src={selectedCar.image} className="w-full h-full object-cover" alt={selectedCar.model} />
               </div>
               <div className="p-12 text-left">
-                <span className="text-orange-600 text-xs font-black uppercase tracking-[0.3em] mb-3 block">{selectedCar.brand}</span>
-                <h2 className="text-5xl font-black uppercase italic text-white mb-10 leading-[0.9] tracking-tighter">{selectedCar.model}</h2>
-                <div className="grid grid-cols-2 gap-5 mb-12">
-                  <div className="bg-white/5 p-5 rounded-3xl text-left border border-white/5"><p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest font-bold">Año Modelo</p><p className="text-white font-black text-xl italic">{selectedCar.year}</p></div>
-                  <div className="bg-white/5 p-5 rounded-3xl text-left border border-white/5"><p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest font-bold">Kilometraje</p><p className="text-white font-black text-xl italic">{selectedCar.km} KM</p></div>
+                <span className="text-orange-600 text-xs font-black uppercase tracking-[0.3em] mb-3 block text-left font-bold">{selectedCar.brand}</span>
+                <h2 className="text-5xl font-black uppercase italic text-white mb-10 leading-[0.9] tracking-tighter text-left">{selectedCar.model}</h2>
+                <div className="grid grid-cols-2 gap-5 mb-12 text-left font-bold uppercase">
+                  <div className="bg-white/5 p-5 rounded-3xl text-left border border-white/5 text-left"><p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest font-bold text-left">Año Modelo</p><p className="text-white font-black text-xl italic text-left">{selectedCar.year}</p></div>
+                  <div className="bg-white/5 p-5 rounded-3xl text-left border border-white/5 text-left"><p className="text-slate-500 text-[10px] font-black uppercase mb-1 tracking-widest font-bold text-left">Kilometraje</p><p className="text-white font-black text-xl italic text-left">{selectedCar.km} KM</p></div>
                 </div>
-                <button onClick={() => openWhatsApp(selectedCar)} className="w-full bg-orange-600 text-white py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-xl font-black">
+                <button onClick={() => openWhatsApp(selectedCar)} className="w-full bg-orange-600 text-white py-6 rounded-[2rem] font-black uppercase text-sm tracking-[0.2em] flex items-center justify-center gap-4 active:scale-95 transition-all shadow-xl font-black font-bold">
                   <MessageCircle size={24}/> Consultar WhatsApp
                 </button>
               </div>
