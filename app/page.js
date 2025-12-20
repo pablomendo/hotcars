@@ -1,5 +1,4 @@
-"use client";
-import React, { useState, useMemo, memo, useCallback, useEffect, useRef } from 'react';
+port React, { useState, useMemo, memo, useCallback, useEffect, useRef } from 'react';
 // Importación vía CDN para que la vista previa funcione correctamente sin errores de compilación
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 import { 
