@@ -1,15 +1,17 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["class"],
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
-        background: "#f8fafc",
-        foreground: "#020617",
-        border: "#e2e8f0",
+        background: "hsl(var(--background))",
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+        },
       },
     },
   },
