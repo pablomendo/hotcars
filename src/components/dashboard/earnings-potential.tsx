@@ -38,6 +38,7 @@ const ProgressBar = () => {
   );
 };
 
+// Cambiado a EarningsPotential (con S) para coincidir con el import en page.tsx
 export function EarningsPotential() {
   return (
     <Card className="bg-gradient-to-br from-[#1a2c32] to-[#2a4a53] text-white flex flex-col justify-between" style={{minHeight: '11.5rem'}}>
@@ -47,7 +48,7 @@ export function EarningsPotential() {
             Potencial de Ganancia
           </h3>
           <p className="text-sm text-gray-400 mt-1 whitespace-nowrap">
-            Lo que ganarias cerrando todas las operaciones de tu inventario.
+            Lo que ganarías cerrando todas las operaciones de tu inventario.
           </p>
         </div>
         
