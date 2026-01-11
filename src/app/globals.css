@@ -2,14 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    background-color: #f8fafc;
-    color: #020617;
-    -webkit-font-smoothing: antialiased;
-  }
+/* Forzamos que el fondo y colores sean los de tu diseño original */
+html, body {
+  background-color: #0f1c23 !important; /* El color oscuro azulado de tu captura */
+  color: white !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
-.sidebar-container {
-  display: flex !important;
+/* Matamos cualquier rastro de modo oscuro automático */
+.dark {
+  color-scheme: dark;
 }
