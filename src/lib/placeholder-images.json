@@ -1,0 +1,34 @@
+{
+  "placeholderImages": [
+    {
+      "id": "suv-1",
+      "description": "A modern white SUV",
+      "imageUrl": "https://images.unsplash.com/photo-1684849311731-eb8293657d7e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx3aGl0ZSUyMHN1dnxlbnwwfHx8fDE3NjY0MTEzNjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white suv"
+    },
+    {
+      "id": "pickup-1",
+      "description": "A red pickup truck",
+      "imageUrl": "https://images.unsplash.com/photo-1672407307288-f8bfe240e790?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxyZWQlMjBwaWNrdXB8ZW58MHx8fHwxNzY2MzU0NTA0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "red pickup"
+    },
+    {
+      "id": "sedan-1",
+      "description": "A sleek black sedan",
+      "imageUrl": "https://images.unsplash.com/photo-1712815780855-5cce5961f8ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxibGFjayUyMHNlZGFufGVufDB8fHx8MTc2NjM1NjI3M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black sedan"
+    },
+    {
+      "id": "suv-2",
+      "description": "A family SUV on a road",
+      "imageUrl": "https://images.unsplash.com/photo-1726412181429-1a8fb23fc3e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdXYlMjByb2FkfGVufDB8fHx8MTc2NjQxMzQ4MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "suv road"
+    },
+    {
+      "id": "user-avatar",
+      "description": "A user's profile picture",
+      "imageUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjYzOTEyMDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    }
+  ]
+}

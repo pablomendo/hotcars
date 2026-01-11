@@ -1,0 +1,5284 @@
+{
+    "CAMION": {
+        "AGRALE": {
+            "MARRUA": [
+                "C/S 2.8 AM 100",
+                "D/C 2.8 AM 100",
+                "D/C 2.8 AM 150",
+                "D/C 2.8 AM 200"
+            ]
+        },
+        "GREAT WALL": {
+            "WINGLE 5": [
+                "C/S 2.0 TD STANDARD"
+            ],
+            "WINGLE 6": [
+                "D/C 2.0 TD STANDARD"
+            ],
+            "WINGLE 7": [
+                "D/C 2.0 TD LUXURY"
+            ],
+            "WINGLE 8": [
+                "D/C 2.0 TD STANDARD"
+            ],
+            "WINGLE 9": [
+                "D/C 2.0 TD DIGNITY"
+            ],
+            "WINGLE 10": [
+                "D/C 2.0 TD M21"
+            ],
+            "WINGLE 11": [
+                "D/C 2.0 TD M21"
+            ]
+        },
+        "HYUNDAI": {
+            "H 100": [
+                "TRUCK 2.5 CRDI EXTRALARGO",
+                "TRUCK 2.5 CRDI EXTRALARGO C/CAJA"
+            ]
+        },
+        "IVECO": {
+            "DAILY": [
+                "DAILY",
+                "DAILY CHASIS",
+                "DAILY FURGÓN"
+            ],
+            "TECTOR": [
+                "11 TONELADAS",
+                "15 TONELADAS",
+                "1699999999999999995101052928",
+                "17 TONELADAS",
+                "170 E",
+                "1700000000000000025165824",
+                "1700000000000000118246355238912",
+                "17E",
+                "2399999999999999935133108928512",
+                "2399999999999999976914550784",
+                "2599999999999999882815038554112",
+                "2600000000000000089523224576",
+                "9 TONELADAS",
+                "ATTACK",
+                "AUTO-SHIFT",
+                "GNC"
+            ],
+            "VERTIS": [
+                "STANDARD"
+            ],
+            "STRALIS": [
+                "HD",
+                "HI-ROAD",
+                "HI-WAY"
+            ],
+            "CURSOR": [
+                "240 E",
+                "330"
+            ],
+            "TRAKKER": [
+                "HI-LAND"
+            ]
+        },
+        "SCANIA": {
+            "SCANIA P": [
+                "P 340",
+                "P 380",
+                "P 440"
+            ],
+            "SCANIA G": [
+                "G 380",
+                "G 410",
+                "G 440"
+            ],
+            "SCANIA R": [
+                "R 410",
+                "R 450",
+                "R 500"
+            ],
+            "SCANIA S": [
+                "S 450",
+                "S 500",
+                "S 580"
+            ]
+        },
+        "ZANELLA": {
+            "FORCE TRUCK": [
+                "C/S 1.2",
+                "CHASIS 1.2",
+                "D/C 1.2"
+            ],
+            "Z TRUCK": [
+                "C/S 1.2"
+            ]
+        }
+    },
+    "AUTO": {
+        "ALFA ROMEO": {
+            "159": [
+                "1.8 TBI 200CV DISTINCTIVE",
+                "2.2 JTS 185CV S-SPEED CRO",
+                "2.2 JTS 189CV S-SPEED DISTINCTIVE"
+            ],
+            "BRERA": [
+                "COUPE 2.2 JTS S-SPEED 6TA"
+            ],
+            "GIULIA": [
+                "2.0 T AWD 280CV VELOCE",
+                "2.0 T RDW 200CV DISTINCTIVE",
+                "2.9 BT RDW 510CV QUADRIFOGLIO"
+            ],
+            "GIULIETTA": [
+                "DISTINCTIVE 1.4 TB",
+                "DISTINCTIVE 1.4 TB MULTIAIR",
+                "DISTINCTIVE 1.6 JTDM",
+                "DISTINCTIVE 1.75 TBI",
+                "DISTINCTIVE 2.0 JTDM",
+                "PROGRESSION 1.4 TB",
+                "PROGRESSION 1.4 TB MULTIAIR",
+                "PROGRESSION 1.6 JTDM",
+                "PROGRESSION 1.75 TBI",
+                "PROGRESSION 2.0 JTDM",
+                "QUADRIFOGLIO 1.75 TBI",
+                "QUADRIFOGLIO 2.0 JTDM",
+                "SUPER 1.4 TB",
+                "SUPER 1.4 TB MULTIAIR",
+                "SUPER 1.6 JTDM",
+                "SUPER 2.0 JTDM",
+                "VELOCE 1.75 TBI",
+                "VELOCE 2.0 JTDM"
+            ],
+            "GT": [
+                "COUPE 2.0 JTS T/C",
+                "COUPE 2.0 JTS T/C S-SPEED CRO"
+            ],
+            "MITO": [
+                "1.4 JUNIOR",
+                "1.4 JUNIOR CRO MILANO",
+                "1.4 MULTIAIR 6TA PLUS",
+                "1.4 MULTIAIR 6TA PROGRESSION",
+                "1.4 PACK RACER",
+                "1.4 PROGRESSION M5",
+                "1.4 T 170CV QUADRI 6M CRO MILA TECHNOLOGY RACER",
+                "1.4 T 170CV QUADRIFOGLIO 6M",
+                "1.4 T 170CV VELOCE M6",
+                "1.4 T 170CV VELOCE TCT",
+                "1.4 T MULTIAIR 6TA DISTINCTIVE",
+                "1.4 T PROGRESSION TCT",
+                "1.4 T QV M6 CRO ALCANTARA",
+                "1.4 T QV M6 CRO MILANO",
+                "1.4 T TCT DISTINCTIVE",
+                "1.4 T TCT DISTINCTIVE T/C",
+                "1.4 TBI 6TA DISTINCTIVE",
+                "1.4 TBI 6TA DISTINCTIVE T/C",
+                "1.4 TBI 6TA QUADRIFOGLIO T/C",
+                "1.4T SPORT",
+                "1.4T SPORT T/C"
+            ],
+            "SPIDER": [
+                "CABRIO 2.2 JTS S-SPEED 6TA"
+            ],
+            "TONALE": [
+                "1.3 T 6AT PHEV 4Q TRIBUTO ITALIANO",
+                "1.5 T 7AT MHEV SPRINT",
+                "1.5 T 7AT MHEV VELOCE"
+            ]
+        },
+        "AUDI": {
+            "A1": [
+                "30 TFSI 1.0 TFSI",
+                "35 TFSI 1.5 TFSI",
+                "40 TFSI 2.0 TFSI",
+                "BASE 1.0 TFSI",
+                "BASE 1.2 TFSI",
+                "BASE 1.4 TFSI",
+                "S1 2.0 TFSI",
+                "SPORT 1.4 TFSI"
+            ],
+            "A3": [
+                "1.4 TFSI",
+                "1.4 TFSI 35 150CV",
+                "1.4 TFSI 35 150CV ADVANCED",
+                "1.4 TFSI S-TRONIC",
+                "1.4 TFSI SPORTBACK",
+                "1.6 ALCANTARA",
+                "1.6 CRO",
+                "1.6 PLUS",
+                "1.6 PREMIUM",
+                "1.6 SPORTBACK",
+                "1.8 TFSI",
+                "1.8 TFSI S-TRONIC",
+                "1.8 TFSI SPORTBACK",
+                "2.0 TDI S-TRONIC",
+                "2.0 TDI SPORTBACK S-TRONIC",
+                "2.0 TFSI",
+                "2.0 TFSI 40 190CV ADVANCE S-TRONIC",
+                "2.0 TFSI 40 190CV S LINE",
+                "2.0 TFSI CRO",
+                "2.0 TFSI PREMIUM",
+                "2.0 TFSI SPORTBACK",
+                "CABRIO 1.8 TFSI",
+                "CABRIO 1.8 TFSI S-TRONIC"
+            ],
+            "A4": [
+                "1.8 TFSI ATTRACTION",
+                "1.8 TFSI ATTRACTION MULTI",
+                "1.8 TFSI PLUS AMBITION",
+                "1.8 TFSI PLUS AMBITION MULTI",
+                "1.8 TFSI SPORT ALCANTARA",
+                "1.8 TFSI SPORT ALCANTARA MULTI",
+                "1.8 TFSI SPORT CRO",
+                "1.8 TFSI SPORT CRO MULTI",
+                "1.8 TFSI SPORT CRO PLUS",
+                "1.8 TFSI SPORT CRO PLUS MULTI",
+                "2.0 TDI MULTI ATTRACTION",
+                "2.0 TDI MULTI PLUS AMBITION",
+                "2.0 TDI MULTI SPORT CRO",
+                "2.0 TFSI 190CV",
+                "2.0 TFSI 190CV 40",
+                "2.0 TFSI 190CV S-TRONIC FRONT",
+                "2.0 TFSI 252CV S-TRONIC FRONT",
+                "2.0 TFSI 252CV S-TRONIC QUATTRO",
+                "2.0 TFSI 40 ADVANCED",
+                "2.0 TFSI 45 S-TRONIC QUATTRO ADVANCE MH",
+                "2.0 TFSI ATTRACTION",
+                "2.0 TFSI ATTRACTION MULTI",
+                "2.0 TFSI PLUS AMBITION",
+                "2.0 TFSI PLUS AMBITION MULTI",
+                "2.0 TFSI QUATTRO ATTRACTION",
+                "2.0 TFSI QUATTRO ATTRACTION S-TRONIC",
+                "2.0 TFSI QUATTRO PLUS AMBITION",
+                "2.0 TFSI QUATTRO PLUS AMBITION S-TRONIC",
+                "2.0 TFSI QUATTRO SPORT ALCANTARA",
+                "2.0 TFSI QUATTRO SPORT ALCANTARA S-TRONIC",
+                "2.0 TFSI QUATTRO SPORT CRO",
+                "2.0 TFSI QUATTRO SPORT CRO S-TRONIC",
+                "2.0 TFSI SPORT ALCANTARA",
+                "2.0 TFSI SPORT ALCANTARA MULTI",
+                "2.0 TFSI SPORT CRO",
+                "2.0 TFSI SPORT CRO MULTI",
+                "3.0 TDI QUATTRO S-TRONIC",
+                "3.0 TFSI S-TRONIC QUATTRO",
+                "3.2 QUATTRO",
+                "3.2 QUATTRO TIPT",
+                "AVANT 1.8 TFSI ATTRACTION",
+                "AVANT 1.8 TFSI ATTRACTION MULTITRONIC",
+                "AVANT 1.8 TFSI PLUS AMBITION",
+                "AVANT 1.8 TFSI PLUS AMBITION MULTITRONIC",
+                "AVANT 1.8 TFSI SPORT ALCANTARA",
+                "AVANT 1.8 TFSI SPORT ALCANTARA MULTI",
+                "AVANT 1.8 TFSI SPORT CRO",
+                "AVANT 1.8 TFSI SPORT CRO MULTI",
+                "AVANT 2.0 TDI ATTRACTION MULTI",
+                "AVANT 2.0 TDI PLUS AMBITION MULTI",
+                "AVANT 2.0 TDI SPORT ALCANTARA MULTI",
+                "AVANT 2.0 TDI SPORT CRO MULTI"
+            ],
+            "A5": [
+                "CABRIO 3.0 TFSI QUATTRO S-TRONIC",
+                "CABRIO 3.2 FSI QUATTRO S-TRONIC",
+                "COUPE 2.0 TFSI",
+                "COUPE 2.0 TFSI 190CV 40 FRONT",
+                "COUPE 2.0 TFSI 40",
+                "COUPE 2.0 TFSI MULTI",
+                "COUPE 2.0 TFSI PLUS",
+                "COUPE 2.0 TFSI PLUS MULTI",
+                "COUPE 2.0 TFSI QUATTRO",
+                "COUPE 2.0 TFSI QUATTRO 252CV 45",
+                "COUPE 2.0 TFSI QUATTRO 45",
+                "COUPE 2.0 TFSI QUATTRO PLUS",
+                "COUPE 2.0 TFSI QUATTRO PLUS S-TRONIC",
+                "COUPE 2.0 TFSI QUATTRO S-TRONIC",
+                "COUPE 2.0 TFSI QUATTRO SPORT ALCANTARA",
+                "COUPE 2.0 TFSI QUATTRO SPORT ALCANTARA S-TRONIC",
+                "COUPE 2.0 TFSI QUATTRO SPORT CRO",
+                "COUPE 2.0 TFSI QUATTRO SPORT CRO S-TRONIC",
+                "COUPE 2.0 TFSI S-TRONIC",
+                "COUPE 2.0 TFSI SPORT ALCANTARA",
+                "COUPE 2.0 TFSI SPORT ALCANTARA MULTI",
+                "COUPE 2.0 TFSI SPORT CRO",
+                "COUPE 2.0 TFSI SPORT CRO MULTI",
+                "COUPE 3.0 TFSI QUATTRO S-TRONIC",
+                "COUPE 3.2 QUATTRO",
+                "COUPE 3.2 QUATTRO S-TRONIC",
+                "SPORTBACK 2.0 TFSI",
+                "SPORTBACK 2.0 TFSI 190CV 40 FRONT",
+                "SPORTBACK 2.0 TFSI 40 S-TRONIC",
+                "SPORTBACK 2.0 TFSI MULTI",
+                "SPORTBACK 2.0 TFSI PLUS",
+                "SPORTBACK 2.0 TFSI PLUS MULTI",
+                "SPORTBACK 2.0 TFSI QUATTRO",
+                "SPORTBACK 2.0 TFSI QUATTRO 252CV 45",
+                "SPORTBACK 2.0 TFSI QUATTRO 45",
+                "SPORTBACK 2.0 TFSI QUATTRO PLUS",
+                "SPORTBACK 2.0 TFSI QUATTRO PLUS MULTI",
+                "SPORTBACK 2.0 TFSI QUATTRO S-TRONIC",
+                "SPORTBACK 2.0 TFSI QUATTRO SPORT ALCANTARA",
+                "SPORTBACK 2.0 TFSI QUATTRO SPORT ALCANTARA MULTI",
+                "SPORTBACK 2.0 TFSI QUATTRO SPORT CRO",
+                "SPORTBACK 2.0 TFSI QUATTRO SPORT CRO MULTI",
+                "SPORTBACK 2.0 TFSI S-TRONIC",
+                "SPORTBACK 2.0 TFSI SPORT ALCANTARA",
+                "SPORTBACK 2.0 TFSI SPORT ALCANTARA MULTI",
+                "SPORTBACK 2.0 TFSI SPORT CRO",
+                "SPORTBACK 2.0 TFSI SPORT CRO MULTI",
+                "SPORTBACK 3.0 TFSI QUATTRO S-TRONIC",
+                "SPORTBACK 3.2 FSI QUATTRO S-TRONIC"
+            ],
+            "A6": [
+                "2.8 FSI MULTI",
+                "3.0 TDI S-TRONIC QUATTRO",
+                "3.0 TFSI QUATTRO 340CV 55",
+                "3.0 TFSI QUATTRO S-TRONIC",
+                "4.2 FSI QUATTRO TIPT",
+                "4.2 FSI QUATTRO TIPT SECURITY"
+            ],
+            "A7": [
+                "SPORTBACK 3.0 FSI QUATTRO 340CV 55",
+                "SPORTBACK 3.0 FSI V6 S-TRONIC QUATTRO",
+                "SPORTBACK 3.0 TDI S-TRONIC QUATTRO"
+            ],
+            "A8": [
+                "4.0 TFSI QUATTRO 460CV 60",
+                "4.0 TFSI QUATTRO 460CV 60 L",
+                "4.0 V8 TFSI TRONIC QUATTRO",
+                "4.0 V8 TFSI TRONIC QUATTRO L",
+                "4.2 QUATTRO TIPT T/C",
+                "4.2 QUATTRO TIPT T/C L",
+                "4.2 TFSI QUATTRO TIPT"
+            ],
+            "ALLROAD": [
+                "A 4 2.0 TFSI QUATTRO S-TRONIC",
+                "A 4 2.0 TFSI QUATTRO S-TRONIC AMBITION",
+                "A 4 2.0 TFSI QUATTRO S-TRONIC ATTRACTION",
+                "A 4 2.0 TFSI QUATTRO S-TRONIC STR MH",
+                "A 6 3.0 TDI QUATTRO TIPT",
+                "A 6 3.0 TDI QUATTRO TIPT PREMIUM (LN)",
+                "A 6 3.0 TDI S-TRONIC QUATTRO",
+                "A 6 3.0 TFSI QUATTRO 340CV 55",
+                "A 6 3.0 TFSI QUATTRO TIPT",
+                "A 6 3.0 TFSI S-TRONIC QUATTRO",
+                "A 6 4.2 FSI QUATTRO TIPT"
+            ],
+            "E-TRON": [
+                "55 QUATTRO"
+            ],
+            "R8": [
+                "COUPE 4.2 FSI QUATTRO",
+                "COUPE 4.2 FSI QUATTRO S-TRONIC",
+                "COUPE 5.2 FSI QUATTRO",
+                "COUPE 5.2 FSI QUATTRO S-TRONIC",
+                "COUPE 5.2 V10 PLUS QUATTRO S-TRONIC",
+                "SPYDER 5.2 FSI QUATTRO",
+                "SPYDER 5.2 FSI QUATTRO S-TRONIC",
+                "SPYDER 5.2 V10 PLUS QUATTRO S-TRONIC"
+            ],
+            "RS3": [
+                "2.5 TFSI S-TRONIC QUATTRO 400CV",
+                "2.5 TFSI S-TRONIC QUATTRO 400CV SPORTBACK",
+                "TFSI S-TRONIC 400CV",
+                "TFSI S-TRONIC 400CV SPORTBACK"
+            ],
+            "RS5": [
+                "4.2 FSI V8 S-TRONIC QUATTRO",
+                "COUPE 2.9 TFSI 450CV TIPT QUATTRO"
+            ],
+            "RS6": [
+                "5.0 V10"
+            ],
+            "RS7": [
+                "SPORTBACK 4.0 TFSI V8 BT TIPT QUATTRO"
+            ],
+            "RS E-TRON": [
+                "GT QUATTRO"
+            ],
+            "RS Q8": [
+                "4.0 TFSI QUATTRO 8TIPT 600CV",
+                "4.0 TFSI QUATTRO 8TIPT 640CV"
+            ],
+            "S": [
+                "2.0 3 TFSI QUATTRO",
+                "2.0 3 TFSI QUATTRO S-TRONIC",
+                "2.0 3 TFSI QUATTRO SPORTBACK",
+                "2.0 3 TFSI QUATTRO SPORTBACK S-TRONIC",
+                "2.0 3 TFSI S-TRONIC QUATTRO",
+                "3.0 TFSI 4 QUATTRO",
+                "3.0 TFSI 4 QUATTRO S-TRONIC",
+                "3.0 TFSI 4 QUATTRO S-TRONIC 354CV",
+                "4.0 TFSI 7 S-TRONIC QUATTRO SPORTBACK",
+                "4.0 V8 TFSI 6 S-TRONIC QUATTRO",
+                "COUPE 3.0 TFSI 5 QUATTRO TRIP",
+                "COUPE 4.2 FSI 5 V8 QUATTRO",
+                "COUPE 4.2 FSI 5 V8 QUATTRO TIPT",
+                "SPORTBACK 3.0 TFSI 5 QUATTRO TRIP"
+            ],
+            "S3": [
+                "AVANT",
+                "BERLINA (SEDAN)",
+                "PREMIUM",
+                "PREMIUM PLUS",
+                "PRESTIGE",
+                "SPORTBACK (HATCHBACK)"
+            ],
+            "S4": [
+                "3.0 V6 TFSI",
+                "AVANT",
+                "CONVERTIBLE",
+                "PREMIUM",
+                "PREMIUM PLUS",
+                "PRESTIGE"
+            ],
+            "TT": [
+                "COUPE 1.8 TFSI 160CV",
+                "COUPE 1.8 TFSI 160CV PREMIUM",
+                "COUPE 1.8 TFSI 160CV PREMIUM SPORT",
+                "COUPE 1.8 TFSI 160CV SPORT",
+                "COUPE 2.0 TFSI",
+                "COUPE 2.0 TFSI 211CV",
+                "COUPE 2.0 TFSI 211CV SPORT",
+                "COUPE 2.0 TFSI 230CV S-TRONIC",
+                "COUPE 2.0 TFSI S 310CV QUATTRO S-TRONIC",
+                "COUPE 2.0 TFSI S-TRONIC",
+                "COUPE 2.5 TFSI 340 RS QUATTRO",
+                "COUPE 2.5 TFSI 340 RS QUATTRO S-TRONIC",
+                "COUPE 2.5 TFSI RS 400CV QUATTRO S-TRONIC",
+                "COUPE 3.2 QUATTRO",
+                "COUPE 3.2 QUATTRO S-TRONIC",
+                "ROADSTER 2.0 TFSI 200CV",
+                "ROADSTER 2.0 TFSI 200CV S-TRONIC",
+                "ROADSTER 2.0 TFSI 211CV",
+                "ROADSTER 2.0 TFSI 211CV SPORT",
+                "ROADSTER 2.0 TFSI 310CV QUATTRO S-TRONIC",
+                "ROADSTER 3.2 QUATTRO",
+                "ROADSTER 3.2 QUATTRO S-TRONIC",
+                "ROADSTER 3.2 V6 DSG QUATTRO 250CV"
+            ]
+        },
+        "BAIC": {
+            "BJ60": [
+                "2.0 HYBRID"
+            ],
+            "D20": [
+                "1.3"
+            ],
+            "EX 260 CROSSOVER ELECTRIC": [
+                "STANDARD"
+            ],
+            "EU5 ELECTRICO": [
+                "100% ELECTRICO"
+            ],
+            "SENOVA ELITE": [
+                "1",
+                "1.5"
+            ]
+        },
+        "BMW": {
+            "116": [
+                "1.6 I",
+                "1.6 I ACTIVE"
+            ],
+            "118": [
+                "1.5 T 7AT ADVANTAGE",
+                "1.5 T 7AT SPORTLINE",
+                "1.8 D ACTIVE",
+                "1.8 D SPORT/URBAN",
+                "1.8 I ACTIVE",
+                "1.8 I SPORT LINE",
+                "1.8 I SPORT/URBAN"
+            ],
+            "120": [
+                "2.0 D ACTIVE",
+                "2.0 I ACTIVE",
+                "2.0 I SPORT",
+                "CONV 2.0 I ACTIVE",
+                "COUPE 2.0 I ACTIVE",
+                "COUPE 2.0 I EXECUTIVE"
+            ],
+            "125": [
+                "1.6 I",
+                "2.0 D SPORT LINE",
+                "COUPE 3.0 EXECUTIVE"
+            ],
+            "130": [
+                "3.0 I LIMITED EDITION"
+            ],
+            "135": [
+                "3.0 I M",
+                "COUPE 3.0 I SPORTIVE"
+            ],
+            "218 I": [
+                "1.5 T 7SEPT GRAN COUPE ADVANTAGE"
+            ],
+            "220 I": [
+                "CONV 2.0 T SPORT",
+                "CONV 2.0 T SPORT LCI 8AT",
+                "COUPE 2.0 T 8AT ADVANTAGE",
+                "COUPE 2.0 T 8AT M SPORT LCII",
+                "COUPE 2.0 T 8AT SPORTLINE LCI",
+                "COUPE 2.0 T SPORT",
+                "COUPE 2.0 T SPORT LCI 8AT",
+                "COUPE 2.0 T SPORT LINE"
+            ],
+            "235 I": [
+                "COUPE 3.0 T M PACKAGE"
+            ],
+            "318": [
+                "1.8 I EXECUTIVE"
+            ],
+            "320": [
+                "2.0 D EXECUTIVE",
+                "2.0 D SPORT/LUXYRY",
+                "2.0 I",
+                "2.0 I EXECUTIVE",
+                "COUPE 2.0 I EXECUTIVE"
+            ],
+            "320 I": [
+                "2.0 T EXECUTIVE",
+                "2.0 T SPORTLINE",
+                "2.0 T SPORTLINE II"
+            ],
+            "325": [
+                "2.5 I EXECUTIVE",
+                "CONV 3.0 I EXECUTIVE",
+                "COUPE 2.5 I EXECUTIVE",
+                "COUPE 2.5 I EXECUTIVE TRONIC",
+                "COUPE 3.0 I SPORTIVE"
+            ],
+            "328": [
+                "2.0 I SPORT/LUXURY"
+            ],
+            "330": [
+                "2.0 T SPORTLINE 8AT",
+                "2.0 T SPORTLINE 8AT SHADOW",
+                "3.0 I EXECUTIVE",
+                "3.0 I EXECUTIVE TRONIC"
+            ],
+            "330E": [
+                "2.0 T SPORTLINE"
+            ],
+            "335": [
+                "3.0 I",
+                "COUPE 3.0 SPORTIVE BT"
+            ],
+            "428 I": [
+                "COUPE 2.0 T SPORT LINE"
+            ],
+            "430 I": [
+                "COUPE 2.0 T M SPORTPACKAGE 8AT",
+                "COUPE 2.0 T SPORT",
+                "COUPE 2.0 T SPORTLINE LCI 8AT",
+                "GRAN COUPE 2.0 T SPORT",
+                "GRAN COUPE 2.0 T SPORTLINE 8AT",
+                "GRAN COUPE 2.0 T SPORTLINE LCI 8AT"
+            ],
+            "435 I": [
+                "COUPE 3.0 T V6 M PACKAGE"
+            ],
+            "440 I": [
+                "CABRIO 3.0 T M PACKAGE 8AT",
+                "CABRIO 3.0 T M SPORT LCI 8AT",
+                "CABRIO 3.0 T SPORT LINE",
+                "COUPE 3.0 T M PACKAGE",
+                "COUPE 3.0 T M SPORT LCI 8AT",
+                "GRAN COUPE 3.0 T M PACKAGE",
+                "GRAN COUPE 3.0 T MSPORT LCI 8AT"
+            ],
+            "525": [
+                "2.0 D EXECUTIVE"
+            ],
+            "528": [
+                "2.8 I EXECUTIVE"
+            ],
+            "530": [
+                "3.0 D EXECUTIVE",
+                "3.0 I EXECUTIVE"
+            ],
+            "530 I": [
+                "SPORTLINE"
+            ],
+            "535": [
+                "3.0 GRAN TURISMO",
+                "3.0 I EXECUTIVE"
+            ],
+            "535 I": [
+                "3.0 T M PACKAGE"
+            ],
+            "540 I": [
+                "3.0 T M PACKAGE"
+            ],
+            "550": [
+                "4.4 I PREMIUM"
+            ],
+            "550E": [
+                "3.0 8AT XDRIVE M SPORT PRO"
+            ],
+            "640": [
+                "CONV SPORTIVE",
+                "COUPE 3.0 I SPORTIVE",
+                "GRAN COUPE 3.0 I"
+            ],
+            "640 I": [
+                "COUPE 3.0 T SPORTIVE"
+            ],
+            "650": [
+                "COUPE 4.8 CI PREMIUM",
+                "COUPE 4.8 CI PREMIUM TRONIC"
+            ],
+            "650 I": [
+                "COUPE 4.4 BT 8AT M SPORT",
+                "COUPE GRAN 4.4 BT 8AT M SPORT",
+                "COUPE GRAN 4.4 V8 BT 8AT M SPORT",
+                "COUPE GRAN 4.4 V8 BT 8AT M SPORT M6"
+            ],
+            "750": [
+                "4.8 I PREMIUM TRONIC",
+                "4.8 IA INDIVIDUAL TRONIC"
+            ],
+            "750 I": [
+                "4.4 BT 8AT M SPORT EXCELLENCE",
+                "LI XDRIVE M SPORT PURE EXC"
+            ],
+            "M1": [
+                "COUPE"
+            ],
+            "M2": [
+                "COUPE 3.0 T"
+            ],
+            "M3": [
+                "3.0 BT",
+                "COMPETITION MRACE TRACK 510CV",
+                "COUPE 4.0 M SPORT"
+            ],
+            "M4": [
+                "COUPE 3.0 BT",
+                "COUPE 3.0 BT F82 LCI",
+                "COUPE 3.0 BT LCI",
+                "COUPE COMPETITION MRACE TRACK 510CV"
+            ],
+            "M5": [
+                "35 J",
+                "4.4 V8 BT",
+                "5.0 SPORT 7 VEL"
+            ],
+            "M6": [
+                "COUPE 5.0 V10 SPORT",
+                "COUPE GRAN",
+                "COUPE GRAN 4.4 BT",
+                "COUPE GRAN 4.4 V8 BT 8AT M SPORT M6"
+            ],
+            "M135": [
+                "2.0 8AT XDRIVE M PACKAGE",
+                "2.0 T XDRIVE 8AT",
+                "XDRIVE M PERFORMANCE"
+            ],
+            "M140I": [
+                "3.0 M PACKAGE"
+            ],
+            "M235I": [
+                "GRAN COUPE 2.0 T 8SEPT XDRIVE"
+            ],
+            "M240I": [
+                "CONV 3.0 T M PACKAGE 8AT",
+                "COUPE 3.0 T 8AT",
+                "COUPE 3.0 T 8AT 388CV XDRIVE",
+                "COUPE 3.0 T 8AT M PERFORMANCE LCI"
+            ],
+            "M340I": [
+                "3.0 T XDRIVE 8AT",
+                "3.0 T XDRIVE 8AT PERFORMANCE II"
+            ],
+            "M440I": [
+                "COUPE 3.0 T XDRIVE M PERFORMANCE 8AT"
+            ],
+            "M850I": [
+                "COUPE 4.4 8AT MPA"
+            ],
+            "Z4": [
+                "ROADSTER 2.0 I EXECUTIVE",
+                "ROADSTER 2.0 T SDRIVE 3.0 I M SPORT 8AT",
+                "ROADSTER 2.3 I ACTIVE",
+                "ROADSTER 2.8 I EXECUTIVE TRONIC",
+                "ROADSTER 3.0 I EXECUTIVE",
+                "ROADSTER 3.0 I EXECUTIVE TRONIC",
+                "ROADSTER 3.5 I EXECUTIVE",
+                "ROADSTER 3.5 I M PACKAGE",
+                "ROADSTER 3.5 IS M PACKAGE"
+            ]
+        },
+        "CHANGAN": {
+            "CS15": [
+                "1.5 COMFORT",
+                "1.5 LUXURY"
+            ],
+            "CS75": [
+                "1.8 T ELITE 6AT",
+                "1.8 T LUXURY 6AT"
+            ],
+            "M": [
+                "201 1.3 CARGO VAN"
+            ],
+            "MD": [
+                "201 1.3 CARGO BOX",
+                "201 1.3 CARGO REFRIGERADO",
+                "201 1.3 PICK UP"
+            ]
+        },
+        "CHERY": {
+            "ARRIZO 5": [
+                "1.5 COMFORT",
+                "1.5 LUXURY",
+                "1.5 LUXURY 7CVT"
+            ],
+            "FACE": [
+                "1.3 LUXURY"
+            ],
+            "FULWIN": [
+                "1.5",
+                "1.5 2"
+            ],
+            "QQ": [
+                "1.0 COMFORT SECURITY (LN)",
+                "1.0 LIGHT SECURITY (LN)",
+                "1.1 BASIC",
+                "1.1 COMFORT",
+                "1.1 COMFORT SECURITY",
+                "1.1 LIGHT",
+                "1.1 LIGHT SECURITY"
+            ],
+            "SKIN": [
+                "1.6"
+            ]
+        },
+        "CHEVROLET": {
+            "AGILE": [
+                "1.4 LS",
+                "1.4 LS ABG ABS",
+                "1.4 LS SPIRIT",
+                "1.4 LT",
+                "1.4 LT ABG ABS",
+                "1.4 LT ABG ABS LLANTAS",
+                "1.4 LT SPIRIT",
+                "1.4 LTZ",
+                "1.4 LTZ ABG ABS",
+                "1.4 LTZ ABG ABS EFFECT",
+                "1.4 LTZ SPIRIT"
+            ],
+            "ASTRA": [
+                "2.0 8V GLS II"
+            ],
+            "AVEO": [
+                "1.6 16V LS G3",
+                "1.6 16V LT G3",
+                "1.6 LS",
+                "1.6 LT"
+            ],
+            "CAMARO SS": [
+                "6.2 V8 405CV",
+                "CONV 6.2 V8 8AT",
+                "COUPE 6.2 V8 8AT"
+            ],
+            "CELTA": [
+                "1.4 ADVANTAGE",
+                "1.4 ADVANTAGE PACK",
+                "1.4 LS",
+                "1.4 LS A/C",
+                "1.4 LS A/C ABG ABS",
+                "1.4 LS SPIRIT",
+                "1.4 LT",
+                "1.4 LT SPIRIT",
+                "1.4 LT SPIRIT ABS ABG",
+                "1.4 LT SPIRIT PACK",
+                "1.4 LT SPIRIT PLUS"
+            ],
+            "CLASSIC": [
+                "1.4 LS",
+                "1.4 LS A/C DH",
+                "1.4 LS A/C DH ABG ABS",
+                "1.4 LS A/C DH ABG ABS PACK",
+                "1.4 LS A/C DH SPIRIT",
+                "1.4 LS CITY A/C",
+                "1.4 LT",
+                "1.4 LT SPIRIT",
+                "1.4 LT SPIRIT PACK",
+                "WAGON 1.4 SW LS",
+                "WAGON 1.4 SW LT"
+            ],
+            "COBALT": [
+                "1.3 TD LT",
+                "1.3 TD LTZ",
+                "1.8 LT",
+                "1.8 LT ADVANTAGE",
+                "1.8 LTZ",
+                "1.8 LTZ ADVANTAGE"
+            ],
+            "CORSA": [
+                "1.8 CD II",
+                "1.8 GL II A/C DH",
+                "1.8 GLS II EASYTRONIC"
+            ],
+            "CRUZE": [
+                "1.4 T LT",
+                "1.4 T LT 6AT",
+                "1.4 T LTZ",
+                "1.4 T LTZ 6AT",
+                "1.4 T LTZ PLUS",
+                "1.4 T MIDNIGHT 6AT",
+                "1.4 T PREMIER",
+                "1.4 T PREMIER 6AT",
+                "1.4 T RS 6AT",
+                "1.4 T SEDAN",
+                "1.8 LT",
+                "1.8 LTZ",
+                "1.8 LTZ S/CC",
+                "2.0 DSL LT",
+                "2.0 DSL LTZ"
+            ],
+            "EQUINOX": [
+                "1.5 T 6AT LT",
+                "1.5 T 6AT PREMIER AWD",
+                "1.5 T 6AT RS"
+            ],
+            "JOY": [
+                "1.4 BASE",
+                "1.4 BASE PLUS",
+                "1.4 BLACK EDITION",
+                "1.4 BLACK EDITION PLUS"
+            ],
+            "ONIX": [
+                "1.0 T LT",
+                "1.0 T LTZ",
+                "1.0 T PLUS LT",
+                "1.0 T PLUS LTZ",
+                "1.0 T PREMIER",
+                "1.0 T RS",
+                "1.2 90CV LS",
+                "1.2 90CV LT",
+                "1.2 90CV PLUS",
+                "1.2 LS",
+                "1.2 LT",
+                "1.2 PLUS LS",
+                "1.2 PLUS LT",
+                "1.2 PLUS LT TECH",
+                "1.4 EFFECT",
+                "1.4 JOY BLACK EDITION",
+                "1.4 JOY LS",
+                "1.4 LT",
+                "1.4 LTZ"
+            ],
+            "PRISMA": [
+                "1.4 JOY LS",
+                "1.4 JOY LS + LV",
+                "1.4 LS",
+                "1.4 LT",
+                "1.4 LTZ"
+            ],
+            "SONIC": [
+                "1.6 16V EFFECT",
+                "1.6 16V LT",
+                "1.6 16V LT MX",
+                "1.6 16V LTZ",
+                "1.6 16V LTZ MX"
+            ],
+            "SPARK": [
+                "1.0 LT",
+                "1.2 LT FULL"
+            ],
+            "VECTRA": [
+                "2.0 GLS",
+                "2.0 GT GLS",
+                "2.4 CD",
+                "2.4 GLS",
+                "2.4 GT CD"
+            ]
+        },
+        "CHRYSLER": {
+            "300": [
+                "3.6 C",
+                "5.7 C HEMI ATX"
+            ],
+            "PT CRUISER": [
+                "2.4 CLASSIC ATX",
+                "2.4 TOURING"
+            ]
+        },
+        "CITROEN": {
+            "BASALT": [
+                "T200 CVT 1ST EDITION",
+                "T200 CVT SHINE",
+                "VTI FEEL",
+                "VTI LIVE PK"
+            ],
+            "C 4": [
+                "1.6 HDI SX",
+                "1.6 HDI SX AM73",
+                "1.6 I 16V X",
+                "1.6 I 16V X PACK LOOK",
+                "1.6 I 16V X PACK LOOK CONNET",
+                "1.6 I 16V X PACK PLUS",
+                "2.0 HDI SX",
+                "2.0 HDI SX CRO",
+                "2.0 I 16V EXCLUSIVE",
+                "2.0 I 16V EXCLUSIVE BVA",
+                "2.0 I 16V SX",
+                "2.0 I 16V SX AM73",
+                "2.0 I 16V SX CRO",
+                "2.0 I 16V X AM73",
+                "2.0 I 16V X PACK LOOK"
+            ],
+            "C 4 CACTUS": [
+                "1.2 T 6AT",
+                "1.2 T 6AT RIP CURL",
+                "1.6 THP 165 NOIR E6AT",
+                "1.6 THP 165 SHINE E6AT",
+                "1.6 THP 165 SHINE E6AT BITONO",
+                "1.6 VTI 115 C-SERIES",
+                "1.6 VTI 115 C-SERIES E6AT",
+                "1.6 VTI 115 FEEL",
+                "1.6 VTI 115 FEEL +",
+                "1.6 VTI 115 FEEL + BITONO",
+                "1.6 VTI 115 FEEL PACK",
+                "1.6 VTI 115 FEEL PACK E6AT",
+                "1.6 VTI 115 FEEL PACK E6AT LOOK",
+                "1.6 VTI 115 FEEL PACK E6AT PLUS",
+                "1.6 VTI 115 FEEL PACK E6AT PLUS BITONO",
+                "1.6 VTI 115 FEEL PACK PLUS",
+                "1.6 VTI 115 FEEL PACK PLUS BITONO",
+                "1.6 VTI 115 LIVE",
+                "1.6 VTI 115 ORIGINS",
+                "1.6 VTI 115 RIP CURL",
+                "1.6 VTI 115 RIP CURL E6AT",
+                "1.6 VTI 115 X-SERIES",
+                "1.6 VTI 115 X-SERIES E6AT"
+            ],
+            "C 4 LOUNGE": [
+                "1.6 HDI 115 FEEL PACK",
+                "1.6 HDI 115 FEEL PACK 10 AÑOS",
+                "1.6 HDI 115 FEEL PACK AM19",
+                "1.6 HDI 115 ORIGINS",
+                "1.6 HDI EXCLUSIVE",
+                "1.6 HDI EXCLUSIVE PACK SELECT",
+                "1.6 HDI TENDANCE",
+                "1.6 HDI TENDANCE PACK",
+                "1.6 I THP EXCLUSIVE 6AT",
+                "1.6 I THP EXCLUSIVE 6AT PACK SELECT",
+                "1.6 I THP S",
+                "1.6 I THP TENDANCE 6AT",
+                "1.6 I THP TENDANCE 6AT S/NAV",
+                "1.6 THP 165 6AT FEEL",
+                "1.6 THP 165 6AT FEEL AM19",
+                "1.6 THP 165 6AT SHINE",
+                "1.6 THP 165 6AT SHINE AM19",
+                "1.6 THP 165 FEEL",
+                "1.6 THP 165 FEEL AM19",
+                "1.6 THP 165 FEEL PACK",
+                "1.6 THP 165 FEEL PACK 10 AÑOS",
+                "1.6 THP 165 FEEL PACK AM19",
+                "1.6 THP 165 FEEL PACK S EDITION",
+                "1.6 VTI 115 LIVE AM19",
+                "143 FEEL PACK",
+                "143 LIVE",
+                "2.0 I 16V ORIGINE",
+                "2.0 I 16V TENDANCE",
+                "2.0 I 16V TENDANCE PACK",
+                "2.0 I 16V TENDANCE S/NAV"
+            ],
+            "C 5": [
+                "1.6 I TURBO EXCLUSIVE",
+                "2.0 HDI CONFORT"
+            ],
+            "SERIE C": [
+                "C31 1.5 TRUCK C/S",
+                "C31 1.5 TRUCK C/S ESP",
+                "C32 1.5 TRUCK D/C",
+                "C32 1.5 TRUCK D/C ESP",
+                "C35 1.5 FURGON CARGO VAN",
+                "C35 1.5 FURGON CARGO VAN ESP"
+            ],
+            "SERIE K": [
+                "PICK UP 1.3 K01H C/EXT"
+            ]
+        },
+        "DS AUTOMOBILES": {
+            "DS 3": [
+                "1.6 110 6AT CAFÉ RACER",
+                "1.6 110 6AT DARK SIDE PURE TECH",
+                "1.6 110 6AT PERFORMANCE LINE",
+                "1.6 110 6AT SO CHIC PURE TECH",
+                "1.6 SPORT CHIC THP",
+                "1.6 THP 156 SPORT CHIC",
+                "1.6 THP 165 SPORT CHIC",
+                "1.6 THP 208 S&S PERFORMANCE",
+                "1.6 TURBO SPORT CHIC",
+                "1.6 VTI 120 BE CHIC",
+                "1.6 VTI 120 GIVENCHY",
+                "1.6 VTI 120 SO CHIC",
+                "1.6 VTI 1955",
+                "1.6 VTI SO CHIC",
+                "1.6 VTI SPORT CHIC",
+                "CABRIO 1.6 110 6AT SO CHIC PURE TECH"
+            ],
+            "DS 3 CROSSBACK": [
+                "1.2 T 8AT PURETECH BE CHIC",
+                "1.2 T 8AT PURETECH GRAND CHIC",
+                "1.2 T 8AT PURETECH RIVOLI",
+                "1.2 T 8AT PURETECH SO CHIC"
+            ],
+            "DS 4": [
+                "1.6 THP 163 6AT BE CHIC CB",
+                "1.6 THP 163 6AT BE CHIC CB PACK INSPIRATION",
+                "1.6 THP 163 6AT SO CHIC AM24",
+                "1.6 THP 163 6AT SO CHIC AM24 CROSSBACK",
+                "1.6 THP 208 S&S PERFORMANCE LINE",
+                "1.6 THP 215 8AT ETOILE",
+                "1.6 THP 215 8AT PERFORMANCE LINE",
+                "1.6 THP 215 8AT TROCADERO",
+                "1.6 TURBO"
+            ],
+            "DS 7": [
+                "1.6 T 215 8AT BASTILLE",
+                "1.6 T 215 8AT PALLAS",
+                "1.6 T 215 8AT RIVOLI"
+            ],
+            "DS 7 CROSSBACK": [
+                "165 PURE TECH PERFORMANCE LINE",
+                "2.0 HDI 180 BASTILLE +",
+                "2.0 HDI 180 GRAND CHIC",
+                "2.0 HDI 180 GRAND CHIC OPERA",
+                "2.0 HDI 180 RIVOLI",
+                "2.0 HDI 180 SO CHIC",
+                "E-TENSE 300 BASTILLE +",
+                "E-TENSE 300 BASTILLE + OPREA"
+            ],
+            "DS 9": [
+                "1.6 RIVOLI E8AT"
+            ]
+        },
+        "FAW": {
+            "ACTIS": [
+                "C/S 1.5 BOX",
+                "C/S 1.5 TRUCK"
+            ],
+            "T33 BESTUNE": [
+                "1.2 T DCT7"
+            ],
+            "X 40": [
+                "1.6 6AT"
+            ]
+        },
+        "FERRARI": {
+            "CALIFORNIA": [
+                "2026-06-04 00:00:00"
+            ],
+            "CALIFORNIA T": [
+                "3.9 V8 BT 7AT CONV"
+            ],
+            "F 8 TRIBUTO": [
+                "3.9 V8 BT 7AT"
+            ],
+            "F 430": [
+                "2026-03-04 00:00:00",
+                "4.3 F1",
+                "4.3 SCUDERIA",
+                "4.3 SPIDER",
+                "4.3 SPIDER F1"
+            ],
+            "F 488": [
+                "3.9 V8 BT 7AT GTB",
+                "3.9 V8 BT 7AT GTB SPIDER"
+            ],
+            "F 599": [
+                "6.0 GTB",
+                "6.0 GTB F1"
+            ],
+            "F 612": [
+                "5.8 SCAGLIETTI",
+                "5.8 SCAGLIETTI F1"
+            ],
+            "F 812": [
+                "6.5 SUPERFAST"
+            ]
+        },
+        "FIAT": {
+            "500": [
+                "1.4 105CV LOUNGE",
+                "1.4 105CV LOUNGE SERIE 4",
+                "1.4 105CV SPORT",
+                "1.4 105CV SPORT SERIE 4",
+                "1.4 16V 100CV SPORT",
+                "1.4 16V BY GUCCI",
+                "1.4 85CV CULT",
+                "1.4 85CV CULT SERIE 4",
+                "1.4 T-JET ABARTH",
+                "1.4 T-JET ABARTH TURISMO",
+                "1.4 T-JET ABARTH TURISMO 595",
+                "CABRIO 1.4 16V",
+                "CABRIO 1.4 16V BY GUCCI",
+                "CABRIO 1.4 16V LOUNGE",
+                "CABRIO 1.4 16V LOUNGE SERIE 4",
+                "CABRIO 1.4 FIRE",
+                "CABRIO 1.4 FIRE DUALOGIC"
+            ],
+            "500 L": [
+                "1.4 16V 95CV POP STAR",
+                "1.4 16V 95CV POP STAR LUXURY"
+            ],
+            "500 X": [
+                "1.4 T POP STAR"
+            ],
+            "ARGO": [
+                "1.3 DRIVE GSE",
+                "1.3 DRIVE GSE PACK CONECTIVIDAD",
+                "1.8 HGT",
+                "1.8 PRECISION",
+                "1.8 PRECISION 6AT",
+                "1.8 PRECISION PACK PREMIUM",
+                "1.8 PRECISION PACK PREMIUM 6AT",
+                "1.8 PRECISION PACK TECNHOLOGY",
+                "1.8 PRECISION PACK TECNHOLOGY 6AT"
+            ],
+            "BRAVO": [
+                "1.4 DYNAMIC",
+                "1.4 DYNAMIC SPORT",
+                "1.4 DYNAMIC SPORT CRO XENON",
+                "1.4 DYNAMIC T/C",
+                "1.4 DYNAMIC T/C CRO",
+                "1.4 SPORT",
+                "1.4 SPORT T/C",
+                "1.4 SPORT T/C CRO",
+                "1.6 DYNAMIC",
+                "1.6 DYNAMIC SPORT",
+                "1.6 DYNAMIC SPORT CRO XENON",
+                "1.6 DYNAMIC T/C",
+                "1.6 DYNAMIC T/C CRO"
+            ],
+            "CRONOS": [
+                "1.3 ATTRACTIVE",
+                "1.3 ATTRACTIVE GSE",
+                "1.3 DRIVE GSE",
+                "1.3 DRIVE GSE CVT",
+                "1.3 DRIVE GSE PACK CONECTIVIDAD",
+                "1.3 DRIVE GSE PACK PLUS",
+                "1.3 DRIVE GSE PACK PLUS CVT",
+                "1.3 DRIVE GSE PACK S-DESING",
+                "1.3 DRIVE S-DESING",
+                "1.3 LIKE GSE",
+                "1.3 PRECISION GSE CVT",
+                "1.3 STILE GSE",
+                "1.8 CENTENARIO",
+                "1.8 HGT PACK",
+                "1.8 PRECISION",
+                "1.8 PRECISION PACK PREMIUM",
+                "1.8 PRECISION PACK STYLE",
+                "1.8 PRECISION PACK TECNHOLOGY"
+            ],
+            "GRAND SIENA": [
+                "1.4 ATTRACTIVE",
+                "1.4 ATTRACTIVE PACK TOP",
+                "1.4 ATTRACTIVE PACK TOP SEG",
+                "1.6 16V ESSENCE",
+                "1.6 16V ESSENCE DUALOGIC",
+                "1.6 16V ESSENCE DUALOGIC HIGH TECH",
+                "1.6 16V ESSENCE EMOTION",
+                "1.6 16V ESSENCE EMOTION DUALOGIC",
+                "1.6 16V ESSENCE HIGH TECH",
+                "1.6 16V ESSENCE HIGH TECH DUALOGIC"
+            ],
+            "IDEA": [
+                "1.4 ELX ATTRACTIVE",
+                "1.4 ELX ATTRACTIVE PACK TOP",
+                "1.4 ELX ATTRACTIVE PACK TOP III",
+                "1.6 16V ADVENTURE",
+                "1.6 16V ADVENTURE LOCKER",
+                "1.6 16V ADVENTURE LOCKER T/C",
+                "1.6 16V ADVENTURE PACK TOP",
+                "1.6 16V ADVENTURE PACK TOP T/C",
+                "1.6 16V ADVENTURE T/C",
+                "1.6 16V ESSENCE",
+                "1.6 16V ESSENCE PACK EMOTION",
+                "1.6 16V ESSENCE PACK EMOTION T/C",
+                "1.6 16V ESSENCE PACK TOP",
+                "1.6 16V ESSENCE PACK TOP T/C",
+                "1.6 16V ESSENCE T/C",
+                "1.6 16V SPORTING",
+                "1.6 16V SPORTING T/C"
+            ],
+            "LINEA": [
+                "1.8 16V ABSOLUTE",
+                "1.8 16V ABSOLUTE DUALOGIC",
+                "1.8 16V ABSOLUTE DUALOGIC UCONNECT NAV",
+                "1.8 16V ESSENCE",
+                "1.8 16V ESSENCE UCONNECT",
+                "1.9 16V ABSOLUTE",
+                "1.9 16V ABSOLUTE DUALOGIC",
+                "1.9 16V ESSENCE",
+                "1.9 16V ESSENCE DUALOGIC"
+            ],
+            "MOBI": [
+                "1.0 EASY",
+                "1.0 EASY TOP",
+                "1.0 EASY TOP LIVE ON",
+                "1.0 LIKE",
+                "1.0 TREKKING",
+                "1.0 WAY",
+                "1.0 WAY LIVE ON"
+            ],
+            "PALIO": [
+                "1.4 ACTIVE",
+                "1.4 ATTRACTIVE",
+                "1.4 ATTRACTIVE ACTIVE",
+                "1.4 ATTRACTIVE PACK SEG",
+                "1.4 ATTRACTIVE PACK SEG TOP",
+                "1.4 FIRE",
+                "1.4 FIRE CONFORT",
+                "1.4 FIRE TOP",
+                "1.6 ELX ESSENCE ACTIVE",
+                "1.6 ESSENCE",
+                "1.6 ESSENCE DUALOGIC",
+                "1.6 ESSENCE DUALOGIC PACK SEG",
+                "1.6 ESSENCE PACK SEG",
+                "1.6 SPORTING",
+                "1.6 SPORTING PACK SEG"
+            ],
+            "PUNTO": [
+                "1.3 JTD MULTIJET TOP",
+                "1.4 ATTRACTIVE",
+                "1.4 ATTRACTIVE TOP",
+                "1.4 ATTRACTIVE TOP T/C",
+                "1.4 ATTRACTIVE TOP UCONNECT",
+                "1.4 ELX",
+                "1.4 ELX TOP",
+                "1.4 ELX TOP T/C",
+                "1.6 16V BLACKMOTION",
+                "1.6 16V ESSENCE",
+                "1.6 16V SPORTING",
+                "1.6 16V SPORTING T/C",
+                "1.6 16V SPORTING T/C CRO",
+                "1.6 16V SPORTING TECH",
+                "1.8 HLX",
+                "1.8 HLX EMOTION"
+            ],
+            "SIENA": [
+                "1.4 ATTRACTIVE ACTIVE",
+                "1.4 ATTRACTIVE EMOTION",
+                "1.4 EL",
+                "1.4 EL ATTRACTIVE",
+                "1.4 EL FLP",
+                "1.4 FIRE",
+                "1.4 FIRE A/C",
+                "1.4 FIRE PACK TOP",
+                "1.4 FIRE WAY",
+                "1.6 16V ESSENCE EMOTION",
+                "1.6 16V ESSENCE EMOTION HIGH TECH",
+                "1.6 16V NPM EL",
+                "1.6 EL",
+                "1.6 EL CONFORT II"
+            ],
+            "TIPO": [
+                "1.6 EASY 6AT",
+                "1.6 POP 6AT"
+            ],
+            "UNO": [
+                "1.3 FIRE",
+                "1.3 FIRE CONFORT",
+                "1.3 FIRE CONFORT DH",
+                "1.3 FIRE DH",
+                "1.3 WAY",
+                "1.4 FIRE EVO ATTRACTIVE (LN)",
+                "1.4 FIRE EVO ATTRACTIVE PACK SEG (LN)",
+                "1.4 FIRE EVO ATTRACTIVE TOP (LN)",
+                "1.4 FIRE EVO ATTRACTIVE TOP PACK SEG (LN)",
+                "1.4 FIRE EVO SPORTING (LN)",
+                "1.4 FIRE EVO SPORTING PACK SEG",
+                "1.4 FIRE EVO WAY (LN)",
+                "1.4 FIRE EVO WAY PACK SEG (LN)",
+                "1.4 FIRE EVO WAY TOP (LN)",
+                "1.4 FIRE EVO WAY TOP PACK SEG (LN)"
+            ],
+            "UNO CARGO": [
+                "1.3 VAN FIRE",
+                "1.3 VAN FIRE A/C",
+                "1.3 VAN FIRE DH",
+                "1.3 VAN FIRE DH A/C",
+                "1.4 EVO",
+                "1.4 EVO PACK TOP"
+            ]
+        },
+        "FORD": {
+            "COURIER": [
+                "PICK UP C/S 1.6",
+                "PICK UP C/S 1.6 A/C"
+            ],
+            "FIESTA": [
+                "1.4 TDCI MAX AMBIENTE ONE",
+                "1.4 TDCI MAX EDGE ONE",
+                "1.6 AMBIENTE ONE",
+                "1.6 AMBIENTE PLUS ABG ONE",
+                "1.6 EDGE PLUS ABS ONE",
+                "1.6 MAX AMBIENTE ONE",
+                "1.6 MAX AMBIENTE PLUS ONE",
+                "1.6 MAX EDGE PLUS ONE"
+            ],
+            "FIESTA KINETIC DESIGN ATTRACTION": [
+                "1.6 S",
+                "1.6 S PLUS",
+                "1.6 SE",
+                "1.6 SE PLUS",
+                "1.6 SE PLUS POWERSHIFT",
+                "1.6 SE POWERSHIFT",
+                "1.6 TITANIUM",
+                "1.6 TITANIUM POWERSHIFT",
+                "1.6 TREND",
+                "1.6 TREND PLUS"
+            ],
+            "FOCUS": [
+                "1.6 STYLE",
+                "1.6 STYLE EXE",
+                "1.6 TREND",
+                "1.6 TREND EXE",
+                "1.8 TDCI GHIA",
+                "1.8 TDCI GHIA EXE",
+                "1.8 TDCI STYLE",
+                "1.8 TDCI STYLE EXE",
+                "1.8 TDCI TREND PLUS",
+                "1.8 TDCI TREND PLUS EXE",
+                "2.0 GHIA",
+                "2.0 GHIA EXE",
+                "2.0 TREND",
+                "2.0 TREND EXE",
+                "2.0 TREND PLUS",
+                "2.0 TREND PLUS EXE"
+            ],
+            "FOCUS KINETIC DESIGN ATTRACTION": [
+                "1.6 S",
+                "2.0 SE",
+                "2.0 SE PLUS",
+                "2.0 TITANIUM"
+            ],
+            "KA": [
+                "1.0 FLY",
+                "1.0 FLY PLUS A/C",
+                "1.0 FLY VIRAL A/C",
+                "1.5 12V S",
+                "1.5 12V SE",
+                "1.5 12V SEL",
+                "1.5 16V S",
+                "1.5 16V SE",
+                "1.5 16V SEL",
+                "1.6 FLY VIRAL A/C"
+            ],
+            "KA +": [
+                "1.5 12V S",
+                "1.5 12V SE",
+                "1.5 12V SEL",
+                "1.5 16V S",
+                "1.5 16V SE",
+                "1.5 16V SEL"
+            ],
+            "KA FREESTYLE": [
+                "1.5 12V SE",
+                "1.5 12V SEL"
+            ],
+            "MONDEO": [
+                "1.8 TDCI 125CV GHIA",
+                "2.0 CVT TITANIUM HYBRID",
+                "2.0 CVT VIGNALE HYBRID",
+                "2.0 ECOBOOST TITANIUM",
+                "2.0 GTDI ECOBOOST SE",
+                "2.0 GTDI ECOBOOST TITANIUM",
+                "2.0 T 240CV SEL 6AT",
+                "2.0 T 240CV TITANIUM 6AT",
+                "2.0 TDCI GHIA",
+                "2.0 TDCI GHIA TITANIUM",
+                "2.3 GHIA",
+                "2.3 GHIA TITANIUM",
+                "2.3 TITANIUM",
+                "2.5 SE",
+                "2.5 T 220CV GHIA TITANIUM"
+            ],
+            "MUSTANG": [
+                "COUPE 5.0 V8 GT",
+                "COUPE 5.0 V8 GT 10AT",
+                "COUPE 5.0 V8 GT PERFORMANCE",
+                "COUPE 5.0 V8 MACH 1 10AT",
+                "MACH-E GT PERFORMANCE"
+            ],
+            "S-MAX": [
+                "VAN 1.8 TDCI TREND",
+                "VAN 2.0 T TITANIUM 6AT",
+                "VAN 2.0 T TREND 6AT",
+                "VAN 2.0 TREND",
+                "VAN 2.3 TITANIUM"
+            ]
+        },
+        "FOTON": {
+            "GRATOUR T3": [
+                "C/S 1.2",
+                "D/C 1.2"
+            ],
+            "VIEW CS2": [
+                "MINIBUS 2.3 EUV 16A"
+            ]
+        },
+        "GEELY": {
+            "515": [
+                "1.5 HATCH GL",
+                "1.5 HATCH GS",
+                "1.5 SEDAN GL",
+                "1.5 SEDAN GS"
+            ],
+            "EMGRAND 7": [
+                "1.8 GL 6AT",
+                "1.8 GL ACTIVE",
+                "1.8 GS",
+                "1.8 GS DRIVE"
+            ],
+            "EMGRAND FE 3": [
+                "1.8 GL",
+                "1.8 GL 6AT",
+                "1.8 GS"
+            ],
+            "EMGRAND GS": [
+                "1.8 GL",
+                "1.8 GS",
+                "1.8 GS (GC) BALANCE",
+                "1.8 GS (GL) ACTIVE",
+                "1.8 GS (GT) EXECUTIVE",
+                "1.8 GS DRIVE",
+                "1.8 GS DRIVE PLUS",
+                "1.8 GS EXECUTIVE",
+                "1.8 GT"
+            ],
+            "EMGRAND X7": [
+                "2.0 GS DRIVE",
+                "2.4 GL ACTIVE"
+            ],
+            "LC": [
+                "1.3 GB",
+                "1.3 GL",
+                "1.3 GL CROSS"
+            ]
+        },
+        "GREAT WALL": {
+            "JOLION": [
+                "1.5 DTC DELUXE"
+            ]
+        },
+        "HONDA": {
+            "ACCORD": [
+                "2.0 T EXT 10AT",
+                "2.4 EXL",
+                "3.5 V6 EXL 6AT",
+                "ADVANCED HYDRID",
+                "V6"
+            ],
+            "CITY": [
+                "1.5 EXL",
+                "1.5 LX"
+            ],
+            "CIVIC": [
+                "1.5 EXT CVT PADDLE-SHIFT 7",
+                "1.8 EX S",
+                "1.8 EX S 6VEL",
+                "1.8 LX S",
+                "1.8 LX S 6VEL",
+                "2.0 ADVANCED HYBRID",
+                "2.0 EX CVT",
+                "2.0 EXL CVT",
+                "2.0 SI"
+            ],
+            "F I T": [
+                "1.4 LX",
+                "1.4 LX-L",
+                "1.5 EX",
+                "1.5 EX 7CVT",
+                "1.5 EXL",
+                "1.5 EXL 7CVT"
+            ],
+            "LEGEND": [
+                "3.5"
+            ]
+        },
+        "HYUNDAI": {
+            "COUPE": [
+                "2.0 T 8AT GENESIS FULL SEG",
+                "2.0 T GENESIS",
+                "2.0 T GENESIS 275CV SEG PLUS",
+                "2.0 T GENESIS FULL SEG",
+                "3.8 V6 6AT GENESIS",
+                "3.8 V6 GENESIS"
+            ],
+            "HB 20": [
+                "1.6 COMFORT PLUS",
+                "1.6 PLATINUM SAFETY"
+            ],
+            "IONIQ": [
+                "1.6 6AT HIBRIDO"
+            ],
+            "STARIA": [
+                "2.2 CRDI 8AT PREMIUM 11PAS",
+                "2.2 CRDI 8AT SAFETY 11PAS",
+                "2.2 CRDI 8AT ULTIMATE 11PAS"
+            ],
+            "VELOSTER": [
+                "1.6",
+                "1.6 6AT",
+                "1.6 T ULTIMATE 7DCT",
+                "1.6 TURBO SPORT",
+                "2.0 T N",
+                "2.0 TECH 6AT"
+            ]
+        },
+        "JAC": {
+            "JS4": [
+                "1.5 T CVT LUXURY"
+            ],
+            "S2": [
+                "1.5 INTELLIGENT",
+                "1.5 INTELLIGENT FL",
+                "1.5 LUXURY"
+            ],
+            "S3": [
+                "1.6 INTELLIGENT",
+                "1.6 INTELLIGENT CVT",
+                "1.6 INTELLIGENT CVT FL",
+                "1.6 INTELLIGENT FL"
+            ],
+            "S5": [
+                "2.0 T INTELLIGENT DCT"
+            ],
+            "S7": [
+                "2.0 T INTELLIGENT 6AT",
+                "2.0 T LUXURY 6AT"
+            ],
+            "S8": [
+                "1.5 T GDI+7DCT PRO"
+            ]
+        },
+        "JAGUAR": {
+            "F PACE": [
+                "2.0 R-SPORT",
+                "2.0 TD PRESTIGE",
+                "3.0 SUPERCHARGED PRESTIGE",
+                "3.0 SUPERCHARGED R-SPORT"
+            ],
+            "F TYPE": [
+                "CONV 3.0",
+                "CONV 5.0 V8",
+                "CONV 5.0 V8 SUPERCHARGED",
+                "COUPE 3.0 V6 SUPERCHARGED",
+                "COUPE 5.0 V8 SUPERCHARGED"
+            ],
+            "XE": [
+                "2.0 PRESTIGE",
+                "2.0 PURE",
+                "2.0 R-SPORT",
+                "2.0 T R-SPORT 8AT",
+                "2.0 T SE 8AT",
+                "3.0 SUPERCHARGED S",
+                "3.0 V6 S"
+            ],
+            "XF": [
+                "2.0 PREMIUM LUXURY",
+                "2.0 PRESTIGE 8AT",
+                "3.0 V6",
+                "3.0 V6 S 8AT",
+                "5.0 R S/C"
+            ],
+            "XJ": [
+                "5.0 V8"
+            ],
+            "XK": [
+                "COUPE 5.0",
+                "COUPE 5.0 R S/C"
+            ]
+        },
+        "JETOUR": {
+            "DASHING": [
+                "1.6 T 7AT"
+            ],
+            "X 70": [
+                "1.5 T 7A",
+                "1.5 T 7A 8AT",
+                "1.6 T 7A 7AT PLUS"
+            ]
+        },
+        "KIA": {
+            "PICANTO": [
+                "1.1 EX",
+                "1.2"
+            ],
+            "RIO": [
+                "1.4 EX",
+                "1.4 EX 4AT",
+                "1.4 EX 6AT",
+                "1.6 EX",
+                "1.6 SX",
+                "1.6 SX 6AT",
+                "1.6 SX 6AT SC"
+            ],
+            "SOUL": [
+                "1.6",
+                "1.6 6AT EX",
+                "1.6 6AT EX FULL",
+                "1.6 6AT EX PREMIUM",
+                "1.6 6VEL",
+                "1.6 6VEL BC",
+                "1.6 CLASSIC",
+                "1.6 POP",
+                "1.6 ROCK",
+                "1.6 TC"
+            ]
+        },
+        "KYC": {
+            "MAMUT": [
+                "BOX 1.5 DUAL",
+                "BOX 1.5 DUAL REFRIGERADO",
+                "BOX 1.5 DUAL REFRIGERADO GNC",
+                "BOX 1.5 DUAL REFRIGERADO MY",
+                "C/D 1.5",
+                "C/S 1.5",
+                "C/S 1.5 GNC"
+            ]
+        },
+        "LEXUS": {
+            "ES": [
+                "2.5 300H LUXURY"
+            ],
+            "GS": [
+                "3.5 V6 350 F-SPORT (NAFTA)",
+                "3.5 V6 450H F-SPORT (HV)",
+                "3.5 V6 450H LUXURY (HV)"
+            ],
+            "GX 550": [
+                "3.5 V6 BITURBO 10AT LUXURY"
+            ],
+            "IS": [
+                "2.0 T 300 F-SPORT 8AT",
+                "2.5 300H LUXURY"
+            ],
+            "LBX": [
+                "1.5 E-CVT ACTIVE HIBRIDO"
+            ],
+            "LC": [
+                "COUPE 5.0 8V 10AT 500"
+            ],
+            "LS": [
+                "3.5 V6 500H EXECUTIVE (HV)",
+                "3.5 V6 500H F-SPORT (HV)"
+            ],
+            "NX": [
+                "2.4 T 350 F-SPORT",
+                "2.5 350H LUXURY E-CVT",
+                "2.5 450H +"
+            ],
+            "RC": [
+                "COUPE 3.5 V6 8AT 350 F-SPORT",
+                "COUPE 3.5 V6 8AT 350 F-SPORT MARCK LEVINSON"
+            ],
+            "RX": [
+                "2.5 CVT 450H + PHEV LUXURY",
+                "3.5 V6 8AT 350 F-SPORT",
+                "3.5 V6 8AT 450H F-SPORT (LHD)",
+                "3.5 V6 8AT 450H LUXURY (LHD)"
+            ],
+            "UX": [
+                "2.0 250H (LHD)",
+                "2.0 250H (LHD) F-SPORT"
+            ],
+            "MYWAY": [
+                "1.8 7A FULL",
+                "1.8 7A FULL 5AT"
+            ],
+            "M 7": [
+                "2.0 CVT 7A"
+            ]
+        },
+        "LOTUS": {
+            "ELISE": [
+                "CONV 1.6 SPORT",
+                "CONV 1.8 CUP 250",
+                "CONV 1.8 SPORT 220"
+            ],
+            "EMIRA": [
+                "COUPE 3.5 V6 405CV",
+                "COUPE 3.5 V6 405CV 6AT"
+            ],
+            "EVORA": [
+                "COUPE 3.5 V6 400",
+                "COUPE 3.5 V6 SPORT 410"
+            ],
+            "EXIGE": [
+                "COUPE/ROADSTER 3.5 V6 350",
+                "COUPE/ROADSTER 3.5 V6 380"
+            ],
+            "COUPE": [
+                "COUPE 4.2 GRAN TURISMO"
+            ],
+            "GHIBLI": [
+                "3.0 V6 BT 8AT"
+            ],
+            "GRAN TURISMO": [
+                "COUPE 4.6 V8 6SEC S",
+                "COUPE 4.6 V8 6SEC SPORT"
+            ]
+        },
+        "MASERATI": {
+            "QUATROPORTE": [
+                "3.8 V8 BT 8AT GTS GRAN LUSSO",
+                "4.2 DUO SELECT",
+                "4.2 DUO SELECT EXECUTIVE GT",
+                "4.2 DUO SELECT SPORT GT"
+            ]
+        },
+        "MERCEDES BENZ": {
+            "A 35": [
+                "AMG 4MATIC AMG"
+            ],
+            "A 45": [
+                "A-COUPE 2.0 AMG 4MATIC",
+                "S 4MATIC AMG"
+            ],
+            "A 200": [
+                "1.3 PROGRESSIVE",
+                "1.3 STYLE",
+                "1.3 T PROGRESSIVE",
+                "1.3 T STYLE",
+                "BLUEEFFICIENCY STYLE",
+                "BLUEEFFICIENCY URBAN",
+                "BLUEEFFICIENCY URBAN THERMOT",
+                "URBAN"
+            ],
+            "A 250": [
+                "2.0 AMG-LINE",
+                "2.0 T AMG-LINE NE",
+                "AMG-LINE",
+                "SPORT"
+            ],
+            "B 180": [
+                "1.8"
+            ],
+            "B 200": [
+                "1.3 T PROGRESSIVE 7AT",
+                "1.3 T STYLE 7AT",
+                "1.6 BLUEEFFICIENCY",
+                "1.6 BLUEEFFICIENCY CITY",
+                "1.6 BLUEEFFICIENCY EDITION",
+                "1.6 BLUEEFFICIENCY SPORT",
+                "1.6 CITY",
+                "1.6 EDITION",
+                "1.6 URBAN",
+                "2.0 TURBO SPORT"
+            ],
+            "C 43": [
+                "2.0 T AMG 4MATIC HYBRID",
+                "AMG 4MATIC",
+                "COUPE AMG 4MATIC"
+            ],
+            "C 63": [
+                "6.3 AMG",
+                "6.3 S AMG",
+                "COUPE 6.3 AMG",
+                "COUPE 6.3 S AMG"
+            ],
+            "C 200": [
+                "1.8 AVANTGARDE",
+                "1.8 AVANTGARDE INT AMG",
+                "1.8 BLUE EFFI AVANTGARDE",
+                "1.8 BLUE EFFI AVANTGARDE GPS R/VOZ",
+                "1.8 BLUE EFFI EDITION C",
+                "1.8 CGI BLUE EFFIENCY CITY",
+                "2.0 AVANTGARDE FL",
+                "2.0 AVANTGARDE FL T/PANORAMICO"
+            ],
+            "C 220": [
+                "2.2 CDI AVANTGARDE",
+                "2.2 CDI AVANTGARDE BLUEEFFIC",
+                "2.2 CDI ELEGANCE"
+            ],
+            "C 250": [
+                "1.8 CGI BLUEEFFICIENCY AVANT",
+                "1.8 CGI BLUEEFFICIENCY AVANT EDITION C 17",
+                "1.8 CGI BLUEEFFICIENCY AVANT EDITION C 18",
+                "1.8 CGI BLUEEFFICIENCY AVANT SPORT",
+                "1.8 CGI BLUEEFFICIENCY AVANT SPORT KIT MEM",
+                "2.0 AMG-LINE",
+                "2.0 AVANTGARDE",
+                "2.0 STYLE",
+                "COUPE BLUEEFFICIENCY",
+                "COUPE BLUEEFFICIENCY CITY",
+                "COUPE BLUEEFFICIENCY SPORT"
+            ],
+            "C 300": [
+                "2.0 AMG-LINE FL",
+                "2.0 T MILD HYBRID AMG-LINE 9AT",
+                "CABRIO 2.0 T AMG-LINE",
+                "COUPE AMG-LINE",
+                "COUPE CITY"
+            ],
+            "C 350": [
+                "3.5 AVANTGARDE SPORT"
+            ],
+            "C 400": [
+                "4MATIC AMG-LINE",
+                "COUPE 4MATIC AMG-LINE"
+            ],
+            "CLA 45": [
+                "COUPE 2.0 4MATIC"
+            ],
+            "CLA 200": [
+                "COUPE 1.6 URBAN",
+                "COUPE URBAN",
+                "COUPE URBAN CAMARA M/ATRÁS"
+            ],
+            "CLA 250": [
+                "COUPE 2.0 SPORT"
+            ],
+            "CLC 250": [
+                "COUPE 2.5 SPORT"
+            ],
+            "CLE 53": [
+                "COUPE 3.0 4MATIC AMG MILD HYBRID"
+            ],
+            "CLS 63": [
+                "COUPE AMG"
+            ],
+            "CLS 350": [
+                "3.5 V6 SPORT",
+                "3.5 V6 SPORT AIRMATIC"
+            ],
+            "E 53": [
+                "COUPE 435CV 4MATIC +"
+            ],
+            "E 63": [
+                "4.0 V8 BT AMG 9AT S 4MATIC+",
+                "AMG"
+            ],
+            "E 220D": [
+                "2.0 TD 9AT 4MATIC ALL-TERRAIN"
+            ],
+            "E 250": [
+                "2.5 CGI BLUEEFFICIENCY AVANTGARDE",
+                "2.5 CGI BLUEEFFICIENCY AVANTGARDE CITY 17",
+                "2.5 CGI BLUEEFFICIENCY AVANTGARDE CITY 19",
+                "2.5 CGI BLUEEFFICIENCY AVANTGARDE SPORT"
+            ],
+            "E 300": [
+                "3.0 AVANTGARDE SPORT",
+                "3.0 ELEGANCE"
+            ],
+            "E 350": [
+                "3.5 AVANTGARDE SPORT",
+                "3.5 BLUEEFFICIENCY AVANTGARDE SPORT",
+                "3.5 ELEGANCE",
+                "COUPE 3.5 BLUEEFFICIENCY SPORT",
+                "COUPE 3.5 BLUEEFFICIENCY SPORT FACELIFT",
+                "COUPE 3.5 ELEGANCE",
+                "COUPE 3.5 SPORT",
+                "COUPE 3.5 SPORT COMAND"
+            ],
+            "E 400": [
+                "3.0 4MATIC AMG-LINE",
+                "3.0 4MATIC AMG-LINE CAMARA M-ATRAS",
+                "3.0 4MATIC AMG-LINE NE",
+                "3.0 AVANTGARDE SPORT",
+                "COUPE 3.0 4MATIC AMG-LINE",
+                "COUPE 3.0 4MATIC AMG-LINE NE"
+            ],
+            "E 450": [
+                "3.0 4MATIC AMG-LINE MILD HYBRID",
+                "4MATIC AMG-LINE",
+                "4MATIC AMG-LINE MHEV",
+                "COUPE 4MATIC AMG-LINE"
+            ],
+            "E 500": [
+                "5.0 ELEGANCE",
+                "5.0 GUARD",
+                "COUPE 5.0 SPORT"
+            ],
+            "EQA": [
+                "350 4MATIC"
+            ],
+            "G 500": [
+                "422CV"
+            ],
+            "GL 500": [
+                "4MATIC BLUEEFFICIENCY SPORT"
+            ],
+            "GLB 200": [
+                "163CV ADVANCE"
+            ],
+            "GLB 250": [
+                "PROGRESSIVE 4MATIC 224CV"
+            ],
+            "MERCEDES-AMG GT C": [
+                "GT-ROADSTER 557CV"
+            ],
+            "MERCEDES-AMG GT 4": [
+                "COUPE 63 S 639CV"
+            ],
+            "MERCEDES-AMG GT R": [
+                "GT-COUPE 4.0 V8 BT 585CV 7AT"
+            ],
+            "MERCEDES-AMG GT S": [
+                "GT-COUPE 4.0 V8 BT",
+                "GT-COUPE 4.0 V8 BT CARBON",
+                "GT-COUPE 4.0 V8 BT CHROME"
+            ],
+            "ML": [
+                "320 CDI SPORT FACELIFT",
+                "350 4MATIC SPORT",
+                "350 4MATIC SPORT T/PANORAM",
+                "350 CDI 4MATIC SPORT",
+                "350 CDI SPORT",
+                "350 SPORT",
+                "400 4MATIC SPORT T/PANORAM",
+                "500 SPORT FACELIFT",
+                "63 AMG FACELIFT"
+            ],
+            "S 500": [
+                "3.0 4MATIC MHEV",
+                "5.0",
+                "5.0 4PLAZAS",
+                "5.0 5PLAZAS",
+                "5.0 BLUEEFFICIENCY"
+            ],
+            "SL 63": [
+                "SL-ROADSTER 571CV AMG",
+                "SL-ROADSTER 816CV AMG PERFORMANCE CROMO"
+            ],
+            "SL 65": [
+                "COUPE 6.5 V12 BT AMG"
+            ],
+            "SL 500": [
+                "COUPE 5.0 ROADSTER"
+            ],
+            "SLC 43": [
+                "ROADSTER 3.0 TV6 9AT AMG"
+            ],
+            "SLK": [
+                "C-ROADSTER 200 BLUEEFFICIENCY",
+                "C-ROADSTER 250 BLUEEFFICIENCY",
+                "C-ROADSTER 250 BLUEEFFICIENCY CITY",
+                "C-ROADSTER 350 BLUEEFFICIENCY SPORT",
+                "C-ROADSTER 55 AMG",
+                "CONV 200 KOMPRESSOR SPORT",
+                "CONV 350 AMG EDITION",
+                "CONV 5.5 AMG"
+            ],
+            "SLS": [
+                "COUPE 5.0 AMG"
+            ]
+        },
+        "MINICOOPER": {
+            "CLUBMAN": [
+                "1.5 PEPPER WIRED",
+                "2.0 S CHILI"
+            ],
+            "MINI COOPER": [
+                "1.5 T 136CV CLASSIC",
+                "1.5 T PEPPER",
+                "1.6 CHILI",
+                "1.6 PEPPER",
+                "1.6 S CLUBMAN",
+                "1.6 S HOT",
+                "1.6 S JOHN COOPER WORKS",
+                "1.6 SALT",
+                "2.0 T 192CV 60 YEARS EDITION 7AT",
+                "2.0 T 192CV CLASSIC CONFORT S 7AT",
+                "2.0 T 231CV JOHN COOPER WORKS 8AT",
+                "2.0 T 306CV JOHN COOPER WORKS GP 8AT",
+                "2.0 T CHILI S",
+                "CONV 1.6",
+                "CONV 1.6 S",
+                "CONV CLASSIC CONF PLUS",
+                "CONV S",
+                "CONV S CHILI",
+                "COUPE 1.6",
+                "COUPE 1.6 S JOHN COOPER WORKS",
+                "COUPE S",
+                "JOHN COOPER WORKS",
+                "S LOOK JCW"
+            ],
+            "PACEMAN": [
+                "1.6 S",
+                "1.6 S ALL 4"
+            ]
+        },
+        "MITSUBISHI": {
+            "LANCER": [
+                "2.0 GLS",
+                "2.0 GT",
+                "2.0 GT CRO"
+            ]
+        },
+        "NISSAN": {
+            "ALTIMA": [
+                "2.5 ADVANCE MEDIA TECH",
+                "2.5 ADVANCE PURE"
+            ],
+            "COUPE": [
+                "COUPE 3.7 V6 370 Z",
+                "COUPE 3.7 V6 370 Z ROADSTER"
+            ],
+            "LEAF": [
+                "STANDARD",
+                "TEKNA"
+            ],
+            "MARCH": [
+                "1.6 ACENTA ABS",
+                "1.6 ACTIVE",
+                "1.6 ADVANCE",
+                "1.6 MEDIA TECH",
+                "1.6 SENSE",
+                "1.6 SR",
+                "1.6 VISIA",
+                "1.6 VISIA PLUS"
+            ],
+            "MURANO": [
+                "3.5 V6 EXCLUSIVE CVT",
+                "3.5 XTRONIC CVT"
+            ],
+            "NOTE": [
+                "1.6 ADVANCE",
+                "1.6 ADVANCE CVT",
+                "1.6 EXCLUSIVE CVT",
+                "1.6 EXCLUSIVE PURE DRIVE CVT",
+                "1.6 SENSE",
+                "1.6 SENSE CVT",
+                "1.6 SENSE PURE DRIVE",
+                "1.6 SR",
+                "1.6 SR CVT"
+            ],
+            "SENTRA": [
+                "1.8 ADVANCE",
+                "1.8 ADVANCE SAFETY PACK",
+                "1.8 ADVANCE SAFETY PACK CVT",
+                "1.8 EXCLUSIVE CVT",
+                "1.8 EXCLUSIVE CVT SAFETY PACK",
+                "1.8 SENSE",
+                "1.8 SR CVT",
+                "1.8 SR CVT SAFETY PACK",
+                "2.0 ACENTA",
+                "2.0 ADVANCE CVT",
+                "2.0 EXCLUSIVE CVT",
+                "2.0 SR CVT",
+                "2.0 TEKNA"
+            ],
+            "TEANA": [
+                "250 XV",
+                "350 XV"
+            ],
+            "TIIDA": [
+                "1.8 ACENTA HATCHBACK",
+                "1.8 ACENTA SEDAN",
+                "1.8 TEKNA HATCHBACK",
+                "1.8 TEKNA SEDAN",
+                "1.8 VISIA HATCHBACK",
+                "1.8 VISIA SEDAN"
+            ],
+            "VERSA": [
+                "1.6 ACENTA",
+                "1.6 ADVANCE",
+                "1.6 ADVANCE CVT",
+                "1.6 EXCLUSIVE",
+                "1.6 EXCLUSIVE CVT",
+                "1.6 SENSE",
+                "1.6 SENSE CVT",
+                "1.6 SR CVT",
+                "1.6 VISIA",
+                "V-DRIVE",
+                "V-DRIVE PLUS"
+            ]
+        },
+        "PEUGEOT": {
+            "206": [
+                "1.4 ACTIVE SEG",
+                "1.4 ALLURE SEG",
+                "1.4 GENERATION",
+                "1.4 GENERATION PLUS"
+            ],
+            "207": [
+                "1.4 ACTIVE COMPACT",
+                "1.4 ACTIVE COMPACT SEG",
+                "1.4 ALLURE COMPACT SEG",
+                "1.4 HDI ACTIVE COMPACT SEG",
+                "1.4 HDI ALLURE COMPACT SEG",
+                "1.4 HDI FELINE COMPACT",
+                "1.4 HDI XR",
+                "1.4 HDI XS",
+                "1.4 HDI XT",
+                "1.4 QUIKSILVER",
+                "1.4 XR COMPACT",
+                "1.4 XS COMPACT",
+                "1.6 ALLURE COMPACT SEG",
+                "1.6 FELINE COMPACT",
+                "1.6 FELINE COMPACT TIPT",
+                "1.6 GRIFFE COMPACT",
+                "1.6 XS COMPACT",
+                "1.6 XT COMPACT",
+                "1.6 XT COMPACT PREMIUM",
+                "1.6 XT COMPACT TIPT",
+                "CABRIO 1.6 CC 156HP",
+                "GTI",
+                "SW 1.6 XS COMPACT",
+                "SW 1.6 XT COMPACT"
+            ],
+            "208": [
+                "1.2 LIKE",
+                "1.2 LIKE NEW",
+                "1.2 T GT 6TIPT",
+                "1.5 ACTIVE",
+                "1.5 ALLURE",
+                "1.6 ALLURE",
+                "1.6 ALLURE TIPT",
+                "1.6 FELINE",
+                "1.6 FELINE PACK CUIR",
+                "1.6 FELINE TIPT6",
+                "1.6 HDI ALLURE PLUS",
+                "1.6 IN CONCERT",
+                "1.6 ROADTRIP",
+                "1.6 STYLE",
+                "1.6 STYLE TIPT6",
+                "1.6 THP GT",
+                "1.6 URBAN TECH",
+                "1.6 VTI IN CONCERT",
+                "GTI",
+                "T200 ALLURE PK CVT6",
+                "T200 CVT GT",
+                "XY"
+            ],
+            "301": [
+                "1.6 16V ALLURE",
+                "1.6 16V ALLURE PLUS",
+                "1.6 16V ALLURE PLUS TIPT",
+                "1.6 HDI ALLURE",
+                "1.6 HDI ALLURE PLUS"
+            ],
+            "307": [
+                "1.6 XS",
+                "1.6 XT PREMIUM",
+                "2.0 HDI SS LA DOLFINA",
+                "2.0 HDI XS",
+                "2.0 HDI XS PREMIUM 110CV",
+                "2.0 HDI XT PREMIUM 110CV",
+                "2.0 XS PREMIUM"
+            ],
+            "308": [
+                "1.6 ACTIVE",
+                "1.6 ALLURE",
+                "1.6 GTI",
+                "1.6 HDI ACTIVE",
+                "1.6 HDI ALLURE",
+                "1.6 HDI FELINE",
+                "1.6 HDI ROLLAND GARROS",
+                "1.6 T PURE TECH GT 8AT",
+                "1.6 THP ALLURE PACK TIPT",
+                "1.6 THP FELINE",
+                "1.6 THP ROLAND GARROS",
+                "1.6 THP S ALLURE PLUS 6AT",
+                "1.6 THP S GTI",
+                "1.6 THP SPORT",
+                "2.0 ALLURE PLUS",
+                "2.0 FELINE",
+                "CC 1.6 T",
+                "CC 1.6 T NAV",
+                "CC 1.6 T TIPT",
+                "COUPE 1.6 THP S GTI FRANCHE"
+            ],
+            "407": [
+                "2.0 HDI SR SPORT",
+                "2.0 HDI SV SPORT",
+                "2.0 SR SPORT",
+                "2.0 SV SPORT",
+                "3.0 V6 SV SPORT TIPT"
+            ],
+            "408": [
+                "1.6 ACTIVE",
+                "1.6 ALLURE",
+                "1.6 HDI ALLURE",
+                "1.6 THP ALLURE PLUS",
+                "1.6 THP ALLURE PLUS T/C CRO +",
+                "1.6 THP SPORT",
+                "2.0 ALLURE",
+                "2.0 ALLURE PLUZ",
+                "2.0 FELINE"
+            ],
+            "508": [
+                "1.6 THP ALLURE TIP",
+                "1.6 THP ALLURE TIP T/C",
+                "1.6 THP FELINE TIP",
+                "2.0 HDI ALLURE TIP",
+                "2.0 HDI FELINE TIP",
+                "2.2 HDI GT TIP"
+            ],
+            "807": [
+                "VAN 2.0 HDI ST 7A",
+                "VAN 2.0 HDI ST 8A"
+            ],
+            "RCZ": [
+                "COUPE",
+                "COUPE 1.6 THP 163CV TIPT",
+                "COUPE 1.6 THP 200CV",
+                "COUPE CARBON CONCEPT",
+                "COUPE TIPT"
+            ]
+        },
+        "PORSCHE": {
+            "911": [
+                "CARRERA",
+                "CARRERA 4",
+                "CARRERA 4 S",
+                "CARRERA S",
+                "CONV 4.0",
+                "CONV CARRERA",
+                "CONV CARRERA 4",
+                "CONV CARRERA 4 S",
+                "CONV CARRERA S",
+                "CONV TURBO",
+                "CONV TURBO S",
+                "GT2",
+                "GT2 RS",
+                "GT3",
+                "GT3 RS",
+                "TARGA 4",
+                "TARGA 4 S",
+                "TURBO",
+                "TURBO S"
+            ],
+            "911 (992)": [
+                "CABRIOLET CARRERA",
+                "CABRIOLET CARRERA 4",
+                "CABRIOLET CARRERA 4 GTS",
+                "CABRIOLET CARRERA 4S 3.0 BT 8AT",
+                "CABRIOLET CARRERA GTS",
+                "CABRIOLET CARRERA S 3.0 BT 8AT",
+                "CABRIOLET EDITION 50 YEARS",
+                "CABRIOLET TARGA 4",
+                "CABRIOLET TARGA 4 GTS",
+                "CABRIOLET TARGA 4 S",
+                "COUPE CARRERA",
+                "COUPE CARRERA 4",
+                "COUPE CARRERA 4 GTS",
+                "COUPE CARRERA 4S 3.0 BT 8AT",
+                "COUPE CARRERA GTS",
+                "COUPE CARRERA S 3.0 BT 8AT",
+                "COUPE CARRERA T",
+                "COUPE GT3",
+                "COUPE GT3 RS",
+                "COUPE GT3 TOURING",
+                "COUPE S/T",
+                "COUPE SPORT CLASSIC",
+                "COUPE TURBO 50 YEARS"
+            ],
+            "911 TURBO PDK": [
+                "CABRIOLET",
+                "CABRIOLET 3.8 T 8AT 650CV S",
+                "COUPE",
+                "COUPE 3.8 T 8AT 650CV S",
+                "COUPE DAKAR"
+            ],
+            "BOXSTER 718": [
+                "CONV",
+                "CONV GTS 4.0",
+                "CONV S",
+                "CONV SPYDER",
+                "CONV STYLE EDITION",
+                "SPYDER 3.4"
+            ],
+            "CAYMAN 718": [
+                "CAYMAN",
+                "CAYMAN GT4",
+                "CAYMAN GT4 RS",
+                "CAYMAN GTS 4.0",
+                "CAYMAN S",
+                "CAYMAN STYLE EDITION"
+            ],
+            "PANAMERA": [
+                "2.9 330CV",
+                "2.9 V6",
+                "4 E-HYBRID",
+                "4 E-HYBRID PLATINUM EDITION",
+                "4 E-HYBRYD",
+                "4 S",
+                "4 S E-HYBRID",
+                "4 TURBO S E-HYBRID",
+                "4.0 630CV TURBO S",
+                "4.0 V8 BT 8AT 480CV GTS",
+                "4S E-HYBRYD",
+                "GTS",
+                "PLATINUM EDITION",
+                "S",
+                "TURBO",
+                "TURBO-HYBRYD",
+                "TURBO-HYBRYD S",
+                "V6 BT 4 S 8AT II",
+                "V8 BT TURBO 8AT II",
+                "V8 BT TURBO 8AT SPORT TURISMO"
+            ],
+            "SPYDER 718": [
+                "CONV RS"
+            ],
+            "TAYCAN (ELECTRICO)": [
+                "270KW",
+                "270KW S",
+                "300 KW/408PS",
+                "4 CROSS TURISMO",
+                "4 S 530CV",
+                "4 S CROSS TURISMO",
+                "4 TURBO 680CV",
+                "4 TURBO CROSS TURISMO",
+                "4 TURBO S 761CV",
+                "GTS",
+                "TURBO GT",
+                "TURBO GT WEISSACH"
+            ]
+        },
+        "RENAULT": {
+            "CLIO": [
+                "1.2 BASE",
+                "1.2 CAMPUS",
+                "1.2 CAMPUS PACK I",
+                "1.2 CAMPUS PACK II",
+                "1.2 PACK",
+                "1.2 PACK A/C DH",
+                "1.2 PACK PLUS",
+                "1.2 PACK SL GET UP"
+            ],
+            "CLIO MIO": [
+                "1.2 16V AUTH PACK",
+                "1.2 16V CONFORT",
+                "1.2 16V CONFORT PACK",
+                "1.2 16V CONFORT PLUS",
+                "1.2 16V DYNAMIQUE",
+                "1.2 16V EXP",
+                "1.2 16V EXP PACK I",
+                "1.2 16V EXP PACK II",
+                "1.2 16V GT LINE"
+            ],
+            "CLIO WORK": [
+                "1.2 16V A/C DH ABG ABS"
+            ],
+            "FLUENCE": [
+                "1.6 CONFORT",
+                "1.6 CONFORT PLUS",
+                "1.6 DYNAMIQUE",
+                "1.6 LUXE",
+                "2.0 16V GT",
+                "2.0 16V GT 2",
+                "2.0 16V SPORT",
+                "2.0 DYNAMIQUE",
+                "2.0 LUXE",
+                "2.0 LUXE CVT",
+                "2.0 LUXE PACK",
+                "2.0 LUXE RLINK",
+                "2.0 PRIVILEGE"
+            ],
+            "KWID": [
+                "1.0",
+                "1.0 ICONIC",
+                "1.0 INTENS",
+                "1.0 LIFE",
+                "1.0 OUTSIDER",
+                "1.0 ZEN"
+            ],
+            "KWID E-TECH": [
+                "E-TECH"
+            ],
+            "LATITUDE": [
+                "2.0 DYNAMIQUE",
+                "3.5 V6 PRIVILEGE"
+            ],
+            "LOGAN": [
+                "1.6 16V INTENS",
+                "1.6 16V LIFE",
+                "1.6 16V LIFE PACK",
+                "1.6 16V PRIVILEGE",
+                "1.6 16V ZEN",
+                "1.6 8V CONFORT",
+                "1.6 8V CONFORT I",
+                "1.6 8V CONFORT II",
+                "1.6 8V CONFORT PLUS",
+                "1.6 8V PACK",
+                "1.6 8V PACK PLUS",
+                "1.6 AUTHENTIQUE PACK I",
+                "1.6 AUTHENTIQUE PACK II",
+                "1.6 AVANTAGE SL",
+                "1.6 EXPRESSION",
+                "1.6 EXPRESSION PACK I"
+            ],
+            "MEGANE II": [
+                "1.5 DCI CONFORT",
+                "1.5 DCI LUXE",
+                "1.6L CONFORT",
+                "1.6L CONFORT PLUS",
+                "1.6L LUXE",
+                "2.0 16V PRIV",
+                "2.0L LUXE",
+                "GR. TOUR 1.5 DCI LUXE",
+                "GR. TOUR 1.6L CONF PLUS",
+                "GR. TOUR 1.6L LUXE",
+                "GR. TOUR 2.0L PRIVILEGE"
+            ],
+            "MEGANE III": [
+                "1.6 LUXE PACK",
+                "2.0 16V LUXE",
+                "2.0 16V LUXE PH2",
+                "2.0 16V LUXE TN",
+                "2.0 16V PRIVILEGE",
+                "2.0 16V PRIVILEGE PH2",
+                "2.0 16V PRIVILEGE TN",
+                "2.0 LUXE",
+                "2.0 LUXE R1",
+                "2.0 PRIVILEGE",
+                "COUPE 2.0 T RS 265 CV",
+                "COUPE RS 250 CV"
+            ],
+            "MEGANE E-TECH": [
+                "STANDARD"
+            ],
+            "SANDERO": [
+                "1.5 DCI CONFORT",
+                "1.6 16V CONFORT",
+                "1.6 16V GET UP",
+                "1.6 16V GT LINE",
+                "1.6 16V INTENS",
+                "1.6 16V INTENS PH2",
+                "1.6 16V LIFE",
+                "1.6 16V LUXE",
+                "1.6 16V ZEN",
+                "1.6 16V ZEN PH2",
+                "1.6 AUTH PACK I",
+                "1.6 AUTH PACK II",
+                "1.6 DYNAMIQUE",
+                "1.6 EXPRESSION",
+                "1.6 PACK",
+                "1.6 PACK PLUS",
+                "1.6 SL TECH RUN",
+                "2.0 RS",
+                "2.0 RS RACING SPIRIT"
+            ],
+            "SCENIC": [
+                "1.6 CONFORT",
+                "1.6 SPORTWAY",
+                "1.9 TD CONFORT"
+            ],
+            "SYMBOL": [
+                "1.5 DCI CONFORT",
+                "1.5 DCI CONNECTION",
+                "1.6 16V CONFORT",
+                "1.6 16V CONNECTION",
+                "1.6 16V LUXE",
+                "1.6 16V PACK",
+                "1.6 AUTH PACK I",
+                "1.6 AUTH PACK II",
+                "1.6 AUTH PACK II ABS",
+                "1.6 EXP PACK II"
+            ]
+        },
+        "SEAT": {
+            "ALTEA": [
+                "2.0 TSI 211CV FREETRACK DSG"
+            ],
+            "IBIZA": [
+                "1.4 85CV REFERENCE",
+                "1.6 105CV SPORT",
+                "1.6 105CV STYLE"
+            ],
+            "LEON": [
+                "1.6 MPI 102CV REFERENCE",
+                "1.8 T FSI 160CV STYLE",
+                "1.8 T FSI 160CV STYLE DSG",
+                "2.0 TDI 140CV STYLE",
+                "2.0 TDI 140CV STYLE DSG",
+                "2.0 TSI CUPRA 240CV",
+                "2.0 TSI FR 211CV"
+            ]
+        },
+        "SHINERAY": {
+            "T 30": [
+                "C/S 1.3"
+            ],
+            "T 32": [
+                "D/C 1.3"
+            ],
+            "SWM G01": [
+                "1.5 T"
+            ],
+            "X7": [
+                "1.5 T",
+                "1.8"
+            ]
+        },
+        "SMART": {
+            "FORTWO": [
+                "CONV 1.0 GREY MATT EDITION",
+                "CONV 1.0 PASSION",
+                "CONV 1.0 PASSION HIGH",
+                "CONV 1.0 PASSION LIMITED EDITION",
+                "CONV 1.0 RED & WHITE",
+                "COUPE 1.0 CITY",
+                "COUPE 1.0 CITY C453",
+                "COUPE 1.0 PASSION",
+                "COUPE 1.0 PASSION C453",
+                "COUPE 1.0 PASSION GREY MATT PLUS EDITION",
+                "COUPE 1.0 PASSION HIGH",
+                "COUPE 1.0 PASSION LIMITED EDITION",
+                "COUPE 1.0 PLAY",
+                "COUPE 1.0 SHARPRED EDITION"
+            ],
+            "FORFOUR": [
+                "1.0 CITY",
+                "1.0 PASSION",
+                "1.0 PLAY"
+            ]
+        },
+        "SOUEAST": {
+            "DX 3": [
+                "1.5",
+                "1.5 T 8CVT"
+            ]
+        },
+        "SSANGYONG": {
+            "ACTYON": [
+                "A 230 DYNAMIC PACK 1",
+                "A 230 DYNAMIC PACK 2",
+                "A 230 DYNAMIC PACK 3 LUXE"
+            ],
+            "KYRON": [
+                "2.0 D I",
+                "2.0 D II",
+                "2.0 D III"
+            ],
+            "STAVIC": [
+                "VAN"
+            ]
+        },
+        "SUBARU": {
+            "CROSSTREK": [
+                "2.0 CVT AWD LIMITED ES",
+                "2.0 CVT AWD LIMITED ES HYBRID"
+            ],
+            "IMPREZA": [
+                "1.5R AWD 2A 107CV",
+                "2.0I AWD DYNAMIC CVT",
+                "2.0I AWD LIMITED CVT",
+                "2.0I AWD LIMITED EYESIGHT CVT",
+                "2.0R AWD NA",
+                "2.0R AWD RC 150CV",
+                "2.0R AWD RC 150CV SPORTSHIFT",
+                "2.0R AWD RN",
+                "2.5 AWD WRX TURBO 265CV",
+                "2.5R AWD 300CV STI",
+                "2.5R AWD WRX TURBO 265CV"
+            ],
+            "LEGACY": [
+                "2.0 AWD X",
+                "2.5 AWD 5AT GT SI DRIVE",
+                "2.5 AWD CVT LIMITED",
+                "2.5 AWD CVT SPORT",
+                "2.5 AWD CVT XA",
+                "2.5 I AWD CVT LIMITED",
+                "SW 2.0 AWD CVT XA"
+            ],
+            "TRIBECA": [
+                "3.6R 256CV AWD 7P"
+            ],
+            "WRX": [
+                "2.0 T",
+                "2.0 T CVT",
+                "2.4 AWD PERFORMANCE ES"
+            ],
+            "XV": [
+                "2.0 AWD",
+                "2.0 AWD CVT",
+                "2.0 AWD CVT LIMITED",
+                "2.0 I AWD",
+                "2.0 I AWD CVT",
+                "2.0 I AWD CVT DYNAMIC",
+                "2.0 I AWD CVT DYNAMIC EYESIGHT",
+                "2.0 I AWD CVT LIMITED",
+                "2.0 I AWD CVT LIMITED EYESIGHT",
+                "2.0 I CVT",
+                "2.0R AWD",
+                "2.0R AWD LIMITED"
+            ]
+        },
+        "SUZUKI": {
+            "BALENO": [
+                "1.4 GLX"
+            ],
+            "FUN": [
+                "1.4 A/C DH"
+            ],
+            "SWIFT": [
+                "1.2 GLX CVT",
+                "1.4 WT GLX",
+                "1.5"
+            ]
+        },
+        "TOYOTA": {
+            "86": [
+                "2.5 HEV E CVT",
+                "2.5 L4",
+                "2.5 L4 6AT",
+                "3.5 V6",
+                "3.5 V6 8AT",
+                "COUPE 2.0 FT",
+                "COUPE 2.0 GT",
+                "COUPE 2.4 GR"
+            ],
+            "COROLLA": [
+                "1.8 SE-G",
+                "1.8 SEG",
+                "1.8 XEI",
+                "1.8 XEI PACK",
+                "1.8 XLI",
+                "2.0 GR-S 10CVT",
+                "2.0 SEG CVT",
+                "2.0 XEI CVT",
+                "2.0 XLI CVT",
+                "HEV 1.8 SEG ECVT",
+                "HEV 1.8 XEI ECVT",
+                "HV 1.8 SEG CVT",
+                "HV 1.8 XEI CVT"
+            ],
+            "CROWN": [
+                "2.4 T HEV E-AWD PLATINUM"
+            ],
+            "ETIOS": [
+                "1.5 AIBO",
+                "1.5 PLATINUM",
+                "1.5 X",
+                "1.5 XLS",
+                "1.5 XLS 4AT",
+                "1.5 XS"
+            ],
+            "ETIOS CROSS": [
+                "1.5 XLS",
+                "1.5 XLS 4AMT"
+            ],
+            "INNOVA": [
+                "2.7 DUAL-VVTI SR 6AT",
+                "2.7 DUAL-VVTI SRV 6AT"
+            ],
+            "PRIUS": [
+                "1.8 CVT",
+                "1.8 CVT (LN)",
+                "1.8 CVT IV",
+                "1.8 HV CVT"
+            ],
+            "RAV - 4": [
+                "2.5 HEV LIMITED AWD CVT",
+                "HEV LIMITED AWD CVT"
+            ],
+            "YARIS": [
+                "1.5 CVT 7AT",
+                "1.5 S",
+                "1.5 S CVT",
+                "1.5 XLS",
+                "1.5 XLS + CVT",
+                "1.5 XLS CVT",
+                "1.5 XLS PACK CVT",
+                "1.5 XS",
+                "1.5 XS CVT",
+                "1.6 T GR"
+            ]
+        },
+        "VOLKSWAGEN": {
+            "BORA": [
+                "1.8 T HIGHLINE 180CV",
+                "1.8 T HIGHLINE 180CV CRO",
+                "1.8 T HIGHLINE 180CV CRO TIPT",
+                "1.8 T HIGHLINE 180CV TIPT",
+                "1.9 TDI TRENDLINE",
+                "2.0 TRENDLINE 115CV",
+                "2.0 TRENDLINE 115CV TIPT"
+            ],
+            "CROSSFOX": [
+                "1.6 COMFORTLINE",
+                "1.6 HIGHLINE",
+                "1.6 HIGHLINE CRO",
+                "1.6 MSI 16V HIGHLINE",
+                "1.6 TRENDLINE",
+                "1.6 TRENDLINE CRO FULL"
+            ],
+            "FOX": [
+                "1.6 COMFORTLINE",
+                "1.6 COMFORTLINE PACK",
+                "1.6 HIGHLINE",
+                "1.6 HIGHLINE I MOTION",
+                "1.6 MSI 16V HIGHLINE",
+                "1.6 MSI 16V HIGHLINE I MOTION",
+                "1.6 MSI 16V HIGHLINE PEPPER",
+                "1.6 MSI COMFORTLINE",
+                "1.6 MSI CONNECT",
+                "1.6 MSI TRACK",
+                "1.6 MSI TRENDLINE",
+                "1.6 TRENDLINE",
+                "1.6 TRENDLINE I MOTION"
+            ],
+            "GOL": [
+                "1.4L POWER 4G",
+                "1.4L POWER 4G DH A/C",
+                "1.6L POWER 4G PLUS",
+                "1.6L POWER 4G PLUS DH A/C"
+            ],
+            "GOL TREND": [
+                "1.6",
+                "1.6 COMF",
+                "1.6 COMF TIPT",
+                "1.6 CONNECT",
+                "1.6 GP CUP",
+                "1.6 GP PACK I",
+                "1.6 GP PACK I ABG ABS",
+                "1.6 GP PACK II",
+                "1.6 GP PACK III",
+                "1.6 GP PACK III I MOTTION",
+                "1.6 GP SERIE",
+                "1.6 GP SERIE ABG ABS",
+                "1.6 HIGHLINE",
+                "1.6 HIGHLINE I MOTTION",
+                "1.6 PACK I",
+                "1.6 PACK I PLUS",
+                "1.6 PACK I PLUS I MOTION",
+                "1.6 PACK II",
+                "1.6 PACK III",
+                "1.6 PACK III ABS",
+                "1.6 PACK III I MOTION",
+                "1.6 SERIE",
+                "1.6 SPORTLINE",
+                "1.6 TRENDLINE",
+                "1.6 TRENDLINE TIPT"
+            ],
+            "GOLF": [
+                "1.4 TSI COMFORTLINE",
+                "1.4 TSI COMFORTLINE DSG",
+                "1.4 TSI HIGHLINE DSG",
+                "1.6 ADVANCE",
+                "1.6 CONCEPLINE",
+                "1.6 FORMAT",
+                "1.6 TRENDLINE",
+                "1.8 GTI 180CV",
+                "1.8 GTI 180CV TIPT",
+                "1.9 TDI ADVANCE",
+                "1.9 TDI CONCEPTLINE",
+                "2.0 ADVANCE",
+                "2.0 CONCEPTLINE",
+                "2.0 HIGHLINE T/C",
+                "2.0 HIGHLINE T/C TIPT",
+                "2.0 TSI GTI",
+                "2.0 TSI GTI 211CV",
+                "2.0 TSI GTI 211CV DSG",
+                "2.0 TSI GTI 211CV DSG NAV",
+                "2.0 TSI GTI 211CV NAV",
+                "2.0 TSI GTI APP CONNECT",
+                "2.0 TSI GTI APP CONNECT CRO",
+                "2.0 TSI GTI CRO",
+                "2.0 TSI GTI DSG",
+                "2.0 TSI GTI DSG CRO",
+                "250 TSI HIGHLINE DSG",
+                "GTI"
+            ],
+            "NEW BEETLE": [
+                "1.8 T CABRIOLET SPORT TIPT",
+                "1.8 T SPORT",
+                "1.8 T SPORT TIPT",
+                "2.0 ADVANCE",
+                "2.0 LUXURY CRO"
+            ],
+            "PASSAT": [
+                "COMFORTLINE 1.4 TSI",
+                "COMFORTLINE 1.4 TSI DSG",
+                "COMFORTLINE 1.6 TDI",
+                "COMFORTLINE 1.6 TDI DSG",
+                "COMFORTLINE 1.8 TSI",
+                "COMFORTLINE 1.8 TSI DSG",
+                "COMFORTLINE 1.9 TDI",
+                "COMFORTLINE 1.9 TDI DSG",
+                "COMFORTLINE 2.0 TDI",
+                "COMFORTLINE 2.0 TDI DSG",
+                "COMFORTLINE 2.0 TSI",
+                "COMFORTLINE 2.0 TSI DSG",
+                "COMFORTLINE 3.6 VR6 DSG",
+                "GTE 1.4 TSI E‑HYBRID DSG",
+                "HIGHLINE 1.4 TSI",
+                "HIGHLINE 1.4 TSI DSG",
+                "HIGHLINE 1.6 TDI",
+                "HIGHLINE 1.6 TDI DSG",
+                "HIGHLINE 1.8 TSI",
+                "HIGHLINE 1.8 TSI DSG",
+                "HIGHLINE 1.9 TDI",
+                "HIGHLINE 1.9 TDI DSG",
+                "HIGHLINE 2.0 TDI",
+                "HIGHLINE 2.0 TDI DSG",
+                "HIGHLINE 2.0 TSI",
+                "HIGHLINE 2.0 TSI DSG",
+                "HIGHLINE 3.6 VR6 DSG",
+                "TRENDLINE 1.4 TSI",
+                "TRENDLINE 1.4 TSI DSG",
+                "TRENDLINE 1.6 TDI",
+                "TRENDLINE 1.6 TDI DSG",
+                "TRENDLINE 1.8 TSI",
+                "TRENDLINE 1.8 TSI DSG",
+                "TRENDLINE 1.9 TDI",
+                "TRENDLINE 1.9 TDI DSG",
+                "TRENDLINE 2.0 TDI",
+                "TRENDLINE 2.0 TDI DSG",
+                "TRENDLINE 2.0 TSI",
+                "TRENDLINE 2.0 TSI DSG",
+                "TRENDLINE 3.6 VR6 DSG"
+            ],
+            "PASSAT CC": [
+                "COMFORTLINE 1.8 TSI",
+                "COMFORTLINE 1.8 TSI DSG",
+                "COMFORTLINE 2.0 TDI",
+                "COMFORTLINE 2.0 TDI DSG",
+                "COMFORTLINE 2.0 TSI",
+                "COMFORTLINE 2.0 TSI DSG",
+                "EXCLUSIVE 2.0 TDI DSG",
+                "EXCLUSIVE 2.0 TSI DSG",
+                "EXCLUSIVE 3.6 V6 DSG",
+                "HIGHLINE 1.8 TSI",
+                "HIGHLINE 1.8 TSI DSG",
+                "HIGHLINE 2.0 TDI",
+                "HIGHLINE 2.0 TDI DSG",
+                "HIGHLINE 2.0 TSI",
+                "HIGHLINE 2.0 TSI DSG",
+                "TRENDLINE 1.8 TSI",
+                "TRENDLINE 1.8 TSI DSG",
+                "TRENDLINE 2.0 TDI",
+                "TRENDLINE 2.0 TDI DSG",
+                "TRENDLINE 2.0 TSI",
+                "TRENDLINE 2.0 TSI DSG"
+            ],
+            "POLO": [
+                "COMFORTLINE 1.0 TSI DSG",
+                "GTS 1.4 TSI DSG",
+                "HIGHLINE 1.0 TSI DSG",
+                "MSI 1.6 MSI",
+                "TRACK 1.6 MSI"
+            ],
+            "SAVEIRO PICK - UP": [
+                "COMFORTLINE 1.6 MSI",
+                "CROSS 1.6 MSI",
+                "EXTREME 1.6 MSI",
+                "HIGHLINE 1.6 MSI",
+                "ROBUST 1.6 MSI",
+                "STARLINE 1.6 MSI",
+                "STARTLINE 1.6 MSI",
+                "SURF 1.6 MSI",
+                "TRENDLINE 1.6 MSI"
+            ],
+            "SAVEIRO PICK - UP CROSS": [
+                "D/C 1.6 GP PACK HIGH",
+                "D/C 1.6 MSI"
+            ],
+            "SCIROCCO": [
+                "1.4 TSI",
+                "1.4 TSI DSG",
+                "2.0 TSI",
+                "2.0 TSI DSG",
+                "2.0 TSI DSG GTS"
+            ],
+            "SURAN": [
+                "1.6 COMFORTLINE",
+                "1.6 COMFORTLINE + ABS",
+                "1.6 COMFORTLINE I MOTION",
+                "1.6 HIGHLINE",
+                "1.6 HIGHLINE CRO",
+                "1.6 HIGHLINE CRO I MOTION",
+                "1.6 HIGHLINE I MOTION",
+                "1.6 LIMITED EDITION",
+                "1.6 MSI 16V HIGHLINE",
+                "1.6 MSI 16V HIGHLINE I MOTION",
+                "1.6 MSI COMFORTLINE",
+                "1.6 MSI TRACK",
+                "1.6 MSI TRENDLINE",
+                "1.6 STYLE",
+                "1.6 TRENDLINE",
+                "1.6 TRENDLINE I MOTION"
+            ],
+            "THE BEETLE": [
+                "1.4 TSI DESIGN",
+                "1.4 TSI DESIGN DSG",
+                "2.0 TSI SPORT",
+                "2.0 TSI SPORT DSG",
+                "CONV 2.0 TSI SPORT",
+                "CONV 2.0 TSI SPORT DSG"
+            ],
+            "UP!": [
+                "1.0 BLACK",
+                "1.0 CROSS",
+                "1.0 HIGH",
+                "1.0 HIGH I MOTION",
+                "1.0 MOVE",
+                "1.0 MOVE I MOTION",
+                "1.0 TAKE A/C",
+                "1.0 TSI PEPPER",
+                "1.0 WHITE"
+            ],
+            "VENTO": [
+                "1.4 150CV COMFORTLINE",
+                "1.4 150CV HIGHLINE",
+                "1.9 TDI ADVANCE 105CV",
+                "1.9 TDI ADVANCE 105CV DSG",
+                "1.9 TDI LUXURY WOOD 105CV",
+                "1.9 TDI LUXURY WOOD 105CV DSG",
+                "2.0 ADVANCE",
+                "2.0 ADVANCE SUMMER PACKAGE",
+                "2.0 T FSI ELEGANCE",
+                "2.0 T FSI SPORTLINE",
+                "2.0 T FSI SPORTLINE DSG",
+                "2.0 TDI ADVANCE",
+                "2.0 TDI ADVANCE SUMMER PACKPAGE",
+                "2.0 TDI CONFORT",
+                "2.0 TDI ELEGANCE",
+                "2.0 TDI ELEGANCE DSG",
+                "2.0 TDI ELEGANCE WOOD",
+                "2.0 TDI ELEGANCE WOOD DSG",
+                "2.0 TDI LUXURY",
+                "2.0 TDI LUXURY DSG",
+                "2.0 TDI SPORTLINE",
+                "2.0 TDI SPORTLINE DSG",
+                "2.0 TSI 230CV 350 GLI DSG",
+                "2.0 TSI GLI APP CONNET",
+                "2.0 TSI GLI DSG",
+                "2.5 FSI ADVANCE 170CV",
+                "2.5 FSI ADVANCE PLUS",
+                "2.5 FSI LUXURY",
+                "2.5 FSI LUXURY WOOD 170CV"
+            ],
+            "VIRTUS": [
+                "1.4 TSI GTS TIPT",
+                "1.6 MSI",
+                "1.6 MSI COMFORTLINE",
+                "1.6 MSI COMFORTLINE SAFETY PACK",
+                "1.6 MSI COMFORTLINE TIPT",
+                "1.6 MSI HIGHLINE",
+                "1.6 MSI HIGHLINE TIPT",
+                "1.6 MSI TRENDLINE",
+                "1.6 MSI TRENDLINE SAFETY PACK",
+                "1.6 MSI TRENDLINE TIPT",
+                "170 TSI HIGHLINE",
+                "250 TSI EXCLUSIVE"
+            ],
+            "VOYAGE": [
+                "1.6 COMFORTLINE",
+                "1.6 COMFORTLINE GP",
+                "1.6 COMFORTLINE GP PLUS",
+                "1.6 COMFORTLINE GP PLUS ABS FULL",
+                "1.6 COMFORTLINE GP PLUS ABS FULL I MOTION",
+                "1.6 COMFORTLINE PLUS",
+                "1.6 COMFORTLINE PLUS ABS FULL",
+                "1.6 COMFORTLINE PLUS ABS FULL I MOTION",
+                "1.6 COMFORTLINE PLUS I MOTION",
+                "1.6 FORMAT",
+                "1.6 HIGHLINE",
+                "1.6 HIGHLINE GP",
+                "1.6 HIGHLINE I MOTION",
+                "1.6 SERIE",
+                "1.6 SERIE GP"
+            ]
+        },
+        "VOLVO": {
+            "C 30": [
+                "2.0 P1",
+                "2.0 P2",
+                "2.0 P2 COLOR",
+                "2.0 P3",
+                "2.5 T5 P3",
+                "2.5 T5 R-DECIGN"
+            ],
+            "S 40": [
+                "2.0 P1",
+                "2.0 P2",
+                "2.5 T5 HIGH",
+                "2.5 T5 PREMIUM"
+            ],
+            "S 60": [
+                "2.0 T HIGH",
+                "2.0 T PREMIUM",
+                "2.0 T6 INSCRIPTION FWD",
+                "2.0 T6 MONENTUM FWD",
+                "2.0 T6 R-DESING FWD",
+                "HIGH",
+                "R-DESIGN",
+                "T5 HIGH LUXURY",
+                "T5 HIGH PLUS",
+                "T5 HIGH PLUS R-DESIGN",
+                "T6 HIGH",
+                "T6 HIGH LUXURY",
+                "T6 HIGH LUXURY FWD",
+                "T6 PREMIUM AWD",
+                "T6 R-DESIGN FWD"
+            ],
+            "S 90": [
+                "2.0 T6 INSCRIPTION AWD 8AT"
+            ],
+            "V 40": [
+                "1.6 T4 COMFORT",
+                "1.6 T4 HIGH",
+                "1.6 T4 HIGH CC",
+                "1.6 T4 HIGH LUXURY",
+                "1.6 T4 HIGH PLUS",
+                "1.6 T4 HIGH PLUS CC",
+                "1.6 T4 INSCRIPTION",
+                "1.6 T4 MOMENTUM",
+                "1.6 T4 PLUS",
+                "1.6 T4 PLUS CC",
+                "1.6 T4 R-RACING",
+                "2.0 T4 CROSS COUNTRY 8AT AWD"
+            ],
+            "XC70": [
+                "3.2 LUXURY"
+            ]
+        }
+    },
+    "SUV": {
+        "ALFA ROMEO": {
+            "159": [
+                "3.2 JTS HIGHT CA ELEGANCE"
+            ],
+            "BRERA": [
+                "COUPE 3.2 MD CA"
+            ],
+            "STELVIO": [
+                "2.0 T AWD 200CV DISTINCTIVE",
+                "2.0 T AWD 280CV SUPER Q4",
+                "2.0 T AWD 280CV VELOCE",
+                "2.9 BT RWD 510CV QUADRIFOGLIO"
+            ]
+        },
+        "AUDI": {
+            "E-TRON": [
+                "55 QUATTRO SPORTBACK"
+            ],
+            "Q 2": [
+                "1.0 TFSI SPORT 30 116CV",
+                "1.4 TFSI OFFROAD STYLE S-TRONIC",
+                "1.4 TFSI SERIE S-TRONIC",
+                "1.4 TFSI SPORT S-TRONIC",
+                "1.4 TFSI SPORT S-TRONIC 35 150CV",
+                "2.0 TFSI QUATTRO S-TRONIC 40 190CV"
+            ],
+            "Q 3": [
+                "1.4 TFSI 150CV",
+                "1.4 TFSI 150CV S-TRONIC",
+                "1.4 TFSI 150CV SPORT",
+                "1.4 TFSI 150CV SPORT S-TRONIC",
+                "1.4 TFSI 35 150CV",
+                "1.4 TFSI SPORTBACK 35 150CV",
+                "2.0 TDI QUATTRO 177CV S-TRONIC",
+                "2.0 TFSI QUATTRO 170CV",
+                "2.0 TFSI QUATTRO 170CV S-TRONIC",
+                "2.0 TFSI QUATTRO 211CV S-TRONIC",
+                "2.0 TFSI QUATTRO 220CV S-TRONIC",
+                "2.0 TFSI QUATTRO 220CV S-TRONIC S LINE",
+                "2.0 TFSI QUATTRO 40 ADVANCED",
+                "2.0 TFSI SPORTBACK QUATTRO 40 S-LINE"
+            ],
+            "Q 5": [
+                "2.0 TDI QUATTRO",
+                "2.0 TDI QUATTRO LUXURY",
+                "2.0 TDI QUATTRO LUXURY S-TRONIC",
+                "2.0 TDI QUATTRO S-TRONIC",
+                "2.0 TFSI 245CV QUATTRO OFFROAD MH 45",
+                "2.0 TFSI 245CV QUATTRO PREMIUM BLACK",
+                "2.0 TFSI 245CV QUATTRO S-TRONIC HYBRID ADVANCE 45",
+                "2.0 TFSI 245CV QUATTRO S-TRONIC HYBRID S-LINE 45",
+                "2.0 TFSI 252CV 45 OFFROAD",
+                "2.0 TFSI 252CV 45 SPORT",
+                "2.0 TFSI QUATTRO 180CV",
+                "2.0 TFSI QUATTRO 180CV S-TRONIC",
+                "2.0 TFSI QUATTRO 225CV",
+                "2.0 TFSI QUATTRO 225CV S-TRONIC",
+                "2.0 TFSI QUATTRO 252CV S-TRONIC",
+                "2.0 TFSI QUATTRO 252CV S-TRONIC SECURITY",
+                "2.0 TFSI QUATTRO LUXURY",
+                "2.0 TFSI QUATTRO LUXURY S-TRONIC",
+                "3.0 TDI V6 QUATTRO S-TRONIC",
+                "3.0 TFSI 272CV QUATTRO TIPT",
+                "3.0 TFSI 354CV QUATTRO TIPT S",
+                "3.2 FSI V6 QUATTRO S-TRONIC",
+                "Q 5 SPORTBACK"
+            ],
+            "Q 7": [
+                "3.0 TDI QUATTRO 249CV 8TIPT",
+                "3.0 TDI QUATTRO TIPT",
+                "3.0 TFSI QUATTRO 333CV 8TIPT",
+                "3.0 TFSI QUATTRO TIPT 272CV",
+                "3.0 TFSI QUATTRO TIPT 333CV",
+                "4.2 TDI QUATTRO TIPT (LN)",
+                "45 TDI QUATTRO 8TIPT S LINE",
+                "55 TFSI QUATTRO 8TIPT OFFROAD",
+                "55 TFSI QUATTRO 8TIPT S LINE"
+            ],
+            "Q 8": [
+                "3.0 TDI QUATTRO 249CV 45",
+                "3.0 TFSI QUATTRO 340CV 55",
+                "55 E-TRON",
+                "55 E-TRON SPORTBACK"
+            ],
+            "RS Q3": [
+                "2.5 TFSI QUATTRO SPORTBACK"
+            ]
+        },
+        "BAIC": {
+            "BJ40 PLUS": [
+                "2.0 T 8AT"
+            ],
+            "X25 CROSSOVER": [
+                "1",
+                "1.5"
+            ],
+            "X35 CROSSOVER": [
+                "1",
+                "1.5",
+                "1.5 T CVT FASHION",
+                "1.5 T CVT LUXURY"
+            ],
+            "X55 CROSSOVER": [
+                "1.5 T",
+                "1.5 T II",
+                "1.5 T PLUS EXECUTIVE"
+            ],
+            "X65 CROSSOVER": [
+                "2.0 T"
+            ]
+        },
+        "BMW": {
+            "IX2": [
+                "XDRIVE 30 M SPORT"
+            ],
+            "X1": [
+                "1.8 I 1.5 T 7AT SDRIVE ADVANTAGE LCI",
+                "1.8 I SDRIVE ACTIVE",
+                "1.8 I SDRIVE XLINE",
+                "2.0 D SDRIVE ACTIVE",
+                "2.0 D XDRIVE ACTIVE",
+                "2.0 I 2.0 T 7AT SDRIVE SPORTLINE LCI",
+                "2.0 I SDRIVE ACTIVE",
+                "2.0 I SDRIVE BLACK EDITION",
+                "2.0 I SDRIVE SPORT LINE",
+                "2.0 I SDRIVE XLINE",
+                "2.0 I XDRIVE EXECUTIVE",
+                "2.5 I SDRIVE XLINE",
+                "2.5 I XDRIVE XLINE",
+                "2.8 I XDRIVE EXECUTIVE"
+            ],
+            "X2": [
+                "2.0 I T SDRIVE MSPORTX",
+                "2.0 I T SDRIVE MSPORTX II",
+                "2.0 I XDRIVE M SPORT",
+                "2.0 T M35I MPA",
+                "3.0 I XDRIVE M SPORT"
+            ],
+            "X3": [
+                "2.0 D XDRIVE ACTIVE",
+                "2.0 D XDRIVE EXECUTIVE",
+                "2.0 I XDRIVE ACTIVE",
+                "2.0 I XDRIVE EXECUTIVE",
+                "2.0 I XDRIVE LCI XLINE",
+                "2.0 T XDRIVE 8AT MILDHYBRID",
+                "2.5I XDRIVE LIMITED EDITION",
+                "2.8 I XDRIVE EXECUTIVE",
+                "2.8 I XDRIVE XLINE",
+                "3.0 I XDRIVE LCI XLINE 252CV",
+                "3.0 I XDRIVE LCI XLINE 292CV",
+                "3.0 T XDRIVE 8AT MILDHYBRID M50",
+                "3.0I XDRIVE XLINE",
+                "3.5 I XDRIVE EXECUTIVE",
+                "3.5 I XDRIVE M PACKAGE",
+                "4.0I M XDRIVE",
+                "M 480CV"
+            ],
+            "X4": [
+                "2.0 T XLINE 3.0I 8AT XDRIVE",
+                "2.8I XDRIVE XLINE",
+                "3.0 M40I 8AT XDRIVE",
+                "3.0 XDRIVE MSPORT",
+                "3.5I XDRIVE M PACKAGE"
+            ],
+            "X5": [
+                "3.0 BT 40D XDRIVE M SPORT 8AT",
+                "3.0 T 35I XDRIVE EXCELLENCE 8AT",
+                "3.0 T XDRIVE XLINE 8AT",
+                "3.0D XDRIVE EXECUTIVE",
+                "3.5 I XDRIVE EXECUTIVE",
+                "3.5 I XDRIVE PURE EXCELLENCE",
+                "4.0 D XDRIVE M PAKCAGE",
+                "4.0 D XDRIVE PURE EXCELLENCE",
+                "4.0 I XDRIVE M SPORT PRO",
+                "4.4 BT 50I XDRIVE M SPORT 8AT",
+                "4.4 BT XDRIVE M 8ATM",
+                "4.4 BT XDRIVE SECURITY 8ATM",
+                "5.0 I XDRIVE M PACKAGE",
+                "5.0 I XDRIVE PREMIUM",
+                "M 555CV"
+            ],
+            "X6": [
+                "3.0 D XDRIVE SPORTIVE",
+                "3.0 T 35I XDRIVE EXTRAVAGANCE 8AT",
+                "3.5 I XDRIVE",
+                "3.5 I XDRIVE PURE EXTRAVAGANCE",
+                "4.0 I XDRIVE LCI MSPORT PRO MILD HYBRID",
+                "4.0 I XDRIVE MSPORT",
+                "4.4 BT 50I M PACKAGE 8AT",
+                "4.4 BT 50I XDRIVE M SPORT 8AT",
+                "4.4 BT XDRIVE M 8ATM",
+                "5.0 I XDRIVE M PACKAGE",
+                "5.0 I XDRIVE PREMIUM",
+                "M 555CV",
+                "M 600CV",
+                "M COMPETITION 626CV"
+            ],
+            "X7": [
+                "M50I M PERFORMANCE",
+                "M60I XDRIVE MILD HYBRID"
+            ]
+        },
+        "CHERY": {
+            "TIGGO": [
+                "1.6 COMFORT",
+                "2.0 COMFORT",
+                "2.0 LUXURY"
+            ],
+            "TIGGO 2": [
+                "1.5 COMFORT",
+                "1.5 COMFORT CVT PRO",
+                "1.5 COMFORT PRO",
+                "1.5 LUXURY",
+                "1.5 LUXURY PRO",
+                "1.5 STD PRO"
+            ],
+            "TIGGO 3": [
+                "1.6 COMFORT",
+                "1.6 COMFORT FL",
+                "1.6 LUXURY",
+                "1.6 LUXURY CVT"
+            ],
+            "TIGGO 4": [
+                "1.5 COMFORT CVT PRO",
+                "1.5 COMFORT PRO",
+                "1.5 T LUXURY CVT PRO",
+                "2.0 COMFORT",
+                "2.0 COMFORT CVT"
+            ],
+            "TIGGO 5": [
+                "2.0 COMFORT",
+                "2.0 COMFORT CVT",
+                "2.0 LUXURY",
+                "2.0 LUXURY CVT"
+            ],
+            "TIGGO 8": [
+                "1.6 T LUXURY CVT PRO ADAS"
+            ]
+        },
+        "CHEVROLET": {
+            "CAPTIVA": [
+                "2.0 DSL LT AWD",
+                "2.0 DSL LTZ AWD",
+                "2.2 DSL LT AWD",
+                "2.2 DSL LTZ AWD",
+                "2.4 LS FWD",
+                "2.4 LT AWD"
+            ],
+            "MERIVA": [
+                "1.8 GL",
+                "1.8 GL PLUS ABG",
+                "1.8 GLS"
+            ],
+            "SPIN": [
+                "1.3 DSL LTZ",
+                "1.3 DSL LTZ 7A",
+                "1.8 ACTIV 7A",
+                "1.8 LT",
+                "1.8 LT MY LINK",
+                "1.8 LTZ",
+                "1.8 LTZ 7A",
+                "1.8 LTZ ACTIV",
+                "1.8 LTZ ACTIV 7A",
+                "1.8 PREMIER 7A"
+            ],
+            "TRACKER": [
+                "1.2 T",
+                "1.2 T 6AT",
+                "1.2 T 6AT LTZ",
+                "1.2 T 6AT PREMIER",
+                "1.2 T 6AT PREMIER 170",
+                "1.2 T 6AT RS",
+                "1.8 LTZ + AWD",
+                "1.8 LTZ AWD",
+                "1.8 LTZ FWD",
+                "1.8 LTZ FWD MIDNIGHT"
+            ],
+            "TRAILBLAZER": [
+                "2.8 CTDI LT",
+                "2.8 CTDI LTZ",
+                "2.8 CTDI LTZ 7A 6AT",
+                "2.8 TD PREMIER 7A 6AT"
+            ],
+            "ZAFIRA": [
+                "VAN 2.0 16V GLS II",
+                "VAN 2.0 8V GL II"
+            ]
+        },
+        "CHRYSLER": {
+            "TOWN & COUNTRY": [
+                "VAN 3.8 LTD ATX T/C DVD"
+            ],
+            "38": [
+                "VAN 3.6 LTD ATX FULL"
+            ]
+        },
+        "CITROEN": {
+            "C 3 AIRCROSS": [
+                "1.5 90 LIVE",
+                "1.6 115 FEEL",
+                "1.6 115 FEEL 6AT",
+                "1.6 115 LIVE",
+                "1.6 115 SHINE",
+                "1.6 115 SHINE 6AT",
+                "1.6 115 SHINE W",
+                "1.6 16V",
+                "1.6 16V EXCLUSIVE",
+                "1.6 16V EXCLUSIVE PACK MY WAY",
+                "1.6 16V SEGURIDAD",
+                "1.6 16V SX",
+                "1.6 16V SX HIGH TECH",
+                "1.6 VTI 115 EXCLUSIVE",
+                "1.6 VTI 115 EXCLUSIVE PACK MY WAY",
+                "1.6 VTI 115 TENDANCE",
+                "1.6 VTI 115 URBAN EDITION",
+                "1.6 VTI FEEL PK",
+                "1.6 VTI LIVE",
+                "T200 FEEL 7P",
+                "T200 FEEL PK",
+                "T200 SHINE CVT",
+                "T200 SHINE CVT 7P",
+                "T200 SHINE CVT 7P BITONO",
+                "T200 SHINE CVT BITONO"
+            ],
+            "C 3 PICASSO": [
+                "1.5 I 90 ORIGINE",
+                "1.6 16V",
+                "1.6 16V EXCLUSIVE",
+                "1.6 16V EXCLUSIVE PACK MY WAY",
+                "1.6 16V SX",
+                "1.6 VTI 115 EXCLUSIVE",
+                "1.6 VTI 115 EXCLUSIVE PACK MY WAY",
+                "1.6 VTI 115 TENDANCE"
+            ],
+            "C 4 AIRCROSS": [
+                "2.0 I TENDANCE 150",
+                "2.0 I TENDANCE 150 CVT"
+            ],
+            "C 4 PICASSO": [
+                "VAN 1.6 HDI ORIGINE",
+                "VAN 1.6 HDI TENDANCE",
+                "VAN 1.6 THP 6AT FEEL",
+                "VAN 1.6 THP 6AT FEEL PACK",
+                "VAN 2.0 I BVA TENDANCE",
+                "VAV 1.6 HDI FEEL",
+                "VAV 1.6 HDI FEEL PACK"
+            ],
+            "C 4 GRAND PICASSO": [
+                "VAN 1.6 HDI",
+                "VAN 1.6 HDI SHINE",
+                "VAN 1.6 HDI TENDANCE PACK",
+                "VAN 1.6 THP 6AT FEEL PACK",
+                "VAN 1.6 THP 6AT SHINE",
+                "VAN 2.0 I BVA"
+            ],
+            "C 5 AIRCROSS": [
+                "1.6 HDI 92 FEEL",
+                "1.6 THP 165CV E6AT FELL PACK",
+                "1.6 VTI 115 6AT SHINE",
+                "1.6 VTI 115 FELL",
+                "1.6 VTI 115 FELL AM18",
+                "1.6 VTI 115 LIVE",
+                "C-ELYSÉE"
+            ],
+            "XSARA PICASSO": [
+                "1.6 I 16V",
+                "1.6 I 16V EXCLUSIVE",
+                "1.8 CVT 7A",
+                "2.0 16V EXCLUSIVE CRO",
+                "2.0 HDI EXCLUSIVE"
+            ]
+        },
+        "DODGE": {
+            "JOURNEY": [
+                "2.4 SE 2F",
+                "2.4 SE 3F",
+                "2.4 SXT 2F",
+                "2.4 SXT 2F T/C",
+                "2.4 SXT 3F",
+                "2.4 SXT 3F 6AT T/C DVD",
+                "2.4 SXT 3F DVD",
+                "2.4 SXT 3F T/C DVD",
+                "2.7 RT 3F T/C",
+                "3.6 RT ATX AWD"
+            ]
+        },
+        "FIAT": {
+            "500 X": [
+                "1.4 T CROSS 9AT"
+            ],
+            "FASTBACK": [
+                "1.3 TURBO 270 AT6",
+                "1.3 TURBO 270 AT6 ABARTH"
+            ],
+            "PULSE": [
+                "1.0 T AUDACE CVT",
+                "1.0 T IMPETUS CVT",
+                "1.3 DRIVE GSE",
+                "1.3 DRIVE GSE CVT",
+                "270 TURBO ABARTH 6AT"
+            ]
+        },
+        "FORD": {
+            "BRONCO SPORT": [
+                "1.5 8AT BIG BEND",
+                "2.0 8AT WILDTRAK",
+                "2.7 BT 10AT WILDTRAK"
+            ],
+            "ECOSPORT": [
+                "1.4 TDCI XL PLUS",
+                "1.4 TDCI XLS",
+                "1.6 XL PLUS",
+                "1.6 XLS",
+                "1.6 XLS PLUS",
+                "1.6 XLT",
+                "1.6 XLT PLUS",
+                "2.0 XLS",
+                "2.0 XLT PLUS",
+                "2.0 XLT PLUS CRO"
+            ],
+            "ECOSPORT KINETIC DESIGN ATTRACTION": [
+                "1.5 FREESTYLE",
+                "1.5 S",
+                "1.5 SE",
+                "1.5 TDCI S",
+                "1.5 TDCI SE",
+                "1.5 TITANIUM",
+                "1.6 FREESTYLE",
+                "1.6 S",
+                "1.6 SE",
+                "1.6 TITANIUM",
+                "2.0 FREESTYLE",
+                "2.0 SE",
+                "2.0 STORM 6AT AWD",
+                "2.0 TITANIUM"
+            ],
+            "KA": [
+                "1.6 PULSE",
+                "1.6 PULSE TOP"
+            ],
+            "KUGA": [
+                "1.6 SEL",
+                "1.6 TITANIUM",
+                "2.0 T SEL 6AT",
+                "2.0 T TITANIUM 6AT",
+                "2.5 HIBRIDO PLATINUM CVT",
+                "2.5 HIBRIDO SE CVT",
+                "2.5 HIBRIDO TITANIUM CVT",
+                "2.5 TITANIUM",
+                "2.5 TITANIUM L",
+                "2.5 TITANIUM L FULL",
+                "2.5 TREND"
+            ],
+            "TERRITORY": [
+                "1.5 T CVT SEL",
+                "1.5 T CVT TITANIUM",
+                "1.8 T AT7 SEL",
+                "1.8 T AT7 TITANIUM"
+            ]
+        },
+        "GEELY": {
+            "EMGRAND X7": [
+                "2.4 GT EXECUTIVE"
+            ]
+        },
+        "GREAT WALL": {
+            "POER": [
+                "D/C 2.0 TD 8AT LUXURY"
+            ]
+        },
+        "HAVAL": {
+            "H 1": [
+                "1.5 COMFORT",
+                "1.5 ELITE",
+                "1.5 LUXURY"
+            ],
+            "H 2": [
+                "1.5 T COMFORT",
+                "1.5 T LUXURY"
+            ],
+            "H 6": [
+                "2.0 T 7AT 3° GENERACION",
+                "2.0 T 7AT ALL NEW",
+                "2.0 T 7AT GT",
+                "2.0 T DIGNITY"
+            ],
+            "JOLION": [
+                "1.5 DTC 7AT SUPREME"
+            ]
+        },
+        "HONDA": {
+            "ACCORD": [
+                "2.4 EXL 2008",
+                "3.5 V6 EX 2008"
+            ],
+            "CR-V": [
+                "1.5 T EX CVT",
+                "1.5 T EXL AWD CVT",
+                "1.5 T EXT AWD 7CVT",
+                "1.5 T EXT AWD CVT",
+                "1.5 T LX CVT",
+                "2.0 ADVANCED HYBRID AWD",
+                "2.4 EX",
+                "2.4 EX CVT",
+                "2.4 EX L",
+                "2.4 LX",
+                "2.4 LX CVT",
+                "2.4 NEW ACTIVE",
+                "2.4 NEW EX",
+                "2.4 NEW EX L",
+                "2.4 NEW LX"
+            ],
+            "HR-V": [
+                "1.5 EXL CVT",
+                "1.5 LX CVT",
+                "1.8 EX CVT",
+                "1.8 EX L CVT",
+                "1.8 LX",
+                "1.8 LX CVT"
+            ],
+            "PILOT": [
+                "3.5 V6 8A",
+                "3.5 V6 8A EX",
+                "3.5 V6 8A TOURING AWD"
+            ],
+            "WR-V": [
+                "1.5 EX CVT",
+                "1.5 EXL CVT"
+            ],
+            "ZR-V": [
+                "2.0 CVT LX",
+                "2.0 CVT TRG"
+            ]
+        },
+        "HYUNDAI": {
+            "CRETA": [
+                "1. GL",
+                "1. GL CONNECT",
+                "1.5 CVT SAFETY + NEW",
+                "1.5 CVT SAFETY NEW",
+                "1.6 6AT SAFETY",
+                "1.6 6AT SAFETY +",
+                "1.6 6AT STYLE",
+                "1.6 EDICION WORLD CUP",
+                "1.6 GL",
+                "1.6 GL CONNECT"
+            ],
+            "ELANTRA": [
+                "1.8 GLS FULL PREMIUM"
+            ],
+            "GRAND I 10": [
+                "1.2 GLS"
+            ],
+            "GRAND SANTA FE": [
+                "2.2 CRDI GLS 7A 6AT FULL",
+                "2.2 CRDI GLS 7A 6AT FULL PREMIUM",
+                "2.2 CRDI GLS 7A 6AT FULL PREMIUM GPS",
+                "3.3 GLS 7A 6AT FULL",
+                "3.3 GLS 7A 6AT FULL PREMIUM",
+                "3.3 GLS 7A 6AT FULL PREMIUM GPS"
+            ],
+            "I 10": [
+                "1.2 GLS"
+            ],
+            "I 30": [
+                "1.4 GLS FULL SEG",
+                "1.6 GLS FULL SEG",
+                "1.6 GLS FULL SEG PREMIUM",
+                "1.8 6AT GLS FULL SEG",
+                "1.8 6AT GLS FULL SEG PREMIUM",
+                "1.8 GLS FULL SEG",
+                "1.8 GLS FULL SEG PREMIUM",
+                "2.0 GLS FULL SEG PREMIUM"
+            ],
+            "KONA": [
+                "1.6 T GDI 7AT SAFETY PLUS",
+                "1.6 T GDI 7AT STYLE",
+                "1.6 T GDI 7AT ULTIMATE"
+            ],
+            "SANTA FE": [
+                "2.2 GLS CRDI 8AT 7P",
+                "2.2 GLS CRDI FULL 7P",
+                "2.2 GLS CRDI FULL 7P PREMIUM",
+                "2.2 GLS CRDI FULL 7P PREMIUM 6AT",
+                "2.2 GLS CRDI FULL 7P PREMIUM 6AT CHAPELCO",
+                "2.2 GLS CRDI FULL PREMIUM",
+                "2.4 GL 6AT 7P",
+                "2.4 GL 7P",
+                "2.4 GLS 6AT 7P PREMIUM",
+                "2.4 GLS 7P",
+                "2.4 GLS 7P PREMIUM",
+                "2.4 GLS FULL 7P",
+                "2.4 GLS FULL 7P PREMIUM",
+                "2.4 GLS FULL PREMIUM"
+            ],
+            "TUCSON": [
+                "1.6 T 7AT ULTIMATE",
+                "1.6 T FULL PREMIUM NEW",
+                "1.6 T GDI 6AT DCT FULL PREMIUM",
+                "2.0 6AT H MATIC FULL PREMIUM",
+                "2.0 6AT PANORAMA SUNROOF",
+                "2.0 6AT SAFETY",
+                "2.0 CRDI GLS FULL",
+                "2.0 FULL PREMIUM NEW",
+                "2.0 GL",
+                "2.0 GL 6AT",
+                "2.0 GLS",
+                "2.0 GLS 6AT",
+                "2.0 GLS FULL",
+                "2.0 GLS FULL PREMIUM",
+                "2.0 NEW",
+                "2.0 NEW SUNROOF",
+                "2.0 STYLE",
+                "2.0 STYLE 6AT",
+                "2.0 TD 6AT FULL PREMIUM",
+                "2.0 TD FULL PREMIUM NEW"
+            ],
+            "VERACRUZ": [
+                "3.0 V6 DSL GLS 7P FULL PREMIUM",
+                "3.8 V6 GLS 7P FULL PREMIUM"
+            ]
+        },
+        "JEEP": {
+            "CHEROKEE": [
+                "2.8 CRD SPORT",
+                "3.2 V6 9AT TRAILHAWK",
+                "3.7 LIMITED",
+                "3.7 SPORT"
+            ],
+            "CHEROKEE GRAND": [
+                "3.0 CRD LIMITED",
+                "3.6 LIMITED 8AT AWD",
+                "3.6 LIMITED 8ATX",
+                "3.6 LIMITED ATX",
+                "3.6 V6 OVERLAND 8AT AWD",
+                "3.6 V6 OVERLAND 8ATX",
+                "3.6 V6 OVERLAND ATX",
+                "4.7 V8 LIMITED SCV (LN)",
+                "5.7 LIMITED OVERLAND",
+                "6.1 SRT8 ATX",
+                "6.4 V8 SRT 8AT AWD HEMI",
+                "6.4 V8 SRT 8ATX HEMI"
+            ],
+            "COMMANDER": [
+                "1.3 T 6AT FWD LIMITED",
+                "2.0 TD AT9 LIMITED",
+                "2.0 TD AT9 OVERLAND"
+            ],
+            "COMPASS": [
+                "1.3 T 6AT LIMITED",
+                "1.3 T 6AT LIMITED PLUS",
+                "1.3 T 6AT LONGITUDE",
+                "1.3 T 6AT LONGITUDE PLUS",
+                "1.3 T 6AT SERIE-S FWD",
+                "1.3 T 6AT SPORT",
+                "2.0 TD 350 AT9 TRAILHAWK",
+                "2.0 TD AT9 TRAILHAWK",
+                "2.4 6AT LONGITUDE FWD",
+                "2.4 6AT SPORT FWD",
+                "2.4 AT9 LIMITED",
+                "2.4 AT9 LIMITED PLUS",
+                "2.4 AT9 LONGITUDE",
+                "2.4 AT9 LONGITUDE PLUS",
+                "2.4 LIMITED CVT T/C",
+                "2.4 LIMITED CVT T/C (LN)",
+                "2.4 LIMITED MTX T/C",
+                "2.4 SPORT",
+                "2.4 SPORT ATX"
+            ],
+            "GLADIATOR PICK-UP": [
+                "D/C 3.6 8AT OVERLAND",
+                "D/C 3.6 8AT RUBICON"
+            ],
+            "PATRIOT": [
+                "2.0 SPORT MTX",
+                "2.4 SPORT ATX",
+                "2.4 SPORT MTX"
+            ],
+            "RENEGADE": [
+                "1.3 T 6AT LONGITUDE",
+                "1.3 T 6AT SERIE-S FWD",
+                "1.3 T AT9 TRAILHAWK",
+                "1.8 6AT ANNIVERSARY",
+                "1.8 6AT LONGITUDE",
+                "1.8 6AT SPORT",
+                "1.8 6AT SPORT PLUS",
+                "1.8 SPORT",
+                "1.8 SPORT PLUS",
+                "2.0 AT9 TRAILHAWK",
+                "2.4 AT9 LONGITUDE"
+            ],
+            "WRANGLER": [
+                "2.0 8AT UNLIMITED RUBICOM",
+                "3.6 RUBICOM 5AT AWD DT",
+                "3.6 SPORT 5AT AWD DT",
+                "3.6 SPORT 5AT AWD HT",
+                "3.6 SPORT 5AT UNLIMITED AWD DT",
+                "3.6 SPORT 5AT UNLIMITED AWD HT",
+                "3.6 V6 8AT RUBICOM",
+                "3.6 V6 8AT RUBICOM UNLIMITED",
+                "3.6 V6 8AT SAHARA OVERLAND",
+                "3.6 V6 RUBICOM ATX",
+                "3.6 V6 SPORT AMTX",
+                "3.6 V6 SPORT MTX",
+                "3.6 V6 UNLIMITED MTX",
+                "3.8 MOUNTAIN MTX",
+                "3.8 SPORT ATX UNLIMITED",
+                "3.8 SPORT ATX UNLIMITED (LN)",
+                "3.8 SPORT MTX",
+                "3.8 SPORT MTX UNLIMITED",
+                "3.8 SPORT MTX UNLIMITED (LN)"
+            ]
+        },
+        "KIA": {
+            "CARNIVAL": [
+                "VAN 2.2 CRDI 6AT 11P PREMIUM",
+                "VAN 2.2 CRDI 8AT 11P",
+                "VAN 2.2 CRDI 8AT 11P EX",
+                "VAN 2.2 CRDI 8AT 11P PREMIUM",
+                "VAN 2.2 CRDI 8AT 11P PREMIUM T/C",
+                "VAN 2.2 CRDI 8AT 11P SX",
+                "VAN 2.2 DSL 6AT 11P FULL",
+                "VAN 2.2 DSL 6AT 11P PREMIUM"
+            ],
+            "CARNIVAL GRAND": [
+                "VAN 2.9 CRDI EX ESP",
+                "VAN 3.5 EX ESP"
+            ],
+            "CERATO": [
+                "1.6",
+                "1.6 EX 6VEL",
+                "1.6 EX FORTE",
+                "1.6 EX FORTE FULL",
+                "1.6 EX FORTE PREMIUM",
+                "1.6 GT",
+                "2.0",
+                "2.0 EX",
+                "2.0 EX FORTE",
+                "2.0 EX FORTE ELEGANCE",
+                "2.0 EX FORTE PREMIUM",
+                "2.0 SX",
+                "2.0 SX GT LINE",
+                "2.0 SX PLUS",
+                "KOUP 1.6 EX",
+                "KOUP 2.0 ELX"
+            ],
+            "MOHAVE": [
+                "3.8 V6 EX"
+            ],
+            "RONDO": [
+                "VAN 2.0 CRDI FULL 7A",
+                "VAN 2.0 CRDI STD 7A"
+            ],
+            "SELTOS": [
+                "1.5 LX CVT",
+                "1.6 EX",
+                "1.6 LX"
+            ],
+            "SORENTO": [
+                "2.2 CRDI EX",
+                "2.2 CRDI EX 8AT",
+                "2.2 CRDI GT 8AT",
+                "2.2 CRDI SX 8AT DCT",
+                "2.2 DSL EX FULL",
+                "2.2 DSL EX PREMIUM",
+                "2.2 DSL EX PREMIUM 6AT",
+                "2.4 EX",
+                "2.4 EX 6AT",
+                "2.4 EX FULL",
+                "2.4 EX FULL NEW",
+                "2.4 EX PREMIUM"
+            ],
+            "SPORTAGE": [
+                "1.6 T-GDI E-LINE AWD 7AT",
+                "1.6 T-GDI EX 7AT",
+                "2.0 CRDI EX",
+                "2.0 CRDI EX AVN",
+                "2.0 CRDI EX GT-LINE",
+                "2.0 EX",
+                "2.0 EX 6AT",
+                "2.0 EX 6AT PREMIUM",
+                "2.0 SX"
+            ]
+        },
+        "LAND ROVER": {
+            "DEFENDER": [
+                "110 2.0 T P400E HSE X-DYNAMIC 8AT HÍBIRDO",
+                "110 2.2 TD EDICIÓN DE COLECCIÓN",
+                "110 SW 2.4 5S",
+                "110 SW 2.4 7S",
+                "110 SW 2.4 7S M",
+                "110 SW 2.4 7S PLUS"
+            ],
+            "DISCOVERY": [
+                "2.0 T SPORT HSE",
+                "2.0 T SPORT HSE BLACK",
+                "2.0 T SPORT S",
+                "2.0 T SPORT SE",
+                "2.2 DSL SPORT HSE",
+                "3.0 SD V6 BLACK EDITION",
+                "3.0 V6 T DIESEL 8AT HSE 5 ALL-NEW",
+                "3.0 V6 T NAFTA 8AT HSE 5 ALL-NEW",
+                "4 2.7 TD V6 HSE",
+                "4 2.7 TD V6 SE",
+                "4 2.7 TD V6 SE PLUS",
+                "4 3.0 SD V6 HSE",
+                "4 3.0 TD V6 HSE",
+                "4 HSE"
+            ],
+            "EVOQUE": [
+                "2.0 T BLACK EDITION",
+                "2.0 T DYNAMIC PLUS",
+                "2.0 T HSE 9AT",
+                "2.0 T PRESTIGE",
+                "2.0 T PRESTIGE PLUS",
+                "2.0 T PURE",
+                "2.0 T PURE COUPE",
+                "2.0 T PURE PLUS",
+                "2.0 T SE 9AT",
+                "2.0 T SE PLUS PURE 9AT",
+                "2.2 D HSE",
+                "2.2 D PRESTIGE",
+                "CONV 2.0 T HSE DYNAMIC 9AT",
+                "COUPE 2.0 T HSE DYNAMIC 9AT"
+            ],
+            "FREELANDER": [
+                "2 2.0 HSE",
+                "2 2.0 S PLUS",
+                "2 2.2 TD4 S",
+                "2 2.2 TD4 S PLUS",
+                "2 3.2 I6 HSE",
+                "2 3.2 I6 S",
+                "2 3.2 I6 S PLUS",
+                "2.2.2 TD4 SE"
+            ],
+            "RANGE ROVER": [
+                "3.0 SC HSE SPORT",
+                "3.0 SDV6 HSE",
+                "3.0 SDV6 HSE SPORT",
+                "3.0 TDV6 HSE SPORT",
+                "3.0 TDV6 HSE SPORT SURROUND",
+                "3.6 TDV8 HSE",
+                "4.4 TDV8 HSE",
+                "5.0 SC HSE DYNAMIC",
+                "5.0 SUPERCHARGED",
+                "5.0 V8 HSE SPORT",
+                "5.0 V8 SC",
+                "5.0 V8 SC SPORT"
+            ],
+            "RANGE ROVER EVOQUE": [
+                "2.0 T HIBRIDO 9AT HST",
+                "2.0 T HIBRIDO 9AT SE",
+                "2.0 T HIBRIDO 9AT SE R-DYNAMIC"
+            ],
+            "RANGE ROVER SE VOGUE": [
+                "4.4 SDV8",
+                "5.0 SCV8"
+            ],
+            "RANGE ROVER VELAR": [
+                "2.0 T 250HP R-DYNAMIC 8AT",
+                "2.0 T 250HP S + 8AT",
+                "2.0 T 250HP S 8AT",
+                "2.0 T 300HP S + 8AT",
+                "2.0 TD 240HP S 8AT",
+                "3.0 V6 380HP S/RECARGADO R-DYNAMIC 8AT"
+            ]
+        },
+        "LEXUS": {
+            "LX": [
+                "3.5 V6 BT 10AT 600 URBAN",
+                "5.6 V8 8AT 570"
+            ],
+            "NX": [
+                "2.0 T 300H F-SPORT (NAFTA) CVT",
+                "2.5 300H LUXURY (HV) CVT"
+            ],
+            "X 50": [
+                "1.5"
+            ],
+            "X 60": [
+                "1.8"
+            ],
+            "X 70": [
+                "2.0",
+                "2.0 CVT"
+            ]
+        },
+        "MASERATI": {
+            "LEVANTE": [
+                "3.0 V6 BT 350CV 8AT",
+                "3.0 V6 BT 350CV 8AT Q4",
+                "3.0 V6 BT 430CV 8AT Q4 S",
+                "3.0 V6 BT 430CV 8AT S"
+            ]
+        },
+        "MERCEDES BENZ": {
+            "GLA 45": [
+                "2.0 T 4MATIC AMG"
+            ],
+            "GLA 200": [
+                "1.3 T 163CV PROGRESSIVE 7AT",
+                "1.6 URBAN",
+                "1.6 URBAN NE"
+            ],
+            "GLA 250": [
+                "2.0 AMG-LINE",
+                "2.0 T 224CV 4MATIC AMG-LINE 8AT",
+                "2.0 URBAN 4MATIC"
+            ],
+            "GLC 43": [
+                "3.0 V6 BT 4MATIC AMG",
+                "COUPE 3.0 V6 BT 4MATIC AMG"
+            ],
+            "GLC 63": [
+                "COUPE S 4MATIC AMG 510CV",
+                "S 4MATIC AMG 510CV"
+            ],
+            "GLC 300": [
+                "2.0 4MATIC",
+                "2.0 4MATIC AMG-LINE",
+                "2.0 4MATIC AMG-LINE COUPE",
+                "2.0 4MATIC AMG-LINE COUPE LL 20",
+                "2.0 4MATIC URBAN",
+                "2.0 4MATIC URBAN NE",
+                "2.0 T 4MATIC AMG-LINE 9AT MHEV COUPE",
+                "2.0 T 4MATIC OFF-ROAD 9AT MHEV COUPE",
+                "4MATIC AMG-LINE COUPE FL",
+                "4MATIC FL"
+            ],
+            "GLC 350E": [
+                "2.0 4MATIC URBAN"
+            ],
+            "GLE 53": [
+                "COUPE 435CV 4MATIC +"
+            ],
+            "GLE 63 S": [
+                "5.5 V8 BT 4MATIC AMG 510CV",
+                "COUPE 5.5 V8 BT 4MATIC AMG 510CV",
+                "COUPE 5.5 V8 BT 4MATIC AMG 585CV"
+            ],
+            "GLE 400": [
+                "4MATIC SPORT",
+                "4MATIC SPORT NE",
+                "COUPE 4MATIC SPORT"
+            ],
+            "GLE 450": [
+                "4MATIC AMG LINE 367CV"
+            ],
+            "GLE 500": [
+                "4MATIC GUARD"
+            ],
+            "GLK 300": [
+                "3.0 V6 CITY",
+                "3.0 V6 SPORT",
+                "BLUEEFFICIENCY 4MATIC",
+                "BLUEEFFICIENCY SPORT 4MATIC"
+            ],
+            "GLS 500": [
+                "4MATIC AMG-LINE 455CV"
+            ]
+        },
+        "MINICOOPER": {
+            "COUNTRYMAN": [
+                "1.5 T 136CV CLASSIC 7AT",
+                "1.5 T PEPPER",
+                "1.6 CHILI S",
+                "1.6 CHILI SD",
+                "1.6 COOPER",
+                "1.6 COOPER S",
+                "1.6 JOHN COOPER WORKS",
+                "1.6 ONE",
+                "1.6 PEPPER",
+                "1.6 PEPPER S",
+                "1.6 PEPPER SD",
+                "1.6 S ALL 4 CHILI",
+                "156CV C CLASSIC",
+                "2.0 T 192CV CLASSIC CONFORT S 7AT",
+                "2.0 T 306CV JOHN COOPER WORKS 8AT",
+                "2.0 T CHILI S",
+                "2.0 T CHILI S ALL 4",
+                "204CV S ALL4 CLASSIC CONFORD",
+                "204CV S ALL4 FAVOURED"
+            ]
+        },
+        "MITSUBISHI": {
+            "MONTERO": [
+                "3.2 DI-D GLS",
+                "3.2 DI-D GLS SPORT"
+            ],
+            "OUTLANDER": [
+                "2.0 GLS SPORT",
+                "2.0 GLX",
+                "2.4 GLS 6CVT CT 7A",
+                "2.4 GLS T/C",
+                "2.4 GLS T/C FULL CRO",
+                "2.5 6CVT",
+                "3.0 GLS T/C FULL CRO"
+            ]
+        },
+        "NISSAN": {
+            "KICKS": [
+                "1.6 ADVANCE",
+                "1.6 ADVANCE CVT",
+                "1.6 ADVANCE CVT PLUS",
+                "1.6 ADVANCE CVT UCL",
+                "1.6 EDITION CVT",
+                "1.6 EXCLUSIVE CVT",
+                "1.6 EXCLUSIVE CVT TBT",
+                "1.6 SENSE",
+                "1.6 SPECIAL EDITION CVT",
+                "1.6 UCL LIMITED EDITION CVT",
+                "1.6 X-PLAY",
+                "1.6 X-PLAY-III"
+            ],
+            "XTRAIL": [
+                "1.5 E-POWER CVT",
+                "2.5 ACENTA",
+                "2.5 ADVANCE 7CVT",
+                "2.5 EXCLUSIVE 7CVT",
+                "2.5 EXCLUSIVE CVT",
+                "2.5 TEKNA CVT",
+                "2.5 VISIA"
+            ]
+        },
+        "PEUGEOT": {
+            "2008": [
+                "1.6 ACTIVE",
+                "1.6 ALLURE",
+                "1.6 ALLURE TIPT6",
+                "1.6 CROSSWAY",
+                "1.6 FELINE",
+                "1.6 FELINE TIPT6",
+                "1.6 FELINE TIPT6 T/C",
+                "1.6 THP SPORT",
+                "1.6 THP SPORT TIPT6",
+                "T200 CVT ACTIVE",
+                "T200 CVT ALLURE",
+                "T200 CVT GT"
+            ],
+            "3008": [
+                "1.6 ALLURE",
+                "1.6 ALLURE TIPT",
+                "1.6 FELINE",
+                "1.6 FELINE TIPT",
+                "1.6 HDI FELINE TIPT",
+                "1.6 PREMIUM",
+                "1.6 PREMIUM PLUS",
+                "1.6 THP ALLURE 6AT",
+                "1.6 THP GT LINE 6AT",
+                "1.6 THP GT PACK 6AT",
+                "1.6 THP GT PACK 8AT HYBRID4 AWD WALLBOX",
+                "1.6 THP ROLAND GARROS",
+                "2.0 HDI GT LINE 6AT",
+                "2.0 HDI GT PACK 8AT"
+            ],
+            "4008": [
+                "2.0 16V ALLURE",
+                "2.0 16V ALLURE CVT",
+                "2.0 16V FELINE CVT"
+            ],
+            "5008": [
+                "1.6 ALLURE 7A",
+                "1.6 ALLURE 7A PLUS",
+                "1.6 ALLURE 7A TIPT",
+                "1.6 FELINE TIPT",
+                "1.6 FELINE TIPT B/TECHO",
+                "1.6 THP ALLURE PLUS TIPT",
+                "1.6 THP ALLURE TIPT",
+                "2.0 HDI ALLURE PLUS 8AT",
+                "2.0 HDI ALLURE PLUS TIPT"
+            ]
+        },
+        "PORSCHE": {
+            "CAYENNE": [
+                "2.9 V6 BT S",
+                "2.9 V6 BT S PLATINUM EDITION",
+                "3.0 V6",
+                "3.0 V6 DIESEL TIPT",
+                "3.0 V6 S HYBRID",
+                "3.6 V6 300CV TIPT",
+                "3.6 V6 300CV TIPT PLATINUM EDITION",
+                "3.6 V6 BT 420CV TIPT S",
+                "3.6 V6 TIPT",
+                "4.0 V8 BT",
+                "CAYENNE",
+                "CAYENNE S",
+                "E-HYBRID",
+                "E-HYBRID PLATINUM EDITION",
+                "E-HYBRID S",
+                "GTS",
+                "PLATINUM EDITION",
+                "TURBO",
+                "TURBO E-HYBRID",
+                "TURBO E-HYBRID S",
+                "TURBO GT",
+                "TURBO S"
+            ],
+            "CAYENNE COUPE": [
+                "2.9 V6 BT S 8AT",
+                "2.9 V6 BT S 8AT PLATINUM EDITION",
+                "3.0 V6 TURBO 8AT",
+                "4.0 V8 BT 8AT",
+                "CAYENNE",
+                "CAYENNE S",
+                "E-HYBRID",
+                "E-HYBRID PLATINUM EDITION",
+                "E-HYBRID S",
+                "GTS",
+                "PLATINUM EDITION",
+                "TURBO E-HYBRID",
+                "TURBO GT",
+                "TURBO S E-HYBRID"
+            ],
+            "MACAN": [
+                "2.0 T 252CV",
+                "2.9 380CV GTS",
+                "2.9 440CV TURBO",
+                "2.9 V6 BT 380CV GTS",
+                "3.0 V6 TURBO 354CV S",
+                "4 ELECTRIC",
+                "4 ELECTRIC TURBO",
+                "4 S ELECTRIC",
+                "ELECTRIC",
+                "S 3.0 V6 BT 354CV 7AT",
+                "S 3.0 V6 BT 400CV",
+                "S 3.0 V6 BT S 340CV",
+                "S 3.0 V6 TD GTS 258CV",
+                "T"
+            ]
+        },
+        "RENAULT": {
+            "CAPTUR": [
+                "1.6 INTENS CVT",
+                "1.6 INTENS CVT 1TONE",
+                "1.6 INTENS CVT BOSE",
+                "1.6 INTENS CVT SL",
+                "1.6 LE COP SPORTIF CVT",
+                "1.6 LIFE",
+                "2.0 INTENS",
+                "2.0 ZEN"
+            ],
+            "DUSTER": [
+                "1.3 T ICONIC",
+                "1.3 T ICONIC CVT",
+                "1.3 T OUTSIDER CVT",
+                "1.6 CONFORT",
+                "1.6 DAKAR",
+                "1.6 DYNAMIQUE",
+                "1.6 EXPRESSION",
+                "1.6 INTENS CVT",
+                "1.6 PRIVILEGE",
+                "1.6 TECH ROAD",
+                "1.6 ZEN",
+                "2.0 DAKAR",
+                "2.0 LOS PUMAS",
+                "2.0 LUXE",
+                "2.0 PRIVILEGE",
+                "2.0 TECH ROAD"
+            ],
+            "KARDIAN": [
+                "1.0 T AT6 EVOLUTION",
+                "1.0 T AT6 PREMIERE EDITION",
+                "1.0 T AT6 TECHNO",
+                "1.6 EVOLUTION"
+            ],
+            "KOLEOS": [
+                "2.5 DYNAMIQUE",
+                "2.5 DYNAMIQUE CLIMA",
+                "2.5 EXPRESSION",
+                "2.5 INTENS CVT",
+                "2.5 INTENS CVT X TRONIC",
+                "2.5 PRIVILEGE",
+                "2.5 ZEN CVT"
+            ],
+            "SANDERO STEPWAY": [
+                "1.5 DCI CONFORT",
+                "1.6 16V AUTH",
+                "1.6 16V C.A.B",
+                "1.6 16V CONFORT",
+                "1.6 16V DYNAMIQUE",
+                "1.6 16V EXPRESSION",
+                "1.6 16V INTENS CVT",
+                "1.6 16V INTENS PH2",
+                "1.6 16V INTENS SL",
+                "1.6 16V LUXE",
+                "1.6 16V PRIVILEGE",
+                "1.6 16V PRIVILEGE NAV",
+                "1.6 16V PRIVILEGE PLUS",
+                "1.6 16V RIP CURL",
+                "1.6 16V SERIE LIMITADA",
+                "1.6 16V SL TWEED",
+                "1.6 16V VOLCOM",
+                "1.6 16V ZEN",
+                "1.6 16V ZEN PH2"
+            ]
+        },
+        "SSANGYONG": {
+            "KORANDO": [
+                "FULL EQUIP II"
+            ]
+        },
+        "SUBARU": {
+            "FORESTER": [
+                "2.0 X AWD",
+                "2.0 XS AWD",
+                "2.0 XS AWD LIMITED",
+                "2.5 XT AWD TURBO"
+            ],
+            "FORESTER ALL NEW": [
+                "2.0 AWD CVT DYNAMIC",
+                "2.0 I AWD CVT SI DRIVE XS",
+                "2.0 I AWD CVT XS",
+                "2.0 I AWD X",
+                "2.0 XT AWD CVT SI DRIVE TURBO",
+                "2.5 AWD CVT DYNAMIC EYESIGHT",
+                "2.5 AWD CVT LIMITED SPORT ES",
+                "2.5 I AWD CVT SI DRIVE DYNAMIC",
+                "2.5 I AWD CVT SI DRIVE DYNAMIC SPORT",
+                "2.5 I AWD CVT SI DRIVE LIMITED SPORT",
+                "2.5 I AWD CVT SI DRIVE XS"
+            ],
+            "OUTBACK": [
+                "2.5 AWD 5AT SI DRIVE",
+                "2.5 AWD CVT LIMITED",
+                "2.5 AWD CVT LIMITED TECH",
+                "2.5 AWD CVT XA",
+                "2.5 AWD CVT XS",
+                "2.5 AWD XS",
+                "2.5 I AWD CVT LIMITED",
+                "2.5 R AWD CVT LIMITED ES EYESIGHT",
+                "3.6 R AWD CVT EYESIGHT",
+                "3.6 R AWD CVT LIMITED"
+            ]
+        },
+        "SUZUKI": {
+            "GRAND VITARA": [
+                "1.5 GLX",
+                "1.5 GLX BITONO",
+                "2.0 JIII",
+                "2.4 JIII",
+                "2.4 JX",
+                "2.4 JXL"
+            ],
+            "VITARA": [
+                "1.6 16V GL",
+                "1.6 16V GL 6AT",
+                "1.6 16V GL PLUS ALLGRIP 6AT",
+                "1.6 16V GLX SR ALLGRIP 6AT"
+            ]
+        },
+        "TOYOTA": {
+            "C-HR": [
+                "1.8 HV HIBRIDO ECVT"
+            ],
+            "COROLLA CROSS": [
+                "2.0 GR-SPORT CVT",
+                "2.0 GR-SPORT CVT SAFETY",
+                "2.0 SEG CVT",
+                "2.0 XEI CVT",
+                "2.0 XLI CVT",
+                "HEV 1.8 SEG ECVT",
+                "HEV 1.8 SEG ECVT SAFETY",
+                "HEV 1.8 XEI ECVT",
+                "HEV 1.8 XEI ECVT SAFETY"
+            ],
+            "HILUX SW4": [
+                "2.7 N WTI CRO",
+                "2.7 N WTI CRO 7A",
+                "2.8 TDI DIAMOND 6AT 7A",
+                "2.8 TDI DIAMOND 6AT 7A HAR",
+                "2.8 TDI DIAMOND 7A",
+                "2.8 TDI GR-SPORT 6AT 7A",
+                "2.8 TDI GR-SPORT 6AT 7A HAR",
+                "2.8 TDI SR",
+                "2.8 TDI SR 6AT",
+                "2.8 TDI SRX 6AT 7A",
+                "2.8 TDI SRX 6AT 7A HAR",
+                "2.8 TDI SRX 7A",
+                "3.0 TDI SRV",
+                "3.0 TDI SRV 5 CRO",
+                "3.0 TDI SRV CRO"
+            ],
+            "LAND CRUISER": [
+                "3.3 V6 TD GR-S 300 10AT",
+                "3.3 V6 TD VX 300 10AT",
+                "4.0 V6 PRADO TXL",
+                "4.0 V6 PRADO TXL C5",
+                "4.0 V6 PRADO VX",
+                "4.0 V6 PRADO VX B6",
+                "4.0 V6 PRADO VX SAFETY SENSE",
+                "4.5 LC 200",
+                "4.5 VX 200",
+                "4.5 VX 200 F6"
+            ],
+            "RAV - 4": [
+                "2.0 16V TX CVT",
+                "2.0 16V VX CVT FULL",
+                "2.4",
+                "2.4 FULL",
+                "2.5 16V TX 6AT",
+                "2.5 16V VX 6AT FULL",
+                "2.5 LIMITED CVT HYBRID",
+                "2.5 XLE CVT HYBRID"
+            ]
+        },
+        "VOLKSWAGEN": {
+            "NIVUS": [
+                "1.0 TSI 170",
+                "1.0 TSI 200 6AT COMFORTLINE",
+                "1.0 TSI 200 6AT COMFORTLINE PH4",
+                "1.0 TSI 200 6AT HERO",
+                "1.0 TSI 200 6AT HIGHLINE",
+                "1.0 TSI 200 6AT OUTFIT",
+                "1.0 TSI 200 6AT TRENDLINE"
+            ],
+            "SHARAN": [
+                "VAN 1.4 TSI BLUEMOTION COMFORTLINE",
+                "VAN 2.0 TSI HIGHLINE DSG"
+            ],
+            "SURAN CROSS": [
+                "1.6 HIGHLINE",
+                "1.6 MSI 16V HIGHLINE"
+            ],
+            "TAOS": [
+                "1.4 TSI 250 COMFORTLINE TIPT",
+                "1.4 TSI 250 HERO TIPT",
+                "1.4 TSI 250 HIGHLINE BITONO TIPT",
+                "1.4 TSI 250 HIGHLINE TIPT"
+            ],
+            "T-CROSS": [
+                "1.0 TSI 200 COMFORTLINE 6AT",
+                "1.0 TSI 200 COMFORTLINE 6AT + PACK SAFE",
+                "1.0 TSI 200 HIGHLINE 6AT",
+                "1.0 TSI 200 HIGHLINE 6AT + PACK SAFE",
+                "1.0 TSI 200 HIGHLINE 6AT BITONO",
+                "1.0 TSI 200 HIGHLINE 6AT BITONO + PACK SAFE",
+                "1.0 TSI 200 TRENDILINE 6AT",
+                "1.0 TSI 200 TRENDILINE 6AT + PACK SAFE",
+                "1.6 COMFORTLINE",
+                "1.6 COMFORTLINE TIPT",
+                "1.6 HERO TIPT",
+                "1.6 HIGHLINE TIPT",
+                "1.6 STYLE EDITION TIPT",
+                "1.6 TRENDLINE",
+                "170 TSI",
+                "170 TSI TRENDLINE",
+                "170 TSI TRENDLINE + PACK SAFE"
+            ],
+            "TIGUAN": [
+                "2.0 TDI ELEGANCE TIPT",
+                "2.0 TDI EXCLUSIVE TIPT",
+                "2.0 TDI PREMIUM TIPT",
+                "2.0 TDI SPORT & STYLE TIPT",
+                "2.0 TSI ELEGANCE",
+                "2.0 TSI ELEGANCE TIPT",
+                "2.0 TSI EXCLUSIVE",
+                "2.0 TSI EXCLUSIVE TIPT",
+                "2.0 TSI PREMIUM",
+                "2.0 TSI PREMIUM TIPT",
+                "2.0 TSI SPORT & STYLE",
+                "2.0 TSI SPORT & STYLE TIPT"
+            ],
+            "TIGUAN ALLSPACE": [
+                "1.4 TSI TRENDLINE DSG6",
+                "2.0 TDI HIGHLINE",
+                "2.0 TSI COMFORTLINE DSG7 4MOTION",
+                "2.0 TSI COMFORTLINE DSG7 4MOTION T/SOLAR",
+                "2.0 TSI HIGHLINE DSG7 4MOTION",
+                "250 TSI DSG",
+                "350 TSI COMFORTLINE 4MOTION DSG",
+                "350 TSI HIGHLINE 4MOTION DSG",
+                "350 TSI LIFE 4MOTION 7DSG"
+            ],
+            "TOUAREG": [
+                "2.5 R5 TDI TIPT PREMIUM",
+                "2.5 R5 TDI TIPT STYLE",
+                "3.0 V6 TDI ELEGANCE",
+                "3.0 V6 TDI LIFE",
+                "3.0 V6 TDI PREMIUM",
+                "3.0 V6 TDI PREMIUM 8TIPT",
+                "3.0 V6 TDI STYLE",
+                "3.2 V6 TIPT PREMIUM",
+                "3.2 V6 TIPT STYLE",
+                "3.6 V6 FSI ELEGANCE",
+                "3.6 V6 FSI LIFE",
+                "3.6 V6 FSI STYLE",
+                "3.6 V6 PREMIUM AUX EXT",
+                "3.6 V6 PREMIUM AUX INT",
+                "3.6 V6 STYLE AUX EXT",
+                "3.6 V6 STYLE AUX INT",
+                "4.2 V8 AUX EXT",
+                "4.2 V8 AUX INT",
+                "4.2 V8 PREMIUM",
+                "4.2 V8 TIPT",
+                "5.0 V10 TDI TIPT",
+                "HYBRID",
+                "R5 TDI PREMIUM AUX EXT",
+                "R5 TDI PREMIUM AUX INT",
+                "R5 TDI STYLE AUX EXT",
+                "R5 TDI STYLE AUX INT"
+            ]
+        },
+        "VOLVO": {
+            "XC40": [
+                "2.0 T4 KINETIC 8AT",
+                "2.0 T5 AWD MOMENTUM 8AT",
+                "2.0 T5 AWD R-DESIGN 8AT",
+                "T4 FWD MOMENTUM 190HP",
+                "T5 AWD R-DESING 247HP"
+            ],
+            "XC60": [
+                "2.0",
+                "2.0 T FWD PO",
+                "2.0 T PLUS",
+                "2.0 T5 HIGH",
+                "2.0 T5 HIGH LUXURY AWD",
+                "2.0 T5 HIGH LUXURY FWD",
+                "2.0 T5 HIGH PLUS",
+                "2.0 T5 INSCRIPTION AWD",
+                "2.0 T5 INSCRIPTION FWD",
+                "2.0 T5 MOMENTUM AWD NEW",
+                "2.0 T6 INSCRIPTION FWD NEW",
+                "3.0 T6 HIGH PLUS",
+                "3.0 T6 LUXURY R-DESIGN",
+                "3.0 T6 PLUS",
+                "3.0 T6 PREMIUM"
+            ],
+            "XC90": [
+                "2.0 D5 MOMENTUM 8AT",
+                "2.0 T T6 HIGH LUXURY 8AT",
+                "2.0 T T6 R DESIGN 8AT",
+                "2.0 T6 INSCRIPTION 8AT",
+                "2.0 T6 R DESIGN 8AT",
+                "2.4 D5",
+                "2.5 D5 HIGH LUXURY",
+                "2.5 D5 XO",
+                "3.2L AWD"
+            ]
+        }
+    },
+    "PICKUP": {
+        "CHEVROLET": {
+            "MONTANA": [
+                "C/S 1.8 LS",
+                "C/S 1.8 LS A/C",
+                "C/S 1.8 LS A/C PACK",
+                "C/S 1.8 LS SPORT",
+                "D/C 1.2 T LT",
+                "D/C 1.2 T LTZ",
+                "D/C 1.2 T PREMIER"
+            ],
+            "S-10": [
+                "C/S 2.8 CTDI 6V LS CV200",
+                "C/S 2.8 CTDI LS CV180",
+                "C/S 2.8 TD ELEC",
+                "C/S 2.8 TD LS",
+                "D/C 2.8 CTDI MIDNIGHT",
+                "D/C 2.8 TD 100 YEARS",
+                "D/C 2.8 TD DLX ELEC",
+                "D/C 2.8 TD HC",
+                "D/C 2.8 TD LS",
+                "D/C 2.8 TD LT",
+                "D/C 2.8 TD LTD ELEC",
+                "D/C 2.8 TD LTZ",
+                "D/C 2.8 TD MIDNIGHT SS",
+                "D/C 2.8 TD STD A/C ELEC",
+                "D/C 2.8 TD STD ELEC",
+                "D/C 2.8 TD WT",
+                "D/C 2.8 TD Z71"
+            ],
+            "SILVERADO": [
+                "D/C V8 HIGH COUNTRY",
+                "D/C V8 Z71 TRAIL BOSS"
+            ]
+        },
+        "FIAT": {
+            "STRADA": [
+                "C/EXTEN. 1.3 MULTIJET TREKKING A/C",
+                "C/EXTEN. 1.3 MULTIJET TREKKING SEG A/C",
+                "C/EXTEN. 1.6 16V ADVENTURE",
+                "C/EXTEN. 1.6 16V ADVENTURE LOCKER",
+                "C/EXTEN. 1.6 16V ADVENTURE LOCKER SEG",
+                "C/EXTEN. 1.6 16V ADVENTURE PACK SEG",
+                "C/EXTEN. 1.6 16V ADVENTURE TOP",
+                "C/EXTEN. 1.6 16V ADVENTURE TOP EXTREME",
+                "C/EXTEN. 1.6 16V ADVENTURE TOP T/C",
+                "C/EXTEN. 1.7 TD ADVENTURE",
+                "C/EXTEN. 1.7 TD ADVENTURE XTREME",
+                "C/PLUS 1.4 FIRE ENDURANCE",
+                "C/S 1.3 MULTIJET TREKKING",
+                "C/S 1.3 MULTIJET TREKKING A/C",
+                "C/S 1.3 MULTIJET TREKKING SEG A/C",
+                "C/S 1.4 8V TREKKING",
+                "C/S 1.4 8V WORKING",
+                "C/S 1.4 TREKKING",
+                "C/S 1.4 TREKKING PACK SEG",
+                "C/S 1.4 WORKING",
+                "C/S 1.4 WORKING A/C",
+                "D/C 1.3 FIRE FLY GSE VOLCANO",
+                "D/C 1.3 FIRE FLY GSE VOLCANO CVT",
+                "D/C 1.3 FIRE RANCH CVT",
+                "D/C 1.3 FIRE VOLCANO",
+                "D/C 1.3 FIRE VOLCANO CVT",
+                "D/C 1.3 JTD MULTIJET TREKKING TOP",
+                "D/C 1.4 8V WORKING",
+                "D/C 1.4 FIRE ENDURANCE",
+                "D/C 1.4 FIRE FREEDOM",
+                "D/C 1.4 FIRE FREEDOM TECH",
+                "D/C 1.6 16V ADVENTURE",
+                "D/C 1.6 16V ADVENTURE LOCKER",
+                "D/C 1.6 16V ADVENTURE LOCKER SEG",
+                "D/C 1.6 16V ADVENTURE PACK SEG",
+                "D/C 1.6 16V ADVENTURE TOP",
+                "D/C 1.6 16V ADVENTURE TOP T/C",
+                "D/C 1.6 16V ADVENTURE TOP XTREME",
+                "D/C T200 ULTRA CVT"
+            ],
+            "TORO": [
+                "D/C 1.3 T VOLCANO 6AT",
+                "D/C 1.8 FREEDOM 6AT",
+                "D/C 1.8 FREEDOM 6AT PACK SEG",
+                "D/C 1.8 FREEDOM 6AT PACK SEG CHROME",
+                "D/C 1.8 FREEDOM 6AT S-DESIGN",
+                "D/C 2.0 16V TD FREEDOM 9AT",
+                "D/C 2.0 16V TD MULTIJET RANCH 9AT",
+                "D/C 2.0 16V TD MULTIJET ULTRA 9AT",
+                "D/C 2.0 16V TD VOLCANO 9AT",
+                "D/C 2.0 TD BLACKJACK 9AT",
+                "D/C 2.0 TD FREEDOM",
+                "D/C 2.0 TD FREEDOM 9AT",
+                "D/C 2.0 TD FREEDOM 9AT NEW HOLLAN",
+                "D/C 2.0 TD FREEDOM 9AT PACK SEG",
+                "D/C 2.0 TD FREEDOM PACK XTREME",
+                "D/C 2.0 TD RANCH 9AT",
+                "D/C 2.0 TD VOLCANO 9AT",
+                "D/C 2.0 TD VOLCANO 9AT PACK PREMIUM",
+                "D/C T270 6AT FREEDOM",
+                "D/C T270 6AT VOLCANO",
+                "D/C TD350 9AT ULTRA",
+                "D/C TD350 9AT VOLCANO"
+            ]
+        },
+        "FORD": {
+            "F-100": [
+                "C/S 3.9 TDI CUMMINS 203CV XL PLUS"
+            ],
+            "F-101": [
+                "C/S 3.9 TDI CUMMINS 203CV XL PLUS"
+            ],
+            "F-102": [
+                "D/C 3.9 TDI CUMMINS 203CV XL PLUS"
+            ],
+            "F-103": [
+                "D/C 3.9 TDI CUMMINS 203CV XL PLUS"
+            ],
+            "F-104": [
+                "C/S 3.9 TDI CUMMINS 203CV XLT"
+            ],
+            "F-105": [
+                "C/S 3.9 TDI CUMMINS 203CV XLT"
+            ],
+            "F-106": [
+                "D/C 3.9 TDI CUMMINS 203CV XLT"
+            ],
+            "F-107": [
+                "D/C 3.9 TDI CUMMINS 203CV XLT"
+            ],
+            "F-150": [
+                "D/C 5.0 V8 10AT LARIAT LUXURY"
+            ],
+            "F-151": [
+                "D/C 3.5 T V6 10AT RAPTOR"
+            ],
+            "F-152": [
+                "D/C 3.5 T V6 10AT LARAIT LUXURY HIBRIDA"
+            ],
+            "F-153": [
+                "D/C 5.0 V8 LARAIT LUXURY"
+            ],
+            "F-154": [
+                "D/C 3.5 T V6 10AT LARAIT POWERBOOST HIBRIDA"
+            ],
+            "F-155": [
+                "D/C 5.0 V8 10AT TREMOR"
+            ],
+            "MAVERICK": [
+                "D/C 2.0 T LARIAT FX4 8AT",
+                "D/C 2.0 T XLT 8AT",
+                "D/C 2.5 HIBRIDA LARIAT ECVT"
+            ],
+            "RANGER": [
+                "C/S 2.2 TD XL",
+                "C/S 2.2 TDCI XL",
+                "C/S 2.3 N XL F-TRUCK",
+                "C/S 2.5 NAFTA XL",
+                "C/S 3.0 D XL F-TRUCK",
+                "C/S 3.0 D XL PLUS",
+                "D/C 2.0 BI TD BLACK",
+                "D/C 2.0 BI TD LTD",
+                "D/C 2.0 BI TD XLT",
+                "D/C 2.0 T PANTHER RAPTOR",
+                "D/C 2.0 TD XL",
+                "D/C 2.0 TD XLS",
+                "D/C 2.2 TD XL",
+                "D/C 2.3 N XL PLUS",
+                "D/C 2.5 NAFTA XL",
+                "D/C 2.5 NAFTA XLT",
+                "D/C 3.0 D XL",
+                "D/C 3.0 D XL PLUS",
+                "D/C 3.0 D XLS PLUS",
+                "D/C 3.0 D XLT",
+                "D/C 3.0 D XLT LTD",
+                "D/C 3.0 D XLT SUPERDUTY",
+                "D/C 3.0 T V6 RAPTOR",
+                "D/C 3.0 TD V6 LION LTD +",
+                "D/C 3.0 TD V6 LION XLS",
+                "D/C 3.2 TDCI",
+                "D/C 3.2 TDCI XLS",
+                "D/C 3.2 TDCI XLT"
+            ]
+        },
+        "FOTON": {
+            "TUNLAND": [
+                "D/C 2.8 TDI EUV",
+                "D/C 2.8 TDI EUV LUXURY",
+                "D/C 2.8 TDI EUV STANDARD"
+            ]
+        },
+        "GREAT WALL": {
+            "POER": [
+                "D/C 2.0 VGT ELITE"
+            ]
+        },
+        "ISUZU": {
+            "PICK UP CABINA DOBLE": [
+                "3.0 TD D-MAX KENZU",
+                "3.0 TD D-MAX KENZU 6AT"
+            ]
+        },
+        "JAC": {
+            "T6 PICK UP": [
+                "D/C 2.0 TDI LUXURY"
+            ],
+            "T8 PICK UP": [
+                "D/C 2.0 TDI INTELLIGENT"
+            ]
+        },
+        "LOTUS": {
+            "GRAN TURISMO": [
+                "COUPE 4.6 V8 6SEC MC STRADALE"
+            ]
+        },
+        "MITSUBISHI": {
+            "L 200 PICK - UP": [
+                "D/C 2.4 DI-D HIGH-POWER",
+                "D/C 2.4 DI-D HIGH-POWER 5AT",
+                "D/C 2.4 TDI GLS 6AT",
+                "D/C 2.4 TDI GLS 6AT FULL",
+                "D/C 2.4 TDI GLS FULL",
+                "D/C 2.5 HP DI-D",
+                "D/C 2.5 HP DI-D CRO T/C",
+                "D/C 3.2 CR CRO",
+                "D/C 3.2 DI-D CRO",
+                "D/C 3.2 GLS",
+                "D/C 3.2 GLX"
+            ]
+        },
+        "NISSAN": {
+            "FRONTIER": [
+                "D/C 2.3 TD LE",
+                "D/C 2.3 TD PLATINUM 190CV",
+                "D/C 2.3 TD PRO-4X 190CV",
+                "D/C 2.3 TD S",
+                "D/C 2.3 TD S 160CV",
+                "D/C 2.3 TD S 190CV",
+                "D/C 2.3 TD SE",
+                "D/C 2.3 TD X-GEAR 190CV",
+                "D/C 2.3 TD XE",
+                "D/C 2.3 TD XE 160CV",
+                "D/C 2.3 TD XE 190CV",
+                "D/C 2.5 TDI LE",
+                "D/C 2.5 TDI LE ATTACK",
+                "D/C 2.5 TDI LE CRO",
+                "D/C 2.5 TDI LE PACK PREMIUM"
+            ],
+            "NP 300": [
+                "D/C 2.5 TD"
+            ],
+            "NP 301": [
+                "D/C 2.3 D LE 6V"
+            ],
+            "NP 302": [
+                "D/C 2.3 D LE 6V"
+            ],
+            "NP 303": [
+                "D/C 2.3 D LE"
+            ],
+            "NP 304": [
+                "D/C 2.3 D SE 6V"
+            ],
+            "NP 305": [
+                "D/C 2.3 D SE 6V PLUS"
+            ],
+            "NP 306": [
+                "D/C 2.3 D XE 6V"
+            ]
+        },
+        "PEUGEOT": {
+            "HOGGAR": [
+                "C/S 1.6 ESCAPADE ABS",
+                "C/S 1.6 XR",
+                "C/S 1.6 XS"
+            ]
+        },
+        "RAM": {
+            "1500": [
+                "D/C 5.7 V8 HEMI LARAMIE 8AT",
+                "D/C 5.7 V8 HEMI LARAMIE ATX",
+                "D/C 5.7 V8 HEMI LARAMIE NIGHT EDITION 8AT",
+                "D/C 5.7 V8 HEMI REBEL 8AT"
+            ],
+            "2500": [
+                "D/C 2.5 D LARAMIE QUAD CAB ATX",
+                "D/C 2.5 D SLT QUAD CAB ATX",
+                "D/C 6.7 TD 365CV LARAMIE 6AT HEAVY DUTY",
+                "D/C 6.7 TD 375CV LARAMIE 6AT",
+                "D/C 6.7 TD 375CV LARAMIE NIGT EDITION 6AT",
+                "D/C 6.7 TD LARAMIE ATX"
+            ],
+            "RAMPAGE": [
+                "D/C 2.0 T LARAMIE AT9",
+                "D/C 2.0 T R/T AT9",
+                "D/C 2.0 T REBEL AT9"
+            ]
+        },
+        "RENAULT": {
+            "ALASKAN": [
+                "D/C 2.3 DCI T 160CV CONFORT",
+                "D/C 2.3 DCI T 190CV EMOTION",
+                "D/C 2.3 DCI T 190CV ICONIC",
+                "D/C 2.3 DCI T 190CV ICONIC 7AT",
+                "D/C 2.3 DCI T 190CV INTENS",
+                "D/C 2.3 DCI T 190CV INTENS NOIR",
+                "D/C 2.3 DCI T 190CV OUTSIDER 7AT"
+            ],
+            "OROCH": [
+                "D/C 1.3 TCE ICONIC 163 CVT",
+                "D/C 1.3 TCE OUTSIDER 163",
+                "D/C 1.6 DYNAMIQUE",
+                "D/C 1.6 OUTSIDER",
+                "D/C 1.6 PROFESIONAL",
+                "D/C 1.6 SCE EMOTION 114",
+                "D/C 2.0 DYNAMIQUE",
+                "D/C 2.0 OUTSIDER PLUS",
+                "D/C 2.0 PRIVELEGE"
+            ]
+        },
+        "TOYOTA": {
+            "HILUX": [
+                "C/C 2.4 TDI DX HAR",
+                "C/S 2.4 TDI DX",
+                "C/S 2.4 TDI DX HAR",
+                "C/S 2.5 TD DX",
+                "D/C 2.4 TDI DX",
+                "D/C 2.4 TDI DX 6AT HAR",
+                "D/C 2.4 TDI DX HAR",
+                "D/C 2.4 TDI SR",
+                "D/C 2.4 TDI SR 6AT HAR",
+                "D/C 2.4 TDI SR HAR",
+                "D/C 2.4 TDI STD",
+                "D/C 2.5 TD DX",
+                "D/C 2.5 TD STD",
+                "D/C 2.7 N WTI SRV",
+                "D/C 2.7 N WTI SRV CRO",
+                "D/C 2.8 TDI CONQUEST 6AT",
+                "D/C 2.8 TDI GR-S III 6AT",
+                "D/C 2.8 TDI GR-S IV 6AT",
+                "D/C 2.8 TDI GR-S IV 6AT HAR",
+                "D/C 2.8 TDI LIMITED",
+                "D/C 2.8 TDI LIMITED 6AT",
+                "D/C 2.8 TDI SR",
+                "D/C 2.8 TDI SR 6AT",
+                "D/C 2.8 TDI SR 6AT HAR",
+                "D/C 2.8 TDI SR HAR",
+                "D/C 2.8 TDI SRV",
+                "D/C 2.8 TDI SRV 6AT",
+                "D/C 2.8 TDI SRV 6AT HAR",
+                "D/C 2.8 TDI SRV HAR",
+                "D/C 2.8 TDI SRX",
+                "D/C 2.8 TDI SRX 6AT",
+                "D/C 2.8 TDI SRX 6AT HAR",
+                "D/C 3.0 TDI SRV",
+                "D/C V6 VVTI GR-S II 6AT"
+            ],
+            "HILUX COVER": [
+                "C/S 2.5 TD DX CERRADA",
+                "C/S 2.5 TD DX VENTANAS",
+                "C/S 2.5 TDI DX CERRADA",
+                "C/S 2.5 TDI DX PACK CERRADA",
+                "C/S 2.5 TDI DX PACK VENTANAS",
+                "C/S 2.5 TDI DX VENTANAS"
+            ]
+        },
+        "VOLKSWAGEN": {
+            "AMAROK": [
+                "COMFORTLINE 2.0 TDI",
+                "COMFORTLINE 3.0 V6 TDI",
+                "EXTREME 2.0 TDI",
+                "EXTREME 3.0 V6 TDI",
+                "HIGHLINE 2.0 TDI",
+                "HIGHLINE 3.0 V6 TDI",
+                "STARLINE 2.0 TDI",
+                "STARLINE 3.0 V6 TDI",
+                "TRENDLINE 2.0 TDI",
+                "TRENDLINE 3.0 V6 TDI",
+                "ULTIMATE 2.0 TDI",
+                "ULTIMATE 3.0 V6 TDI"
+            ]
+        }
+    },
+    "UTILITARIO": {
+        "CITROEN": {
+            "BERLINGO": [
+                "1.2 82 PURE TECH FEEL CONFORT M22",
+                "1.2 82 PURE TECH FEEL LOOK",
+                "1.2 82 PURE TECH FEEL M22",
+                "1.2 82 PURE TECH FIRST EDITION",
+                "1.2 82 PURE TECH LIVE M22",
+                "1.2 82 PURE TECH LIVE PACK M22",
+                "1.2 FEEL DESIGN",
+                "1.6 VTI 115 FEEL 6AT",
+                "1.6 VTI 115 FEEL BITONO",
+                "1.6 VTI 115 FEEL BITONO 6AT",
+                "1.6 VTI 115 FELL 6AT PACK BITONO M22",
+                "1.6 VTI 115 FELL 6AT PACK M22",
+                "1.6 VTI 115 FELL CONFORT M22",
+                "1.6 VTI 115 FELL M22",
+                "1.6 VTI 115 FELL M24",
+                "1.6 VTI 115 FELL PK BITONO M24",
+                "1.6 VTI 115 FELL PK M24",
+                "1.6 VTI 115 FIRST EDITION 6AT",
+                "1.6 VTI 115 ORIGINS",
+                "1.6 VTI 115 SHINE",
+                "1.6 VTI 115 SHINE 6AT",
+                "1.6 VTI 115 TECHNO",
+                "1.6 VTI 115 URBAN TRAIL",
+                "1.6 VTI 115 URBAN TRAIL 6AT",
+                "1.6 VTI FELL PK DESING",
+                "1.6 VTI FELL PK DESING BITONO",
+                "T200 YOU! CVT"
+            ],
+            "JUMPER": [
+                "CHASIS 435 CH L3 HDI 130",
+                "CHASIS 440 CH L3 HDI 130",
+                "CHASIS 440 L3 HDI 130",
+                "FURGON 2.3 HDI 33M",
+                "FURGON 2.3 HDI 35LH",
+                "FURGON 2.3 HDI 35MH",
+                "FURGON 2.3 HDI ALTO 2",
+                "FURGON 2.3 HDI PACK 2",
+                "FURGON 33M HDI 127",
+                "FURGON 35LH HDI 127",
+                "FURGON 35MH HDI 127",
+                "FURGON 435 L2H1 HDI 130",
+                "FURGON 435 L2H2 HDI 130",
+                "FURGON 435 L3H2 HDI 130",
+                "MINIBUS 440 L4H2 HDI 130 17+1"
+            ],
+            "JUMPY": [
+                "FURGON 1.6 HDI 115",
+                "FURGON 1.6 HDI 115 BUSINESS",
+                "FURGON 1.6 HDI 115 BUSINESS MIXTO"
+            ]
+        },
+        "FIAT": {
+            "DOBLÓ": [
+                "1.4 16V ACTIVE",
+                "1.4 16V ACTIVE FAMILY",
+                "1.4 16V ACTIVE HIGH SECURITY"
+            ],
+            "DOBLÓ CARGO": [
+                "1.4 16V ACTIVE",
+                "1.4 16V ACTIVE ABS EBD",
+                "1.4 16V ACTIVE HIGH SECURITY",
+                "1.4 16V ACTIVE P/LATERAL",
+                "1.4 16V ACTIVE P/LATERAL HIGH SECURITY"
+            ],
+            "DUCATO": [
+                "CHASIS 2.3 TD",
+                "COMBINATO 2.3 MULTIJET",
+                "COMBINATO 2.3 MULTIJET 2A/C",
+                "FURGON 2.3 MULTIJET 15 TE",
+                "FURGON 2.3 MULTIJET 15 TE A/C",
+                "FURGON 2.3 MULTIJET 15 TN",
+                "FURGON 2.3 MULTIJET 15 TN A/C",
+                "FURGON 2.3 MULTIJET 15 TN CORTO",
+                "FURGON 2.3 MULTIJET 15 TN CORTO A/C",
+                "FURGON 2.3 MULTIJET MAXICARGO TE",
+                "FURGON 2.3 MULTIJET MAXICARGO TE A/C",
+                "FURGON 2.3 TD CORTO L1H1",
+                "FURGON 2.3 TD MAXICARGO L4H2",
+                "FURGON 2.3 TD MAXICARGO L4H2 VIDRIADA",
+                "FURGON 2.3 TD MEDIO L2H1"
+            ],
+            "FIORINO": [
+                "FIORINO QUBO",
+                "FURGON 1.3 FIRE DH",
+                "FURGON 1.3 FIRE DH CONFORT",
+                "FURGON 1.4 8V",
+                "FURGON 1.4 8V CONFORT",
+                "FURGON 1.4 8V ENDURANCE",
+                "FURGON 1.4 8V TOP",
+                "FURGON 1.4 ACTIVE",
+                "FURGON 1.4 ACTIVE CONFORT",
+                "FURGON 1.4 ACTIVE PLC",
+                "FURGON 1.4 ACTIVE PLC CONFORT",
+                "FURGON 1.4 DYNAMIC"
+            ],
+            "QUBO": [
+                "1.4 ACTIVE",
+                "1.4 ACTIVE CONFORT",
+                "1.4 DYNAMIC",
+                "1.4 TREKKING"
+            ]
+        },
+        "FORD": {
+            "TRANSIT": [
+                "CHASIS 2.2 TD",
+                "CHASIS 2.2 TDCI",
+                "CHASIS 2.2 TDCI A/C",
+                "FURGON 2.2 TDCI CORTO",
+                "FURGON 2.2 TDCI CORTO A/C",
+                "FURGON 2.2 TDCI LARGO",
+                "FURGON 2.2 TDCI LARGO A/C",
+                "FURGON 2.2 TDCI LARGO TE",
+                "FURGON 2.2 TDCI MEDIANO",
+                "FURGON 2.2 TDCI MEDIANO TE",
+                "FURGON 2.4 TDCI 16V T/A CORTO",
+                "FURGON 2.4 TDCI 16V T/A CORTO A/C",
+                "FURGON 2.4 TDCI 16V T/A LARGO",
+                "FURGON 2.4 TDCI 16V T/A LARGO A/C",
+                "MINIBUS 2.2 TD 10AT 17+1",
+                "MINIBUS 2.2 TD 17+1",
+                "MINIBUS 2.2 TDCI",
+                "MINIBUS 2.2 TDCI A/C",
+                "MINIBUS 2.4 TDCI 16V",
+                "VAN 2.2 TD LARGA TE",
+                "VAN 2.2 TD LARGA TE 10AT L3H3",
+                "VAN 2.2 TD MEDIANA",
+                "VAN 2.2 TD MEDIANA TE"
+            ],
+            "E-TRANSIT": [
+                "CHASIS CABINA",
+                "VAN LARGA TE",
+                "VAN MEDIANA",
+                "VAN MEDIANA TE"
+            ]
+        },
+        "HYUNDAI": {
+            "H 1": [
+                "VAN 2.5 CRDI 170CV 12/A FULL",
+                "VAN 2.5 CRDI 170CV 12/A FULL PREMIUM",
+                "VAN 2.5 NAFTA 12/A FULL PREMIUM",
+                "VAN 2.6 TD 12/A FULL",
+                "VAN 2.6 TD 12/A FULL PREMIUM"
+            ],
+            "H 350": [
+                "FURGON 2.5 CRDI 150HP LARGO T/ALTO"
+            ]
+        },
+        "LEXUS": {
+            "FOISON": [
+                "BOX 1.2 FULL",
+                "C/S TRUCK 1.2 FULL",
+                "FURGON CARGO 1.2 FULL"
+            ]
+        },
+        "MERCEDES BENZ": {
+            "SPRINTER": [
+                "308 FURGON 2.2 CDI 3000 V1",
+                "308 FURGON 2.2 CDI 3000 V1 ABG",
+                "313 CHASIS 2.2 CDI 3550",
+                "313 COMBI 2.2 CDI 3000 12A",
+                "313 COMBI 2.2 CDI 3000 12A FULL",
+                "313 COMBI 2.2 CDI 3550 10A EJECUTIVA",
+                "313 COMBI 2.2 CDI 3550 13A",
+                "313 COMBI 2.2 CDI 3550 16A",
+                "313 FURGON 2.2 CDI 3000 V1",
+                "314 CDI FURGON 3250 TE",
+                "316 CHASIS CDI 3665",
+                "416 CDI COMBI 3665 TE 9+1",
+                "517 CDI MINIBUS 4325 TE 19+1",
+                "CDI CHASIS 3665",
+                "FURGON CDI"
+            ],
+            "VIANO": [
+                "VAN 2.2 CDI 6/A AMBIENTE",
+                "VAN 2.2 CDI 7A AMBIENTE",
+                "VAN 2.2 CDI 7A PLC AMBIENTE",
+                "VAN 2.2 CDI 7A TREND"
+            ],
+            "VITO 111": [
+                "FURGON 1.6 CDI MIXTO A/C",
+                "FURGON 1.6 CDI PLUS A/C",
+                "FURGON 1.6 CDI V1",
+                "FURGON 1.6 CDI V1 A/C",
+                "FURGON 1.6 CDI V2",
+                "FURGON 1.6 CDI V2 A/C"
+            ],
+            "VITO 114": [
+                "FURGON CDI PLUS",
+                "FURGON CDI V2"
+            ],
+            "VITO 119": [
+                "COMBI 1.6 CDI",
+                "TOURER 1.6 CDI"
+            ],
+            "VITO 121": [
+                "TOURER 1.6 CDI",
+                "TOURER 1.6 CDI 7+1 PLUS",
+                "TOURER 1.6 CDI X"
+            ]
+        },
+        "PEUGEOT": {
+            "BOXER": [
+                "CHASIS 2.2 HDI 435L CC PREMIUM",
+                "CHASIS 2.2 HDI 440 L3 CH 130 PREMIUM",
+                "FURGON 2.2 HDI 435LH PREMIUM",
+                "FURGON 2.2 HDI 435M PREMIUM",
+                "FURGON 2.2 HDI 435MH PREMIUM",
+                "FURGON 2.3 HDI 330M CONFORT LARGA A/C",
+                "FURGON 2.3 HDI 350LH CONFORT LARGA ALTA FULL",
+                "FURGON 2.3 HDI 350M CONFORT LARGA",
+                "FURGON 2.3 HDI 350MH CONFORT LARGA ALTA A/C",
+                "FURGON HDI 140 L2H2 M23",
+                "FURGON HDI 140 L3H2 M23",
+                "MINIBUS 2.2 HDI 440 L4H2 130 PREMIUM"
+            ],
+            "EXPERT": [
+                "FURGON 1.6 HDI",
+                "FURGON 1.6 HDI PREMIUM",
+                "VAN 1.6 HDI CONFORT",
+                "VAN 1.6 HDI PREMIUM 6P",
+                "VAN 2.0 HDI CONFORT"
+            ],
+            "PARTNER": [
+                "FURGON 1.4 CONF A/C PLC CCP",
+                "FURGON 1.4 PRESENCE A/C ABS",
+                "FURGON 1.6 115 CONF",
+                "FURGON 1.6 115 PRESENCE",
+                "FURGON 1.6 HDI 92 CONF",
+                "PATAGONICA 1.4 2PLC FULL",
+                "PATAGONICA 1.6 115",
+                "PATAGONICA 1.6 115 VTC PLUS",
+                "PATAGONICA 1.6 2PLC VTC",
+                "PATAGONICA 1.6 2PLC VTC PLUS",
+                "PATAGONICA 1.6 HDI A/C 2PLC BASE",
+                "PATAGONICA 1.6 HDI VTC",
+                "PATAGONICA 1.6 N",
+                "PATAGONICA 1.6 VTC PLUS"
+            ],
+            "TRAVELLER": [
+                "VAN 2.0 HDI 6AT ALLURE PLUS 8A"
+            ]
+        },
+        "RENAULT": {
+            "KANGOO": [
+                "BREAK 1.5 DCI 2 AUTH A/C DH CD",
+                "BREAK 1.5 DCI 2 CAMPUS 2PLC",
+                "BREAK 1.5 DCI 2 GET UP 2PLC",
+                "BREAK 1.5 DCI 2 SPORTWAY 2PLC",
+                "BREAK 1.6 2 CAMPUS 2PLC",
+                "BREAK 1.6 2 CAMPUS 2PLC 7A",
+                "BREAK 1.6 2 GET UP 2PLC",
+                "BREAK 1.6 2 GET UP 2PLC 7A",
+                "BREAK 1.6 2 SPORTWAY 2PLC",
+                "BREAK 1.6 2 SPORTWAY 2PLC 7A",
+                "BREAK 1.6 7 ASIENTOS",
+                "BREAK 1.6 AUTH 1PLC PH3",
+                "BREAK 1.6 AUTH 2PLC PH3 PLUS 7A",
+                "FURGON 1.6 CONF 2 1PLC",
+                "FURGON 1.6 PH3 CONF 1PLC",
+                "FURGON 1.6 PH3 CONF 2PLC 5A",
+                "FURGON 1.6 PH3 CONF 2PLC 5A PACK",
+                "FURGON 1.6 PH3 GENERIQUE",
+                "FURGON 1.6 PH3 GRAN CONF 2PLC"
+            ],
+            "KANGOO II EXPRESS": [
+                "FURGON 1.5 DCI CONFORT",
+                "FURGON 1.5 DCI CONFORT 5A",
+                "FURGON 1.5 DCI CONFORT 89",
+                "FURGON 1.5 DCI CONFORT 89 5A",
+                "FURGON 1.5 DCI CONFORT STD",
+                "FURGON 1.5 DCI CONFORT STD 5A",
+                "FURGON 1.6 SCE CONFORT",
+                "FURGON 1.6 SCE CONFORT 114",
+                "FURGON 1.6 SCE CONFORT 114 5A",
+                "FURGON 1.6 SCE CONFORT 5A",
+                "FURGON 1.6 SCE CONFORT STD",
+                "FURGON 1.6 SCE CONFORT STD 5A",
+                "FURGON 1.6 SCE EMOTION",
+                "FURGON 1.6 SCE EMOTION 5A",
+                "FURGON 1.6 SCE PROFESIONAL",
+                "FURGON E-TECH",
+                "FURGON ZE 2A",
+                "FURGON ZE MAXI 2A"
+            ],
+            "KANGOO II VERSION PASAJEROS": [
+                "1.5 DCI STEPWAY",
+                "1.6 SCE LIFE",
+                "1.6 SCE STEPWAY",
+                "1.6 SCE ZEN"
+            ],
+            "MASTER": [
+                "CHASIS 2.3 DCI CABINA A/C",
+                "CHASIS 2.5 DCI CABINA A/C",
+                "CHASIS 2.5 DCI CABINA PACK A/C 120",
+                "FURGON 2.3 DCI CORTO L1H1",
+                "FURGON 2.3 DCI CORTO L1H1 A/C",
+                "FURGON 2.3 DCI LARGO L3H2 A/C",
+                "FURGON 2.3 DCI MEDIO L2H2 A/C",
+                "FURGON 2.5 DCI CORTO L1H1",
+                "FURGON 2.5 DCI CORTO L1H1 A/C",
+                "FURGON 2.5 DCI CORTO PACK 120",
+                "FURGON 2.5 DCI CORTO PACK 120 A/C",
+                "FURGON 2.5 DCI CORTO PACK T/A A/C 120",
+                "FURGON 2.5 DCI LARGO L3H2 A/C",
+                "FURGON 2.5 DCI LARGO PACK A/C 120",
+                "FURGON 2.5 DCI MEDIO L2H2 A/C",
+                "FURGON 2.5 DCI MEDIO PACK A/C 120",
+                "MINIBUS 2.3 DCI H6",
+                "MINIBUS 2.3 DCI H6H",
+                "MINIBUS 2.5 DCI",
+                "MINIBUS 2.5 DCI PACK A/C ABG ABS 120"
+            ]
+        },
+        "SHINERAY": {
+            "X 30": [
+                "FURGON 1.3",
+                "VAN 1.3 7P"
+            ]
+        },
+        "TOYOTA": {
+            "HIACE": [
+                "COMMUTER 2.8 TDI 6AT 14A",
+                "FURGON 2.8 TDI L1H1 TB 6AT 3A",
+                "FURGON 2.8 TDI L2H2 6AT 3A",
+                "FURGON 2.8 TDI L2H2 TA 6AT 3A",
+                "WAGON 2.8 TDI 6AT 10A"
+            ]
+        },
+        "VOLKSWAGEN": {
+            "TRANSPORTER": [
+                "FURGON 1.9 TDI",
+                "FURGON 1.9 TDI D/HOJA"
+            ]
+        }
+    },
+    "RURAL": {
+        "CITROEN": {
+            "C 4 SPACETOURER": [
+                "VAN 1.6 HDI FEEL",
+                "VAN 1.6 HDI FEEL PACK",
+                "VAN 1.6 HDI RIP CURL",
+                "VAN 1.6 THP E6AT FEEL",
+                "VAN 1.6 THP E6AT FEEL PACK",
+                "VAN 1.6 THP E6AT RIP CURL"
+            ],
+            "C 4 GRAND SPACETOURER": [
+                "VAN 1.6 HDI SHINE",
+                "VAN 1.6 THP E6AT FEEL PACK",
+                "VAN 1.6 THP E6AT SHINE"
+            ],
+            "SPACETOURER": [
+                "VAN 2.0 HDI L2 6AT 7A FEEL",
+                "VAN 2.0 HDI L2 6AT 7A FEEL PACK"
+            ]
+        },
+        "FIAT": {
+            "PALIO": [
+                "WEEKEND 1.4 ATTRACTIVE",
+                "WEEKEND 1.4 ATTRACTIVE ACTIVE",
+                "WEEKEND 1.4 ATTRACTIVE SEG",
+                "WEEKEND 1.4 TREKKING",
+                "WEEKEND 1.4 TREKKING SEG",
+                "WEEKEND 1.6 ADVENTURE",
+                "WEEKEND 1.6 ADVENTURE LOCKER",
+                "WEEKEND 1.6 ADVENTURE LOCKER SEG",
+                "WEEKEND 1.6 ADVENTURE LOCKER SEG XTREME",
+                "WEEKEND 1.6 ADVENTURE SEG",
+                "WEEKEND 1.6 ADVENTURE SEG XTREME"
+            ]
+        },
+        "VOLKSWAGEN": {
+            "GOL COUNTRY": [
+                "1.4 POWER 4G",
+                "1.4 POWER 4G DH A/C",
+                "1.6 FORMAT 4G",
+                "1.6 POWER 4G PLUS",
+                "1.6 POWER 4G PLUS DH A/C"
+            ],
+            "GOLF VARIANT": [
+                "1.4 TSI COMFORTLINE",
+                "1.4 TSI COMFORTLINE DSG",
+                "1.4 TSI HIGHLINE DSG",
+                "1.6 TRENDLINE"
+            ],
+            "PASSAT VARIANT": [
+                "ADVANCE 1.5 ETSI DSG",
+                "ADVANCE 1.6 TDI",
+                "ADVANCE 1.6 TDI DSG",
+                "ADVANCE 1.8 TSI",
+                "ADVANCE 1.8 TSI DSG",
+                "ADVANCE 2.0 TSI",
+                "ADVANCE 2.0 TSI DSG",
+                "CONFORT 1.4 TSI",
+                "CONFORT 1.4 TSI DSG",
+                "LUXURY 1.5 EHYBRID 272 DSG",
+                "LUXURY 1.5 EHYBRID DSG",
+                "LUXURY 2.0 TDI",
+                "LUXURY 2.0 TDI 150 DSG",
+                "LUXURY 2.0 TDI 170 DSG",
+                "LUXURY 2.0 TDI 193 DSG",
+                "LUXURY 2.0 TDI DSG",
+                "LUXURY 2.0 TSI",
+                "LUXURY 2.0 TSI DSG"
+            ],
+            "VENTO VARIANT": [
+                "1.9 TDI ADVANCE",
+                "1.9 TDI ADVANCE DSG",
+                "1.9 TDI CONFORTLINE",
+                "2.0 TDI CR ADVANCE",
+                "2.0 TDI CR CONFORTLINE",
+                "2.5 ADVANCE",
+                "2.5 ADVANCE TIPT",
+                "2.5 COMFORTLINE",
+                "2.5 CONFORTLINE"
+            ]
+        },
+        "VOLVO": {
+            "V 50": [
+                "RURAL 2.0 P1"
+            ],
+            "V 60": [
+                "RURAL T6 AWD HIGH LUXURY",
+                "RURAL T6 AWD R DESIGN"
+            ]
+        }
+    }
+}
