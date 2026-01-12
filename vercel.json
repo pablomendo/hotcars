@@ -1,6 +1,0 @@
-{
-  "buildCommand": "npm install --force && next build",
-  "installCommand": "npm install --force",
-  "framework": "nextjs",
-  "nodeVersion": "20.x"
-}
