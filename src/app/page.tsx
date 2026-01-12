@@ -9,7 +9,7 @@ import { PurchaseOpportunities } from '@/components/dashboard/purchase-opportuni
 import { RiskListings } from '@/components/dashboard/risk-listings';
 import { SalesTrendChart } from '@/components/dashboard/sales-trend-chart';
 import { SmartAlerts } from '@/components/dashboard/smart-alerts';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { SalesByTypeChart } from '@/components/dashboard/sales-by-type-chart';
 import { PublishNewUnit } from '@/components/dashboard/publish-new-unit';
 import { CommunityStrength } from '@/components/dashboard/community-strength';
@@ -18,22 +18,37 @@ import { EarningsPotential } from '@/components/dashboard/earnings-potential';
 export default function DashboardPage() {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-background">
+        {/* Sidebar Lateral */}
         <AppSidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
+        
+        {/* Contenedor Principal */}
+        <SidebarInset className="flex flex-col flex-1 overflow-hidden">
+          
+          {/* Header de ancho total y fijo arriba */}
           <Header />
-          <main className="flex-1 overflow-y-auto p-1 md:p-2 lg:p-3">
-            <div className="grid gap-2">
+          
+          {/* Área de Contenido con Scroll */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            <div className="max-w-[1600px] mx-auto space-y-6">
+              
+              {/* Stats Superiores (Autos Activos, Flips, etc) */}
               <OverviewStats />
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                <div className="flex flex-col gap-2">
+
+              {/* Grid Principal de dos columnas */}
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                
+                {/* Columna Izquierda (Ancha) */}
+                <div className="lg:col-span-7 flex flex-col gap-6">
                   <EarningsPotential />
                   <PublishNewUnit />
                   <DemandRanking />
                   <RiskListings />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <div className="grid grid-cols-2 gap-2">
+
+                {/* Columna Derecha (Estrecha) */}
+                <div className="lg:col-span-5 flex flex-col gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <SalesByTypeChart />
                     <CommunityStrength />
                   </div>
@@ -41,15 +56,17 @@ export default function DashboardPage() {
                   <PurchaseOpportunities />
                   <SmartAlerts />
                 </div>
+
               </div>
-              <div className="grid grid-cols-1 gap-2">
-                <div className="">
-                  <SalesTrendChart />
-                </div>
+
+              {/* Gráfico de Tendencia inferior */}
+              <div className="w-full">
+                <SalesTrendChart />
               </div>
+
             </div>
           </main>
-        </div>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );

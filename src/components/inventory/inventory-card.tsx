@@ -1,28 +1,17 @@
+"use client";
+
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Car,
-  Repeat,
-  AlertTriangle,
-  Pencil,
-  Pause,
-  Check,
-  TrendingUp
-} from 'lucide-react';
+import { Car, Repeat, AlertTriangle, Pencil, Pause, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent
-} from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 export function InventoryCard({ item }: any) {
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('es-AR', {
+    new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'ARS',
+      currency: 'USD',
       minimumFractionDigits: 0
     }).format(value);
 
@@ -30,7 +19,6 @@ export function InventoryCard({ item }: any) {
   const purchasePrice = Number(item.purchasePrice);
 
   let potentialGain = salePrice - purchasePrice;
-
   if (item.type === 'Flip compartido') {
     potentialGain = potentialGain / 2;
   }
@@ -40,104 +28,47 @@ export function InventoryCard({ item }: any) {
   }
 
   return (
-    <Card className="bg-card/70 overflow-hidden flex">
-      {/* Imagen */}
-      <div className="relative w-1/3">
-        <Image
-          src={item.imageUrl}
-          alt={item.name}
-          fill
-          className="object-cover"
-        />
-
-        <Badge
-          className={`absolute bottom-1 left-1 text-xs ${
-            item.type === 'Propia'
-              ? 'bg-green-600/20 text-green-400 border-green-600/50'
-              : 'bg-blue-600/20 text-blue-400 border-blue-600/50'
+    <Card className="bg-[#111c21] border-border/40 overflow-hidden flex h-32">
+      <div className="relative w-1/3 bg-muted/20">
+        <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+        <Badge 
+          className={`absolute bottom-1 left-1 text-[10px] h-4 border-none ${
+            item.type === 'Propia' ? 'bg-[#15803d] text-white' : 'bg-[#1d4ed8] text-white'
           }`}
-          variant="outline"
         >
-          {item.type === 'Propia' ? (
-            <Car className="mr-1 h-3 w-3" />
-          ) : (
-            <Repeat className="mr-1 h-3 w-3" />
-          )}
+          {item.type === 'Propia' ? <Car className="mr-1 h-3 w-3" /> : <Repeat className="mr-1 h-3 w-3" />}
           {item.type}
         </Badge>
       </div>
 
-      {/* Contenido */}
-      <div className="w-2/3 p-3 flex flex-col justify-between relative">
-        <div>
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-bold text-sm truncate">{item.name}</h3>
-              <p className="text-xs text-muted-foreground">
-                {item.kms?.toLocaleString('es-AR')} km
-              </p>
-            </div>
-
-            {/* Acciones */}
-            <TooltipProvider>
-              <div className="flex gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Editar</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <Pause className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Pausar</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <Check className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Vendido</TooltipContent>
-                </Tooltip>
-              </div>
-            </TooltipProvider>
+      <div className="w-2/3 p-3 flex flex-col justify-between">
+        <div className="flex justify-between items-start">
+          <div className="overflow-hidden">
+            <h3 className="font-bold text-sm truncate text-white uppercase">{item.name}</h3>
+            <p className="text-[11px] text-muted-foreground uppercase">
+              {item.kms?.toLocaleString('es-AR')} KM
+            </p>
           </div>
-
-          {/* Precios */}
-          <div className="mt-2">
-            <div className="flex justify-between items-end">
-              <span className="font-bold text-sm">
-                PV: {formatCurrency(salePrice)}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                PC: {formatCurrency(purchasePrice)}
-              </span>
-            </div>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/10"><Pencil className="h-3.5 w-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/10"><Pause className="h-3.5 w-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-white hover:bg-white/10"><Check className="h-3.5 w-3.5" /></Button>
           </div>
         </div>
 
-        {/* Ganancia */}
-        <div className="mt-2">
-          <p className="text-xs text-muted-foreground">Ganancia Potencial:</p>
-          <p className="font-bold text-green-400 text-sm">
-            +{formatCurrency(potentialGain)}
-          </p>
+        <div className="flex justify-between items-end mb-1">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Ganancia Potencial:</p>
+            <p className="font-bold text-[#4caf50] text-sm leading-none">+{formatCurrency(potentialGain)}</p>
+          </div>
+          <div className="text-right flex flex-col items-end">
+            <p className="text-[12px] font-bold text-white">PV: {formatCurrency(salePrice)}</p>
+            <p className="text-[10px] text-muted-foreground">PC: {formatCurrency(purchasePrice)}</p>
+          </div>
         </div>
 
-        {/* En riesgo */}
         {item.status?.name === 'En riesgo' && (
-          <Badge
-            variant="outline"
-            className="absolute bottom-1 right-1 bg-orange-600/20 text-orange-400 border-orange-600/50 text-xs"
-          >
+          <Badge className="absolute bottom-2 right-2 bg-[#92400e] text-white border-none text-[10px] h-5">
             <AlertTriangle className="mr-1 h-3 w-3" />
             En riesgo +45d
           </Badge>
