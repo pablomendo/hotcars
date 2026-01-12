@@ -28,53 +28,61 @@ const ProgressBar = () => {
 };
 
 export function EarningsPotential() {
-  // LÓGICA DE NEGOCIO (Pronto vendrá de tu base de datos)
-  // PV - PC = Ganancia Propia
   const gananciaPropia = 5400; 
-  // Flips = 50% de la diferencia en autos compartidos
   const gananciaFlips = 2200; 
   const totalPotencial = gananciaPropia + gananciaFlips;
 
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0
+    }).format(value);
+
   return (
-    <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-border text-white overflow-hidden" style={{ minHeight: '11.5rem' }}>
+    <Card className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] border-white/5 text-white overflow-hidden" style={{ minHeight: '11.5rem' }}>
       <CardContent className="p-5 h-full flex flex-col justify-between">
         <div className="z-10">
-          <h3 className="text-lg font-semibold text-white tracking-tight">
+          <h3 className="text-lg font-bold text-white tracking-tight uppercase">
             Potencial de Ganancia
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Diferencia entre PC y PV + Flips compartidos activos.
+          <p className="text-[11px] text-slate-400 mt-1 uppercase font-medium">
+            PC vs PV + Flips compartidos activos
           </p>
         </div>
         
         <div className="relative h-24 flex flex-col justify-end">
-            {/* Monto Total Posicionado */}
             <div className="flex flex-col items-end mb-2 z-10">
-                <p className="text-3xl font-bold text-[#A6C94A]">
-                  USD ${totalPotencial.toLocaleString()}
+                <p className="text-3xl font-black text-[#A6C94A] leading-none">
+                  {formatCurrency(totalPotencial)}
                 </p>
-                <div className="flex gap-2 text-[10px] text-slate-400 uppercase font-semibold">
-                  <span>Propios: ${gananciaPropia}</span>
-                  <span className="text-primary">Flips: ${gananciaFlips}</span>
+                <div className="flex gap-3 text-[10px] text-slate-400 uppercase font-bold mt-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                    <span>Propios: {formatCurrency(gananciaPropia)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#A6C94A]" />
+                    <span>Flips: {formatCurrency(gananciaFlips)}</span>
+                  </div>
                 </div>
             </div>
 
             <ProgressBar />
 
-            {/* Gráfico de fondo */}
-            <div className="absolute inset-0 -bottom-6 opacity-30 pointer-events-none">
+            <div className="absolute inset-0 -bottom-6 opacity-20 pointer-events-none">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#eab308" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#eab308" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#A6C94A" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#A6C94A" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <Area 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#eab308" 
+                    stroke="#A6C94A" 
                     fillOpacity={1} 
                     fill="url(#colorValue)" 
                     strokeWidth={2}
