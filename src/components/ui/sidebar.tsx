@@ -1,47 +1,45 @@
-import type { SVGProps } from 'react';
-export const Logo = (props: SVGProps<SVGSVGElement>) => (
-    <svg
-        {...props}
-        width="32"
-        height="32"
-        viewBox="0 0 50 50"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-    >
-        <path
-            d="M11.332 42.4173H6.83203C5.55293 42.4173 4.58203 41.3963 4.58203 40.1173V25.3373L8.91536 16.5873C9.33203 15.754 10.1654 15.2503 11.082 15.2503H23.082C23.6654 15.2503 24.2487 15.4983 24.6654 15.915L28.832 20.0817"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
-        <path
-            d="M45.418 20.418V30.5013C45.418 31.7804 44.397 32.7513 43.168 32.7513H40.2513"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
-        <path
-            d="M28.832 20.0817L35.2487 13.665C36.9987 11.915 39.7487 12.8317 39.7487 15.2484V20.415C39.7487 22.415 41.4153 23.9984 43.4153 23.9984H45.4153"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        />
-        <circle
-            cx="14.418"
-            cy="32.7495"
-            r="3.58333"
-            stroke="hsl(var(--accent))"
-            strokeWidth="3"
-        />
-        <circle
-            cx="33.168"
-            cy="32.7495"
-            r="3.58333"
-            stroke="hsl(var(--accent))"
-            strokeWidth="3"
-        />
-    </svg>
-);
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+
+export const SidebarContext = React.createContext<any>(null)
+
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
+  return <SidebarContext.Provider value={{}}><div className="flex min-h-svh w-full">{children}</div></SidebarContext.Provider>
+}
+
+export function Sidebar({ children }: { children: React.ReactNode }) {
+  return <aside className="w-64 border-r bg-background">{children}</aside>
+}
+
+export function SidebarHeader({ children }: { children: React.ReactNode }) {
+  return <div className="p-4 border-b">{children}</div>
+}
+
+export function SidebarContent({ children }: { children: React.ReactNode }) {
+  return <div className="flex-1 overflow-auto">{children}</div>
+}
+
+export function SidebarFooter({ children }: { children: React.ReactNode }) {
+  return <div className="p-4 border-t">{children}</div>
+}
+
+export function SidebarMenu({ children }: { children: React.ReactNode }) {
+  return <nav className="p-2">{children}</nav>
+}
+
+export function SidebarMenuItem({ children }: { children: React.ReactNode }) {
+  return <div>{children}</div>
+}
+
+export function SidebarMenuButton({ asChild, children }: any) {
+  const Comp = asChild ? Slot : "button"
+  return <Comp className="flex w-full items-center gap-2 p-2 hover:bg-accent">{children}</Comp>
+}
+
+export function SidebarInset({ children }: { children: React.ReactNode }) {
+  return <main className="flex-1">{children}</main>
+}
+
+export function SidebarTrigger() {
+  return <button className="p-2">☰</button>
+}
