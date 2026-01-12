@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///home/pabloarmendoza/hotcars_final/app/favicon.ico.mjs%20%28structured%20image%20object%29"],"sourcesContent":["import src from \"IMAGE\";\nexport default { src, width: 225, height: 234 }\n"],"names":[],"mappings":";;;;AAAA;;uCACe;IAAE,KAAA,kHAAG;IAAE,OAAO;IAAK,QAAQ;AAAI","debugId":null}}]
-}
