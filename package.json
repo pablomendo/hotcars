@@ -1,4 +1,4 @@
-echo '{
+{
   "name": "hotcars",
   "version": "0.1.0",
   "private": true,
@@ -36,4 +36,4 @@ echo '{
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }
-}' > package.json
+}
