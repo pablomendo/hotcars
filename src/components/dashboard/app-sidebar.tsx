@@ -18,8 +18,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-} from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+} from "../ui/sidebar";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 
 export function AppSidebar() {
   const router = useRouter();

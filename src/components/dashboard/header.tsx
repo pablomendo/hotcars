@@ -1,10 +1,10 @@
 "use client";
 
 import { Bell, Search, Plus, User, Menu, LayoutDashboard, Car, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { usePublishModal } from "@/hooks/use-publish-modal";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "../ui/sheet";
 
 export function Header() {
   const { setOpen } = usePublishModal();

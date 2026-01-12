@@ -1,9 +1,9 @@
 
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
 import { AlertTriangle, CheckCircle, UserCheck } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Separator } from "../ui/separator";
 
 export function SmartAlerts() {
   return (

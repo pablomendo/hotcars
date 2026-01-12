@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import { Plus } from "lucide-react";
 import { usePublishModal } from "@/hooks/use-publish-modal";
 

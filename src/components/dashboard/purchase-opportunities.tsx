@@ -1,9 +1,9 @@
 
 "use client";
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 
 const riskListings = [
   { name: 'Chevrolet Cruze 2016', price: 'u$S 17.000', days: 48 },

@@ -1,9 +1,9 @@
 
 "use client";
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Separator } from "../ui/separator";
+import { Button } from '../ui/button';
 
 const opportunities = [
   { id: 'suv-1', name: 'VW Nivus 2022', marketDiff: '-1500 U$S' },

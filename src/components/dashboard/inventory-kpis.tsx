@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
 import { MessageSquare, FileSearch, Clock } from "lucide-react";
 import type { InventoryItem } from "@/types/inventory";
-import { getAverageDaysToSell } from "@/lib/inventory-metrics";
+import { getAverageDaysToSell } from "../../lib/inventory-metrics";
 
 interface Props {
   inventory: InventoryItem[];

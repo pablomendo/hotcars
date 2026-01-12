@@ -8,14 +8,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "../ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Separator } from '@/components/ui/separator';
+} from "../ui/chart";
+import { Separator } from '../ui/separator';
 
 const chartData = [
   { type: "Autos", sales: 40, fill: "hsl(var(--chart-1))" },
