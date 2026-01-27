@@ -9,7 +9,6 @@ import Header from "../../components/ui/Header";
 
 import { createClient } from "@supabase/supabase-js";
 
-// Credenciales directas para asegurar conexión
 const supabaseUrl = 'https://xkwkgcjgxjvidiwthwbr.supabase.co';
 const supabaseAnonKey = 'sb_publishable_Ou5RH-wPn0_LDs3F8hd-5w_5gSWvlDF';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -93,25 +92,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   const photoRef = useRef<HTMLDivElement>(null);
   const finalRef = useRef<HTMLDivElement>(null);
 
-  const [baseAutos, setBaseAutos] = useState<any[]>([]);
-
-  useEffect(() => {
-    async function fetchBaseAutos() {
-      const { data, error } = await supabase.from('base_autos').select('*');
-      if (!error && data) {
-        setBaseAutos(data);
-        console.log("BASE_AUTOS CARGADA:", data.length);
-      }
-    }
-    fetchBaseAutos();
-  }, []);
-
-  // FILTROS USANDO LA API QUE APUNTA AL JSON CAMUFLADO
   useEffect(() => {
     if (selectedCategory) {
-      setSelectedBrand("");
-      setSelectedModel("");
-      setSelectedVersion("");
       fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}`)
         .then(res => res.json())
         .then(data => { if (Array.isArray(data)) setAvailableBrands(data.sort()); });
@@ -120,8 +102,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     if (selectedCategory && selectedBrand && !isManual) {
-      setSelectedModel("");
-      setSelectedVersion("");
       fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}&brand=${selectedBrand.toUpperCase()}`)
         .then(res => res.json())
         .then(data => { if (Array.isArray(data)) setAvailableModels(data.sort()); });
@@ -130,7 +110,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     if (selectedCategory && selectedBrand && selectedModel && !isManual) {
-      setSelectedVersion("");
       fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}&brand=${selectedBrand.toUpperCase()}&model=${selectedModel.toUpperCase()}`)
         .then(res => res.json())
         .then(data => { if (Array.isArray(data)) setAvailableVersions(data.sort()); });
@@ -361,7 +340,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                   <div className="p-4 border-b border-gray-50"><input placeholder="BUSCAR OTRA MARCA..." className={inputClassName} value={searchBrand} onChange={(e) => setSearchBrand(e.target.value.toUpperCase())} /></div>
                   <div className="divide-y divide-gray-50 max-h-[250px] overflow-y-auto">
-                    {availableBrands.filter(b => b.toUpperCase().includes(searchBrand)).map((item) => (
+                    {availableBrands.filter(b => b.includes(searchBrand)).map((item) => (
                       <button key={item} onClick={() => { setSelectedBrand(item); smartScroll(modelRef); }} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 font-semibold uppercase text-sm text-gray-700">{item} <ChevronRight className="h-4 w-4" /></button>
                     ))}
                     <button onClick={() => { setIsManual(true); smartScroll(manualRef); }} className="w-full flex items-center justify-between px-5 py-4 bg-orange-50 font-bold uppercase text-xs text-orange-600">NO ENCUENTRO MI MARCA <PlusCircle className="h-4 w-4" /></button>
@@ -413,7 +392,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                   <div className="p-4 border-b border-gray-50"><input placeholder="BUSCAR MODELO..." className={inputClassName} value={searchModel} onChange={(e) => setSearchModel(e.target.value.toUpperCase())} /></div>
                   <div className="divide-y divide-gray-50 max-h-[200px] md:max-h-[450px] overflow-y-auto">
-                    {availableModels.filter(m => m.toUpperCase().includes(searchModel)).map((m) => (
+                    {availableModels.filter(m => m.includes(searchModel)).map((m) => (
                       <button key={m} onClick={() => { setSelectedModel(m); smartScroll(yearRef); }} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 font-semibold uppercase text-sm text-gray-700">{m} <ChevronRight className="h-4 w-4" /></button>
                     ))}
                     <button onClick={() => { setIsManual(true); smartScroll(manualRef); }} className="w-full flex items-center justify-between px-5 py-4 bg-orange-50 font-bold uppercase text-xs text-orange-600">NO ENCUENTRO EL MODELO <PlusCircle className="h-4 w-4" /></button>
@@ -453,7 +432,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                   <div className="p-4 border-b border-gray-50"><input placeholder="BUSCAR VERSIÓN..." className={inputClassName} value={searchVersion} onChange={(e) => setSearchVersion(e.target.value.toUpperCase())} /></div>
                   <div className="divide-y divide-gray-50 max-h-[200px] md:max-h-[450px] overflow-y-auto">
-                    {availableVersions.filter(v => v.toUpperCase().includes(searchVersion)).map((v) => (
+                    {availableVersions.filter(v => v.includes(searchVersion)).map((v) => (
                       <button key={v} onClick={() => { setSelectedVersion(v); smartScroll(kmRef); }} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 font-semibold uppercase text-sm text-gray-700 text-left">{v} <ChevronRight className="h-4 w-4" /></button>
                     ))}
                     <button onClick={() => { setIsManual(true); smartScroll(manualRef); }} className="w-full flex items-center justify-between px-5 py-4 bg-orange-50 font-bold uppercase text-xs text-orange-600">NO ENCUENTRO LA VERSIÓN <PlusCircle className="h-4 w-4" /></button>
