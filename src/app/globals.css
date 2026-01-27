@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  /* Core Colors */
+  --color-background: #0b1114;
+  --color-header: #0f1c23;
+  --color-card: #1a2c38;
+  --color-border: #374151;
+
+  /* Action Colors */
+  --color-primary: #3b82f6;
+  --color-success: #00984a;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  /* Text Colors */
+  --color-text-main: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-text-disabled: #6b7280;
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), var(--font-inter), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+/* Global Styles */
+*, *::before, *::after {
+  box-sizing: border-box; /* 1. Crucial para que padding/border no sumen ancho extra */
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+  overflow-x: hidden; /* Evita cualquier rebote lateral en mobile */
+  width: 100%;
+}
+
+/* Estructura del Modal para HotCars */
+.modal-container {
+  width: 100%;
+  max-width: 590px; /* 2. Mantiene los 590px en desktop */
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .modal-container {
+    width: 100%;
+    max-width: 100%; /* 3. En iPhone ocupa el ancho disponible sin pasarse */
+    margin: 0;
+    border-radius: 0; /* Opcional: mejora el look en mobile */
+  }
+
+  /* Asegura que el contenido interno no empuje el modal hacia afuera */
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden; 
+    padding-left: 16px; /* Padding de seguridad para que no toque los bordes físicos */
+    padding-right: 16px;
+  }
+}
+
+/* Header Sticky (si ya existe en tu estructura) */
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--color-header);
+  width: 100%;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-header);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
