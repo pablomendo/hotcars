@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { mockSearchTickets, mockCommunityStats } from '@/data/mock';
-import { isClavo, generateMatchingAlerts } from '@/lib/logic';
+import { generateMatchingAlerts } from '@/lib/logic';
 import SortableKPI from '@/components/ui/SortableKPI';
 import CommunityCard from '@/components/ui/CommunityCard';
 import AlertsList from '@/components/ui/AlertsList';
@@ -16,8 +16,17 @@ export default function DashboardPage() {
     const [inventory, setInventory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     
-    // Cotización Blue de la API: 1500
     const DOLAR_BLUE = 1500;
+
+    // Función de normalización según reglas de negocio
+    const normalizeStatus = (status) => {
+        const s = status?.toLowerCase().trim();
+        if (s === 'activo' || s === 'publicado') return 'activo';
+        if (s === 'reservado' || s === 'señado') return 'reservado';
+        if (s === 'pausado') return 'pausado';
+        if (s === 'vendido') return 'vendido';
+        return 'draft';
+    };
 
     useEffect(() => {
         const fetchInventory = async () => {
@@ -36,7 +45,8 @@ export default function DashboardPage() {
                     model: v.modelo,
                     price: v.pv,
                     cost: v.pc,
-                    status: v.estado?.toUpperCase() || 'DRAFT'
+                    // Normalización aplicada al inicio para consistencia en todo el dashboard
+                    rawStatus: normalizeStatus(v.estado)
                 }));
 
                 setInventory(mappedData);
@@ -51,42 +61,56 @@ export default function DashboardPage() {
         fetchInventory();
     }, []);
 
+    // 1. AUTOS ACTIVOS: Solo estado 'activo' (incluye ahora los 'publicado')
     const activeVehicles = useMemo(() => {
-        return inventory.filter(v => 
-            v.status === 'ACTIVE' || 
-            v.status === 'PUBLICADO' || 
-            v.status === 'ACTIVO'
-        );
+        return inventory.filter(v => v.rawStatus === 'activo');
     }, [inventory]);
 
-    // Lógica corregida: Suma total de (Venta - Compra) de inventario real con conversión API
+    // 2. POTENCIAL DE GANANCIA: Activo + Reservado + Pausado
     const potentialValue = useMemo(() => {
-        return activeVehicles.reduce((total, v) => {
+        const relevantVehicles = inventory.filter(v => 
+            ['activo', 'reservado', 'pausado'].includes(v.rawStatus)
+        );
+        return relevantVehicles.reduce((total, v) => {
             const margen = Number(v.price) - Number(v.cost);
-            // Si la unidad está en pesos (ARS), divide por 1500
             const margenDolar = v.moneda === 'ARS' ? (margen / DOLAR_BLUE) : margen;
             return total + (margenDolar > 0 ? margenDolar : 0);
         }, 0);
-    }, [activeVehicles]);
+    }, [inventory]);
 
+    // 3. ESTADO DE INVENTARIO: Activo + Reservado + Pausado
     const inventoryStatus = useMemo(() => {
-        const total = activeVehicles.length;
+        const relevantVehicles = inventory.filter(v => 
+            ['activo', 'reservado', 'pausado'].includes(v.rawStatus)
+        );
+        const total = relevantVehicles.length;
         if (total === 0) return { r: 0, l: 0, c: 0 };
+        
         const now = new Date().getTime();
         let c = 0, l = 0, r = 0;
-        activeVehicles.forEach(v => {
+        
+        relevantVehicles.forEach(v => {
             const diff = Math.floor((now - new Date(v.created_at).getTime()) / 86400000);
-            if (diff > 45) c++; else if (diff >= 21) l++; else r++;
+            if (diff >= 45) c++; 
+            else if (diff >= 31) l++; 
+            else r++;
         });
+        
         return { 
             r: Math.round((r/total)*100), 
             l: Math.round((l/total)*100), 
             c: Math.round((c/total)*100) 
         };
-    }, [activeVehicles]);
+    }, [inventory]);
 
+    // 4. UNIDAD CLAVO: Solo 'activo' + >= 45 días
     const kpiData = useMemo(() => {
-        const clavoCount = activeVehicles.filter(v => isClavo(v)).length;
+        const now = new Date().getTime();
+        const clavoCount = inventory.filter(v => {
+            const diff = Math.floor((now - new Date(v.created_at).getTime()) / 86400000);
+            return v.rawStatus === 'activo' && diff >= 45;
+        }).length;
+
         return [
             { id: 'activos', title: 'Autos Activos', value: activeVehicles.length, badge: 'En vivo', badgeType: 'up', subtext: 'Inventario real' },
             { id: 'mensajes', title: 'Mensajes', value: 15, subtext: 'Leads acumulados' },
@@ -95,9 +119,9 @@ export default function DashboardPage() {
             { id: 'buscados', title: 'Modelos Buscados', value: mockSearchTickets.length, subtext: 'Pedidos comunidad' },
             { id: 'clavos', title: 'Unidad Clavo', value: clavoCount, isCurrency: false, subtext: 'Acción requerida' }
         ];
-    }, [activeVehicles]);
+    }, [inventory, activeVehicles.length]);
 
-    const [items, setItems] = useState(kpiData);
+    const [items, setItems] = useState([]);
     useEffect(() => { if (isMounted) setItems(kpiData); }, [kpiData, isMounted]);
 
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
@@ -108,13 +132,11 @@ export default function DashboardPage() {
         </div>
     );
 
-    // Formateador corregido: Sin símbolo de moneda, solo el número con comas
     const formatter = new Intl.NumberFormat('en-US', { 
         maximumFractionDigits: 0 
     }).format(potentialValue);
 
     return (
-        /* FIX: Se agregó 'pt-32' para compensar el Header estático y un contenedor max-width para centrar */
         <div className="bg-[#0b1114] min-h-screen w-full pt-32 pb-10 px-4 md:px-8 overflow-y-auto">
             <div className="max-w-[1600px] mx-auto space-y-6">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => {
@@ -136,7 +158,6 @@ export default function DashboardPage() {
                 </DndContext>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* CARD POTENCIAL DE GANANCIA CORREGIDA */}
                     <div className="bg-[#1a2b2b] p-6 rounded-xl border border-white/10 shadow-2xl">
                         <div className="flex justify-between items-start mb-1">
                             <div>
@@ -151,7 +172,6 @@ export default function DashboardPage() {
                                 {formatter}
                             </span>
                         </div>
-                        {/* BARRA SEGMENTADA DE COLORES */}
                         <div className="flex gap-1.5 h-1.5 w-full mt-8">
                             <div className="flex-1 bg-red-500 rounded-sm opacity-80"></div>
                             <div className="flex-1 bg-orange-500 rounded-sm opacity-80"></div>

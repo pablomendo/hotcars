@@ -2,50 +2,50 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-// IMPORTAMOS EL ARCHIVO OCULTO
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, Phone, MapPin
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight
 } from 'lucide-react';
 
 export default function InventoryPage() {
-    const [inv, setInv] = useState([]);
+    const [inv, setInv] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [tab, setTab] = useState('ACTIVE');
+    const [tab, setTab] = useState('ACTIVOS');
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [isMounted, setIsMounted] = useState(false); // Para hidratación
+    const [isMounted, setIsMounted] = useState(false);
+    const [userId, setUserId] = useState<string | null>(null);
 
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
     const [openSection, setOpenSection] = useState<string | null>('unidad');
 
-    // VINCULAMOS EL AUTO SELECCIONADO CON LOS DATOS DEL JSON
     const extraInfo = useMemo(() => {
         if (!selectedAuto) return null;
         return (hiddenData as any[]).find((item: any) => item.id === selectedAuto.id);
     }, [selectedAuto]);
 
     useEffect(() => {
-        setIsMounted(true); // Marcamos que ya cargó en el cliente
-        fetchInventory();
+        setIsMounted(true);
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) setUserId(user.id);
+            fetchInventory(user?.id);
+        };
+        getUser();
 
         const channel = supabase
             .channel('inventory-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {
-                fetchInventory();
+                getUser();
             })
             .subscribe();
-
-        document.documentElement.style.overflow = 'auto';
-        document.body.style.overflow = 'auto';
-        document.body.style.height = 'auto';
 
         return () => {
             supabase.removeChannel(channel);
         };
     }, []);
 
-    const fetchInventory = async () => {
+    const fetchInventory = async (currentUserId?: string | null) => {
         try {
             const { data, error } = await supabase
                 .from('inventario')
@@ -58,12 +58,6 @@ export default function InventoryPage() {
                 const pv = Number(v.pv) || 0;
                 const pc = Number(v.pc) || 0;
 
-                let internalStatus = v.estado?.toUpperCase() || 'DRAFT';
-                if (internalStatus === 'ACTIVO' || internalStatus === 'PUBLICADO') internalStatus = 'ACTIVE';
-                if (internalStatus === 'PAUSADO' || internalStatus === 'SEÑADO') internalStatus = 'PAUSED';
-                if (internalStatus === 'VENDIDO') internalStatus = 'SOLD';
-                if (internalStatus === 'BORRADOR') internalStatus = 'DRAFT';
-
                 return {
                     ...v,
                     brand: v.marca,
@@ -71,15 +65,19 @@ export default function InventoryPage() {
                     year: v.anio,
                     km: v.km,
                     images: v.fotos || [],
-                    isProprio: v.tipo_operacion === 'PROPIO' || (pc > 0 && v.tipo_operacion !== 'CONSIGNACION'),
+                    // CORRECCIÓN: Leemos de la columna 'provincia' y 'localidad' de tu tabla
+                    location: v.provincia || '',
+                    city: v.localidad || '',
+                    inventory_status: v.inventory_status || 'activo',
+                    deal_status: v.deal_status || 'disponible',
+                    publish_status: v.publish_status || 'publicado',
+                    isProprio: v.created_by_user_id === (currentUserId || userId),
                     prices: {
                         purchasePrice: pc,
                         salePrice: pv,
                         myProfit: pv - pc,      
-                        flipperProfit: Number(v.ganancia_flipper) || 0,
                         currency: v.moneda === 'USD' ? 'USD ' : '$ ARS '
-                    },
-                    status: internalStatus
+                    }
                 };
             });
             setInv(mappedData);
@@ -90,50 +88,66 @@ export default function InventoryPage() {
         }
     };
 
-    const handleAction = async (id: string, nextStatus: string) => {
+    const handleAction = async (id: string, action: string) => {
         try {
-            if (nextStatus === 'DELETE') {
+            let updateData = {};
+            if (action === 'DELETE') {
                 if (!confirm('¿Eliminar unidad?')) return;
                 await supabase.from('inventario').delete().eq('id', id);
-            } else {
-                const dbStatus = nextStatus === 'ACTIVE' ? 'ACTIVO' : nextStatus === 'PAUSED' ? 'PAUSADO' : nextStatus;
-                await supabase.from('inventario').update({ estado: dbStatus }).eq('id', id);
+                fetchInventory();
+                return;
             }
+            if (action === 'PAUSE') updateData = { inventory_status: 'pausado', show_on_web: false };
+            if (action === 'ACTIVATE') updateData = { inventory_status: 'activo' };
+            if (action === 'RESERVE') updateData = { deal_status: 'reservado' };
+            if (action === 'SELL') updateData = { deal_status: 'vendido' };
+
+            await supabase.from('inventario').update(updateData).eq('id', id);
             fetchInventory();
         } catch (err: any) { alert(err.message); }
     };
 
-    const counts = useMemo(() => ({
-        ACTIVE: inv.filter(v => v.status === 'ACTIVE').length,
-        THIRD:  inv.filter(v => !v.isProprio && v.status === 'ACTIVE').length,
-        PROPIO: inv.filter(v => v.isProprio && v.status === 'ACTIVE').length,
-        PAUSED: inv.filter(v => v.status === 'PAUSED').length,
-        SOLD:   inv.filter(v => v.status === 'SOLD').length,
-        DRAFT:  inv.filter(v => v.status === 'DRAFT').length,
-    }), [inv]);
-
     const filtered = useMemo(() => {
         return inv.filter(v => {
-            const s = v.status;
             const searchMatch = (v.brand?.toLowerCase() || "").includes(search.toLowerCase()) || 
                                (v.model?.toLowerCase() || "").includes(search.toLowerCase());
             if (!searchMatch) return false;
 
-            if (tab === 'ACTIVE') return s === 'ACTIVE';
-            if (tab === 'THIRD') return !v.isProprio && s === 'ACTIVE';
-            if (tab === 'PROPIO') return v.isProprio && s === 'ACTIVE';
-            if (tab === 'PAUSED') return s === 'PAUSED';
-            if (tab === 'SOLD') return s === 'SOLD';
-            if (tab === 'DRAFT') return s === 'DRAFT';
-            return false;
+            switch (tab) {
+                case 'ACTIVOS':
+                    return v.inventory_status === 'activo' && v.publish_status === 'publicado' && v.deal_status !== 'vendido';
+                case 'RESERVADOS':
+                    return v.deal_status === 'reservado' && v.publish_status === 'publicado';
+                case 'PAUSADOS':
+                    return v.inventory_status === 'pausado';
+                case 'VENDIDOS':
+                    return v.deal_status === 'vendido';
+                case 'BORRADORES':
+                    return v.publish_status === 'borrador';
+                case 'PROPIOS':
+                    return v.isProprio;
+                case 'TERCEROS':
+                    return !v.isProprio && v.inventory_status === 'activo' && v.publish_status === 'publicado';
+                default:
+                    return false;
+            }
         });
-    }, [tab, search, inv]);
+    }, [tab, search, inv, userId]);
+
+    const counts = useMemo(() => ({
+        ACTIVOS:    inv.filter(v => v.inventory_status === 'activo' && v.publish_status === 'publicado' && v.deal_status !== 'vendido').length,
+        RESERVADOS: inv.filter(v => v.deal_status === 'reservado' && v.publish_status === 'publicado').length,
+        PAUSADOS:   inv.filter(v => v.inventory_status === 'pausado').length,
+        VENDIDOS:   inv.filter(v => v.deal_status === 'vendido').length,
+        BORRADORES: inv.filter(v => v.publish_status === 'borrador').length,
+        PROPIOS:    inv.filter(v => v.isProprio).length,
+        TERCEROS:   inv.filter(v => !v.isProprio && v.inventory_status === 'activo' && v.publish_status === 'publicado').length,
+    }), [inv, userId]);
 
     if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]"><Loader2 className="h-10 w-10 animate-spin text-[#22c55e]" /></div>;
 
     return (
         <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans">
-            
             <style jsx global>{`
                 @font-face {
                     font-family: 'Genos';
@@ -143,26 +157,27 @@ export default function InventoryPage() {
 
             <div className="fixed top-20 left-0 right-0 z-[40] h-auto lg:h-16 bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-6 py-2 lg:py-0">
                 <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-0.5 lg:gap-0">
-                    <div className="grid grid-cols-3 lg:flex items-center gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
+                    <div className="grid grid-cols-4 lg:flex items-center gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
                         {[
-                            { id: 'ACTIVE', label: 'Activos' },
-                            { id: 'THIRD', label: 'Terceros' },
-                            { id: 'PROPIO', label: 'Propio' },
-                            { id: 'PAUSED', label: 'Pausado/Señado' },
-                            { id: 'SOLD', label: 'Vendidos' },
-                            { id: 'DRAFT', label: 'Borradores' }
+                            { id: 'ACTIVOS', label: 'Activos' },
+                            { id: 'RESERVADOS', label: 'Reservados' },
+                            { id: 'PAUSADOS', label: 'Pausados' },
+                            { id: 'VENDIDOS', label: 'Vendidos' },
+                            { id: 'BORRADORES', label: 'Borradores' },
+                            { id: 'PROPIOS', label: 'Propios' },
+                            { id: 'TERCEROS', label: 'Terceros' }
                         ].map((t) => (
                             <button 
                                 key={t.id} 
                                 onClick={() => setTab(t.id)} 
-                                className={`px-3 py-1.5 rounded-lg text-[10px] lg:text-[12px] font-bold transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap ${
+                                className={`px-3 py-1.5 rounded-lg text-[10px] lg:text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap ${
                                     tab === t.id 
                                     ? 'bg-[#134e4d] text-white shadow-md' 
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                             >
                                 {t.label}
-                                <span className={`text-[10px] lg:text-[11px] font-mono font-black ${tab === t.id ? 'opacity-70' : 'text-[#00984a]'}`}>
+                                <span className={`text-[9px] lg:text-[10px] font-mono font-black ${tab === t.id ? 'opacity-70' : 'text-[#00984a]'}`}>
                                     {counts[t.id as keyof typeof counts]}
                                 </span>
                             </button>
@@ -207,30 +222,39 @@ export default function InventoryPage() {
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
                                     )}
-                                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/80 rounded text-[9px] font-bold text-[#22c55e] border border-[#22c55e]/30 tracking-tight z-10">
-                                        {v.isProprio ? 'PROPIO' : 'CONSIGNA'}
-                                    </div>
+                                    {v.deal_status === 'reservado' && (
+                                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-600 rounded text-[9px] font-bold text-white z-10">RESERVADO</div>
+                                    )}
                                 </div>
 
                                 <div className="p-4 flex-1">
                                     <h3 className="font-bold text-xs uppercase truncate text-white tracking-tight">{v.brand} {v.model}</h3>
-                                    <p className="text-[10px] text-slate-500 mb-4" suppressHydrationWarning>
+                                    <p className="text-[10px] text-slate-500 mb-2" suppressHydrationWarning>
                                         {v.year} • {isMounted ? v.km?.toLocaleString('es-AR') : '--'} KM
                                     </p>
+
+                                    {/* UBICACIÓN ESCRITA POR ARRIBA DEL SEPARADOR AL 50% */}
+                                    <div className="mb-1 opacity-50">
+                                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate block">
+                                            {v.location} {v.city ? `• ${v.city}` : ''}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between items-end mb-3">
+                                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">PRECIO VENTA</span>
+                                        <span className="text-sm font-black text-[#22c55e] leading-none" suppressHydrationWarning>
+                                            {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
+                                        </span>
+                                    </div>
                                     
                                     <div className="space-y-1.5 border-t border-white/5 pt-3">
-                                        <div className="flex justify-between items-end">
-                                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">Precio Venta</span>
-                                            <span className="text-sm font-black text-[#22c55e] leading-none" suppressHydrationWarning>
-                                                {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-end opacity-40">
-                                            <span className="text-[9px] uppercase font-bold tracking-tighter">Costo / Cliente</span>
-                                            <span className="text-[11px] font-mono leading-none" suppressHydrationWarning>
+                                        <div className="flex justify-between items-end opacity-50">
+                                            <span className="text-[9px] uppercase font-bold tracking-tighter text-white">PRECIO CLIENTE / COMPRA</span>
+                                            <span className="text-[11px] font-mono leading-none text-white" suppressHydrationWarning>
                                                 {v.prices.currency}{isMounted ? v.prices.purchasePrice.toLocaleString('es-AR') : '--'}
                                             </span>
                                         </div>
+
                                         <div className="flex justify-between items-end mt-1">
                                             <span className="text-[9px] uppercase font-bold tracking-tighter">MI GANANCIA</span>
                                             <span className="text-[11px] font-mono font-normal text-white" suppressHydrationWarning>
@@ -245,17 +269,17 @@ export default function InventoryPage() {
                                         <Pencil size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">EDITAR</span>
                                     </button>
                                     
-                                    {v.status === 'PAUSED' ? (
-                                        <button onClick={() => handleAction(v.id, 'ACTIVE')} className="flex-1 p-3 flex justify-center text-green-500 hover:bg-green-500/10 transition-all group/btn relative">
+                                    {v.inventory_status === 'pausado' ? (
+                                        <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="flex-1 p-3 flex justify-center text-green-500 hover:bg-green-500/10 transition-all group/btn relative">
                                             <Play size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">ACTIVAR</span>
                                         </button>
                                     ) : (
-                                        <button onClick={() => handleAction(v.id, 'PAUSED')} className="flex-1 p-3 flex justify-center text-slate-500 hover:text-yellow-400 hover:bg-white/5 transition-all group/btn relative">
-                                            <PauseCircle size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-yellow-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">PAUSAR/SEÑADO</span>
+                                        <button onClick={() => handleAction(v.id, 'PAUSE')} className="flex-1 p-3 flex justify-center text-slate-500 hover:text-yellow-400 hover:bg-white/5 transition-all group/btn relative">
+                                            <PauseCircle size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-yellow-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">PAUSAR</span>
                                         </button>
                                     )}
 
-                                    <button onClick={() => handleAction(v.id, 'SOLD')} className="flex-1 p-3 flex justify-center text-slate-500 hover:text-[#22c55e] hover:bg-white/5 transition-all group/btn relative">
+                                    <button onClick={() => handleAction(v.id, 'SELL')} className="flex-1 p-3 flex justify-center text-slate-500 hover:text-[#22c55e] hover:bg-white/5 transition-all group/btn relative">
                                         <Check size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#22c55e] text-black font-black text-[9px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">VENDIDO</span>
                                     </button>
                                     
@@ -272,7 +296,7 @@ export default function InventoryPage() {
                             <thead className="bg-black/40 text-slate-500 uppercase font-black border-b border-white/5 tracking-widest">
                                 <tr>
                                     <th className="p-4">Unidad</th>
-                                    <th className="p-4 text-right">Costo / Cliente</th>
+                                    <th className="p-4 text-right">Relación</th>
                                     <th className="p-4 text-right text-[#22c55e]">Venta (PV)</th>
                                     <th className="p-4 text-right">Acciones</th>
                                 </tr>
@@ -281,20 +305,20 @@ export default function InventoryPage() {
                                 {filtered.map((v) => (
                                     <tr key={v.id} onClick={() => setSelectedAuto(v)} className="hover:bg-white/[0.02] transition-colors group cursor-pointer">
                                         <td className="p-4 font-black text-white uppercase tracking-tight">{v.brand} {v.model}</td>
-                                        <td className="p-4 text-right font-mono opacity-50 text-[10px]" suppressHydrationWarning>
-                                            {v.prices.currency}{isMounted ? v.prices.purchasePrice.toLocaleString('es-AR') : '--'}
+                                        <td className="p-4 text-right font-mono opacity-50 text-[10px] uppercase">
+                                            {v.isProprio ? 'MÍO' : 'TERCERO'}
                                         </td>
                                         <td className="p-4 text-right font-mono font-black text-[#22c55e] text-sm" suppressHydrationWarning>
                                             {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
                                         </td>
                                         <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex justify-end gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
-                                                {v.status === 'PAUSED' ? (
-                                                    <button onClick={() => handleAction(v.id, 'ACTIVE')} className="text-green-500"><Play size={14}/></button>
+                                                {v.inventory_status === 'pausado' ? (
+                                                    <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="text-green-500"><Play size={14}/></button>
                                                 ) : (
-                                                    <button onClick={() => handleAction(v.id, 'PAUSED')} className="text-yellow-500"><PauseCircle size={14}/></button>
+                                                    <button onClick={() => handleAction(v.id, 'PAUSE')} className="text-yellow-500"><PauseCircle size={14}/></button>
                                                 )}
-                                                <button onClick={() => handleAction(v.id, 'SOLD')} className="hover:text-[#22c55e]"><Check size={14}/></button>
+                                                <button onClick={() => handleAction(v.id, 'SELL')} className="hover:text-[#22c55e]"><Check size={14}/></button>
                                                 <button onClick={() => handleAction(v.id, 'DELETE')} className="hover:text-red-500"><Trash2 size={14}/></button>
                                             </div>
                                         </td>
@@ -324,10 +348,9 @@ export default function InventoryPage() {
                                     <div className="p-4 grid grid-cols-2 gap-y-3 border-t border-slate-100 animate-in slide-in-from-top duration-200">
                                         <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Marca</span><span className="text-xs font-black uppercase">{selectedAuto.brand}</span></div>
                                         <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Modelo</span><span className="text-xs font-black uppercase">{selectedAuto.model}</span></div>
-                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Año / KM</span><span className="text-xs font-black uppercase" suppressHydrationWarning>{selectedAuto.year} / {isMounted ? selectedAuto.km?.toLocaleString('es-AR') : '--'}</span></div>
-                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Estado</span><span className="text-xs font-black uppercase text-[#00984a]">{selectedAuto.status}</span></div>
+                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Estado Inv.</span><span className="text-xs font-black uppercase text-[#00984a]">{selectedAuto.inventory_status}</span></div>
+                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Relación</span><span className="text-xs font-black uppercase text-orange-600">{selectedAuto.isProprio ? 'PROPIO (MÍO)' : 'TERCERO'}</span></div>
                                         
-                                        {/* INTEGRACIÓN DEL DATO PRIVADO DEL JSON */}
                                         {extraInfo && (
                                             <div className="flex flex-col col-span-2 mt-2 p-2 bg-slate-100 rounded-lg border border-dashed border-slate-300">
                                                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Información Resguardada</span>
@@ -340,24 +363,10 @@ export default function InventoryPage() {
                                 )}
                             </div>
 
-                            <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                <button onClick={() => setOpenSection(openSection === 'economia' ? null : 'economia')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
-                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Precios y Ganancia</span>
-                                    {openSection === 'economia' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
-                                </button>
-                                {openSection === 'economia' && (
-                                    <div className="p-4 space-y-3 border-t border-slate-100 animate-in slide-in-from-top duration-200">
-                                        <div className="flex justify-between items-center text-xs font-bold uppercase"><span>Precio Venta</span><span className="text-slate-900 font-black" suppressHydrationWarning>{selectedAuto.prices.currency}{isMounted ? selectedAuto.prices.salePrice.toLocaleString('es-AR') : '--'}</span></div>
-                                        <div className="flex justify-between items-center text-xs font-bold uppercase"><span>Costo / Cliente</span><span className="text-slate-900 font-black" suppressHydrationWarning>{selectedAuto.prices.currency}{isMounted ? selectedAuto.prices.purchasePrice.toLocaleString('es-AR') : '--'}</span></div>
-                                        <div className="flex justify-between items-center text-sm font-black uppercase text-[#22c55e] bg-[#22c55e]/5 p-3 rounded-xl border border-[#22c55e]/10"><span>MI GANANCIA</span><span suppressHydrationWarning>{selectedAuto.prices.currency}{isMounted ? selectedAuto.prices.myProfit.toLocaleString('es-AR') : '--'}</span></div>
-                                    </div>
-                                )}
-                            </div>
-
                             <div className="grid grid-cols-3 gap-2 pt-4">
                                 <button className="bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"><Pencil size={14}/> Editar</button>
-                                <button onClick={() => handleAction(selectedAuto.id, 'SOLD')} className="bg-white text-slate-600 py-3.5 rounded-xl text-[10px] font-black uppercase border border-slate-300 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"><Check size={14}/> Vendido</button>
-                                <button onClick={() => handleAction(selectedAuto.id, 'DELETE')} className="bg-white text-slate-400 py-3.5 rounded-xl text-[10px] font-black uppercase border border-slate-300 flex items-center justify-center gap-2 hover:text-red-500 transition-all"><Trash2 size={14}/> Borrar</button>
+                                <button onClick={() => handleAction(selectedAuto.id, 'RESERVE')} className="bg-white text-slate-600 py-3.5 rounded-xl text-[10px] font-black uppercase border border-slate-300 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"><Check size={14}/> Reservar</button>
+                                <button onClick={() => handleAction(selectedAuto.id, 'SELL')} className="bg-[#22c55e] text-black py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg"><Check size={14}/> Vender</button>
                             </div>
                         </div>
                     </div>
