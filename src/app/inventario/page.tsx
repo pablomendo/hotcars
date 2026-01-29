@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -65,10 +65,9 @@ export default function InventoryPage() {
                     year: v.anio,
                     km: v.km,
                     images: v.fotos || [],
-                    // CORRECCIÓN: Leemos de la columna 'provincia' y 'localidad' de tu tabla
                     location: v.provincia || '',
                     city: v.localidad || '',
-                    inventory_status: v.inventory_status || 'activo',
+                    inventory_status: (v.inventory_status || 'activo').toLowerCase(),
                     deal_status: v.deal_status || 'disponible',
                     publish_status: v.publish_status || 'publicado',
                     isProprio: v.created_by_user_id === (currentUserId || userId),
@@ -99,8 +98,8 @@ export default function InventoryPage() {
             }
             if (action === 'PAUSE') updateData = { inventory_status: 'pausado', show_on_web: false };
             if (action === 'ACTIVATE') updateData = { inventory_status: 'activo' };
-            if (action === 'RESERVE') updateData = { deal_status: 'reservado' };
-            if (action === 'SELL') updateData = { deal_status: 'vendido' };
+            if (action === 'RESERVE') updateData = { inventory_status: 'reservado' };
+            if (action === 'SELL') updateData = { inventory_status: 'vendido' };
 
             await supabase.from('inventario').update(updateData).eq('id', id);
             fetchInventory();
@@ -115,13 +114,13 @@ export default function InventoryPage() {
 
             switch (tab) {
                 case 'ACTIVOS':
-                    return v.inventory_status === 'activo' && v.publish_status === 'publicado' && v.deal_status !== 'vendido';
+                    return v.inventory_status === 'activo' && v.publish_status === 'publicado';
                 case 'RESERVADOS':
-                    return v.deal_status === 'reservado' && v.publish_status === 'publicado';
+                    return v.inventory_status === 'reservado' && v.publish_status === 'publicado';
                 case 'PAUSADOS':
                     return v.inventory_status === 'pausado';
                 case 'VENDIDOS':
-                    return v.deal_status === 'vendido';
+                    return v.inventory_status === 'vendido';
                 case 'BORRADORES':
                     return v.publish_status === 'borrador';
                 case 'PROPIOS':
@@ -135,10 +134,10 @@ export default function InventoryPage() {
     }, [tab, search, inv, userId]);
 
     const counts = useMemo(() => ({
-        ACTIVOS:    inv.filter(v => v.inventory_status === 'activo' && v.publish_status === 'publicado' && v.deal_status !== 'vendido').length,
-        RESERVADOS: inv.filter(v => v.deal_status === 'reservado' && v.publish_status === 'publicado').length,
+        ACTIVOS:    inv.filter(v => v.inventory_status === 'activo' && v.publish_status === 'publicado').length,
+        RESERVADOS: inv.filter(v => v.inventory_status === 'reservado' && v.publish_status === 'publicado').length,
         PAUSADOS:   inv.filter(v => v.inventory_status === 'pausado').length,
-        VENDIDOS:   inv.filter(v => v.deal_status === 'vendido').length,
+        VENDIDOS:   inv.filter(v => v.inventory_status === 'vendido').length,
         BORRADORES: inv.filter(v => v.publish_status === 'borrador').length,
         PROPIOS:    inv.filter(v => v.isProprio).length,
         TERCEROS:   inv.filter(v => !v.isProprio && v.inventory_status === 'activo' && v.publish_status === 'publicado').length,
@@ -155,8 +154,9 @@ export default function InventoryPage() {
                 }
             `}</style>
 
-            <div className="fixed top-20 left-0 right-0 z-[40] h-auto lg:h-16 bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-6 py-2 lg:py-0">
-                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-0.5 lg:gap-0">
+            {/* SUBHEADER IGUALADO A MI WEB: top original, padding-top ajustado y sombra border-white/5 */}
+            <div className="fixed top-20 left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-6 pt-[14px] pb-3 lg:h-20">
+                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center">
                     <div className="grid grid-cols-4 lg:flex items-center gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
                         {[
                             { id: 'ACTIVOS', label: 'Activos' },
@@ -183,13 +183,13 @@ export default function InventoryPage() {
                             </button>
                         ))}
                     </div>
-                    <span style={{ fontFamily: 'Genos' }} className="text-white text-[12px] lg:text-[14px] font-light tracking-[3px] lg:tracking-[4px] uppercase opacity-40 break-words text-center w-full max-w-full">
+                    <span style={{ fontFamily: 'Genos' }} className="text-white text-[12px] lg:text-[14px] font-light tracking-[3px] lg:tracking-[4px] uppercase opacity-40 mt-1">
                         Inventario
                     </span>
                 </div>
             </div>
 
-            <div className="max-w-[1600px] mx-auto px-6 pt-40 pb-20">
+            <div className="max-w-[1600px] mx-auto px-6 pt-40 pb-20 lg:pt-44">
                 <div className="flex flex-wrap items-center gap-3 mb-8">
                     <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
                         <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white/10 text-[#22c55e]' : 'text-slate-500'}`}>
@@ -222,18 +222,20 @@ export default function InventoryPage() {
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
                                     )}
-                                    {v.deal_status === 'reservado' && (
+                                    {v.inventory_status === 'reservado' && (
                                         <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-600 rounded text-[9px] font-bold text-white z-10">RESERVADO</div>
+                                    )}
+                                    {v.inventory_status === 'vendido' && (
+                                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-green-600 rounded text-[9px] font-bold text-white z-10">VENDIDO</div>
                                     )}
                                 </div>
 
-                                <div className="p-4 flex-1">
+                                <div className="p-4 flex-1 text-left">
                                     <h3 className="font-bold text-xs uppercase truncate text-white tracking-tight">{v.brand} {v.model}</h3>
                                     <p className="text-[10px] text-slate-500 mb-2" suppressHydrationWarning>
                                         {v.year} • {isMounted ? v.km?.toLocaleString('es-AR') : '--'} KM
                                     </p>
 
-                                    {/* UBICACIÓN ESCRITA POR ARRIBA DEL SEPARADOR AL 50% */}
                                     <div className="mb-1 opacity-50">
                                         <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate block">
                                             {v.location} {v.city ? `• ${v.city}` : ''}
@@ -265,26 +267,32 @@ export default function InventoryPage() {
                                 </div>
 
                                 <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5" onClick={(e) => e.stopPropagation()}>
-                                    <button className="flex-1 p-3 flex justify-center text-slate-500 hover:text-blue-400 hover:bg-white/5 transition-all group/btn relative">
-                                        <Pencil size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">EDITAR</span>
+                                    <button className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-blue-400">
+                                        <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
                                     </button>
                                     
                                     {v.inventory_status === 'pausado' ? (
-                                        <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="flex-1 p-3 flex justify-center text-green-500 hover:bg-green-500/10 transition-all group/btn relative">
-                                            <Play size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">ACTIVAR</span>
+                                        <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-green-500 bg-green-500/5">
+                                            <Play size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Activar</span>
                                         </button>
                                     ) : (
-                                        <button onClick={() => handleAction(v.id, 'PAUSE')} className="flex-1 p-3 flex justify-center text-slate-500 hover:text-yellow-400 hover:bg-white/5 transition-all group/btn relative">
-                                            <PauseCircle size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-yellow-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">PAUSAR</span>
+                                        <button onClick={() => handleAction(v.id, 'PAUSE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-yellow-500">
+                                            <PauseCircle size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
                                         </button>
                                     )}
 
-                                    <button onClick={() => handleAction(v.id, 'SELL')} className="flex-1 p-3 flex justify-center text-slate-500 hover:text-[#22c55e] hover:bg-white/5 transition-all group/btn relative">
-                                        <Check size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#22c55e] text-black font-black text-[9px] px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">VENDIDO</span>
+                                    {v.inventory_status === 'activo' && (
+                                        <button onClick={() => handleAction(v.id, 'RESERVE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-orange-500">
+                                            <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Reservar</span>
+                                        </button>
+                                    )}
+
+                                    <button onClick={() => handleAction(v.id, 'SELL')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-[#22c55e]">
+                                        <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
                                     </button>
                                     
-                                    <button onClick={() => handleAction(v.id, 'DELETE')} className="flex-1 p-3 flex justify-center text-slate-600 hover:text-red-500 hover:bg-red-500/10 transition-all group/btn relative">
-                                        <Trash2 size={14}/><span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 pointer-events-none transition-all shadow-xl whitespace-nowrap z-50">BORRAR</span>
+                                    <button onClick={() => handleAction(v.id, 'DELETE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-600 hover:text-red-500">
+                                        <Trash2 size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Borrar</span>
                                     </button>
                                 </div>
                             </div>
@@ -318,6 +326,9 @@ export default function InventoryPage() {
                                                 ) : (
                                                     <button onClick={() => handleAction(v.id, 'PAUSE')} className="text-yellow-500"><PauseCircle size={14}/></button>
                                                 )}
+                                                {v.inventory_status === 'activo' && (
+                                                    <button onClick={() => handleAction(v.id, 'RESERVE')} className="hover:text-orange-400"><DollarSign size={14}/></button>
+                                                )}
                                                 <button onClick={() => handleAction(v.id, 'SELL')} className="hover:text-[#22c55e]"><Check size={14}/></button>
                                                 <button onClick={() => handleAction(v.id, 'DELETE')} className="hover:text-red-500"><Trash2 size={14}/></button>
                                             </div>
@@ -345,7 +356,7 @@ export default function InventoryPage() {
                                     {openSection === 'unidad' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
                                 </button>
                                 {openSection === 'unidad' && (
-                                    <div className="p-4 grid grid-cols-2 gap-y-3 border-t border-slate-100 animate-in slide-in-from-top duration-200">
+                                    <div className="p-4 grid grid-cols-2 gap-y-3 border-t border-slate-100 animate-in slide-in-from-top duration-200 text-left">
                                         <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Marca</span><span className="text-xs font-black uppercase">{selectedAuto.brand}</span></div>
                                         <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Modelo</span><span className="text-xs font-black uppercase">{selectedAuto.model}</span></div>
                                         <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Estado Inv.</span><span className="text-xs font-black uppercase text-[#00984a]">{selectedAuto.inventory_status}</span></div>
@@ -365,7 +376,7 @@ export default function InventoryPage() {
 
                             <div className="grid grid-cols-3 gap-2 pt-4">
                                 <button className="bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"><Pencil size={14}/> Editar</button>
-                                <button onClick={() => handleAction(selectedAuto.id, 'RESERVE')} className="bg-white text-slate-600 py-3.5 rounded-xl text-[10px] font-black uppercase border border-slate-300 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"><Check size={14}/> Reservar</button>
+                                <button onClick={() => handleAction(selectedAuto.id, 'RESERVE')} className="bg-white text-slate-600 py-3.5 rounded-xl text-[10px] font-black uppercase border border-slate-300 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"><DollarSign size={14}/> Reservar</button>
                                 <button onClick={() => handleAction(selectedAuto.id, 'SELL')} className="bg-[#22c55e] text-black py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg"><Check size={14}/> Vender</button>
                             </div>
                         </div>
