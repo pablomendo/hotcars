@@ -114,7 +114,8 @@ export default function InventoryPage() {
 
             switch (tab) {
                 case 'ACTIVOS':
-                    return v.inventory_status === 'activo' && v.publish_status === 'publicado';
+                    // LOGICA: Activos y Reservados permanecen en la solapa Activos
+                    return (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado';
                 case 'RESERVADOS':
                     return v.inventory_status === 'reservado' && v.publish_status === 'publicado';
                 case 'PAUSADOS':
@@ -126,7 +127,7 @@ export default function InventoryPage() {
                 case 'PROPIOS':
                     return v.isProprio;
                 case 'TERCEROS':
-                    return !v.isProprio && v.inventory_status === 'activo' && v.publish_status === 'publicado';
+                    return !v.isProprio && (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado';
                 default:
                     return false;
             }
@@ -134,13 +135,13 @@ export default function InventoryPage() {
     }, [tab, search, inv, userId]);
 
     const counts = useMemo(() => ({
-        ACTIVOS:    inv.filter(v => v.inventory_status === 'activo' && v.publish_status === 'publicado').length,
+        ACTIVOS:    inv.filter(v => (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado').length,
         RESERVADOS: inv.filter(v => v.inventory_status === 'reservado' && v.publish_status === 'publicado').length,
         PAUSADOS:   inv.filter(v => v.inventory_status === 'pausado').length,
         VENDIDOS:   inv.filter(v => v.inventory_status === 'vendido').length,
         BORRADORES: inv.filter(v => v.publish_status === 'borrador').length,
         PROPIOS:    inv.filter(v => v.isProprio).length,
-        TERCEROS:   inv.filter(v => !v.isProprio && v.inventory_status === 'activo' && v.publish_status === 'publicado').length,
+        TERCEROS:   inv.filter(v => !v.isProprio && (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado').length,
     }), [inv, userId]);
 
     if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]"><Loader2 className="h-10 w-10 animate-spin text-[#22c55e]" /></div>;
@@ -152,9 +153,9 @@ export default function InventoryPage() {
                     font-family: 'Genos';
                     src: url('/fonts/genos/Genos-VariableFont_wght.ttf') format('truetype');
                 }
+                button { cursor: pointer; }
             `}</style>
 
-            {/* SUBHEADER IGUALADO A MI WEB: top original, padding-top ajustado y sombra border-white/5 */}
             <div className="fixed top-20 left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-6 pt-[14px] pb-3 lg:h-20">
                 <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center">
                     <div className="grid grid-cols-4 lg:flex items-center gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
@@ -266,8 +267,9 @@ export default function InventoryPage() {
                                     </div>
                                 </div>
 
+                                {/* ACCIONES UNIFICADAS: Visibles siempre para permitir cambios de estado */}
                                 <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5" onClick={(e) => e.stopPropagation()}>
-                                    <button className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-blue-400">
+                                    <button onClick={() => handleAction(v.id, 'EDIT')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-blue-400">
                                         <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
                                     </button>
                                     
@@ -281,13 +283,11 @@ export default function InventoryPage() {
                                         </button>
                                     )}
 
-                                    {v.inventory_status === 'activo' && (
-                                        <button onClick={() => handleAction(v.id, 'RESERVE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-orange-500">
-                                            <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Reservar</span>
-                                        </button>
-                                    )}
+                                    <button onClick={() => handleAction(v.id, v.inventory_status === 'reservado' ? 'ACTIVATE' : 'RESERVE')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'reservado' ? 'text-orange-500 bg-orange-500/5' : 'text-slate-500 hover:text-orange-500'}`}>
+                                        <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">{v.inventory_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</span>
+                                    </button>
 
-                                    <button onClick={() => handleAction(v.id, 'SELL')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-[#22c55e]">
+                                    <button onClick={() => handleAction(v.id, v.inventory_status === 'vendido' ? 'ACTIVATE' : 'SELL')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'vendido' ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
                                         <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
                                     </button>
                                     
@@ -326,10 +326,8 @@ export default function InventoryPage() {
                                                 ) : (
                                                     <button onClick={() => handleAction(v.id, 'PAUSE')} className="text-yellow-500"><PauseCircle size={14}/></button>
                                                 )}
-                                                {v.inventory_status === 'activo' && (
-                                                    <button onClick={() => handleAction(v.id, 'RESERVE')} className="hover:text-orange-400"><DollarSign size={14}/></button>
-                                                )}
-                                                <button onClick={() => handleAction(v.id, 'SELL')} className="hover:text-[#22c55e]"><Check size={14}/></button>
+                                                <button onClick={() => handleAction(v.id, v.inventory_status === 'reservado' ? 'ACTIVATE' : 'RESERVE')} className={v.inventory_status === 'reservado' ? 'text-orange-500' : 'hover:text-orange-400'}><DollarSign size={14}/></button>
+                                                <button onClick={() => handleAction(v.id, v.inventory_status === 'vendido' ? 'ACTIVATE' : 'SELL')} className={v.inventory_status === 'vendido' ? 'text-green-500' : 'hover:text-[#22c55e]'}><Check size={14}/></button>
                                                 <button onClick={() => handleAction(v.id, 'DELETE')} className="hover:text-red-500"><Trash2 size={14}/></button>
                                             </div>
                                         </td>
@@ -376,8 +374,8 @@ export default function InventoryPage() {
 
                             <div className="grid grid-cols-3 gap-2 pt-4">
                                 <button className="bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"><Pencil size={14}/> Editar</button>
-                                <button onClick={() => handleAction(selectedAuto.id, 'RESERVE')} className="bg-white text-slate-600 py-3.5 rounded-xl text-[10px] font-black uppercase border border-slate-300 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"><DollarSign size={14}/> Reservar</button>
-                                <button onClick={() => handleAction(selectedAuto.id, 'SELL')} className="bg-[#22c55e] text-black py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg"><Check size={14}/> Vender</button>
+                                <button onClick={() => handleAction(selectedAuto.id, selectedAuto.inventory_status === 'reservado' ? 'ACTIVATE' : 'RESERVE')} className={`py-3.5 rounded-xl text-[10px] font-black uppercase border flex items-center justify-center gap-2 transition-all ${selectedAuto.inventory_status === 'reservado' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}><DollarSign size={14}/> {selectedAuto.inventory_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</button>
+                                <button onClick={() => handleAction(selectedAuto.id, selectedAuto.inventory_status === 'vendido' ? 'ACTIVATE' : 'SELL')} className={`py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg transition-all ${selectedAuto.inventory_status === 'vendido' ? 'bg-green-700 text-white' : 'bg-[#22c55e] text-black'}`}><Check size={14}/> {selectedAuto.inventory_status === 'vendido' ? 'Quitar Venta' : 'Vender'}</button>
                             </div>
                         </div>
                     </div>
