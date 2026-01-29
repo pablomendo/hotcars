@@ -89,17 +89,31 @@ export default function InventoryPage() {
 
     const handleAction = async (id: string, action: string) => {
         try {
-            let updateData = {};
+            let updateData: any = {};
             if (action === 'DELETE') {
                 if (!confirm('¿Eliminar unidad?')) return;
                 await supabase.from('inventario').delete().eq('id', id);
                 fetchInventory();
                 return;
             }
-            if (action === 'PAUSE') updateData = { inventory_status: 'pausado', show_on_web: false };
-            if (action === 'ACTIVATE') updateData = { inventory_status: 'activo' };
-            if (action === 'RESERVE') updateData = { inventory_status: 'reservado' };
-            if (action === 'SELL') updateData = { inventory_status: 'vendido' };
+
+            // --- LÓGICA CORREGIDA SEGÚN REGLAS ---
+            if (action === 'PAUSE') {
+                // Única excepción que afecta web
+                updateData = { inventory_status: 'pausado', show_on_web: false };
+            } 
+            else if (action === 'ACTIVATE') {
+                // Activar NO toca show_on_web (independencia)
+                updateData = { inventory_status: 'activo' };
+            } 
+            else if (action === 'RESERVE') {
+                // Reservar SOLO cambia estado, NO toca show_on_web y NO saca de activos
+                updateData = { inventory_status: 'reservado' };
+            } 
+            else if (action === 'SELL') {
+                // Vender no toca show_on_web automáticamente
+                updateData = { inventory_status: 'vendido' };
+            }
 
             await supabase.from('inventario').update(updateData).eq('id', id);
             fetchInventory();
@@ -114,10 +128,10 @@ export default function InventoryPage() {
 
             switch (tab) {
                 case 'ACTIVOS':
-                    // LOGICA: Activos y Reservados permanecen en la solapa Activos
+                    // Reservados siguen siendo inventario activo
                     return (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado';
                 case 'RESERVADOS':
-                    return v.inventory_status === 'reservado' && v.publish_status === 'publicado';
+                    return v.inventory_status === 'reservado';
                 case 'PAUSADOS':
                     return v.inventory_status === 'pausado';
                 case 'VENDIDOS':
@@ -136,7 +150,7 @@ export default function InventoryPage() {
 
     const counts = useMemo(() => ({
         ACTIVOS:    inv.filter(v => (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado').length,
-        RESERVADOS: inv.filter(v => v.inventory_status === 'reservado' && v.publish_status === 'publicado').length,
+        RESERVADOS: inv.filter(v => v.inventory_status === 'reservado').length,
         PAUSADOS:   inv.filter(v => v.inventory_status === 'pausado').length,
         VENDIDOS:   inv.filter(v => v.inventory_status === 'vendido').length,
         BORRADORES: inv.filter(v => v.publish_status === 'borrador').length,
@@ -267,7 +281,6 @@ export default function InventoryPage() {
                                     </div>
                                 </div>
 
-                                {/* ACCIONES UNIFICADAS: Visibles siempre para permitir cambios de estado */}
                                 <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5" onClick={(e) => e.stopPropagation()}>
                                     <button onClick={() => handleAction(v.id, 'EDIT')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-blue-400">
                                         <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>

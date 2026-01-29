@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   Star, Eye, EyeOff, Check, Settings, Zap, Plus, DollarSign, 
-  Settings as SettingsIcon, Search, LayoutGrid, List 
+  Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle
 } from 'lucide-react';
 
 export default function MiWebPage() {
@@ -36,7 +36,6 @@ export default function MiWebPage() {
                     year: v.anio, 
                     km: v.km,
                     image: v.fotos?.[0] || null,
-                    // Mantenemos los nombres de las columnas de Supabase tal cual
                     inventory_status: (v.inventory_status || 'activo').toLowerCase(),
                     show: !!v.show_on_web,
                     featured: !!v.is_featured,
@@ -48,13 +47,24 @@ export default function MiWebPage() {
         } catch (err) { console.error(err); } finally { setLoading(false); }
     };
 
-    const handleAction = async (id: string, updates: object) => {
-        await supabase.from('inventario').update(updates).eq('id', id);
+    // CORRECCIÓN CRÍTICA: Lógica de actualización respetando las reglas de negocio
+    const handleAction = async (id: string, updates: any) => {
+        let finalUpdates = { ...updates };
+
+        // REGLA: Si se cambia el estado a 'pausado', se fuerza show_on_web a false
+        if (updates.inventory_status === 'pausado') {
+            finalUpdates.show_on_web = false;
+        }
+        
+        // REGLA: Si se está reservando, asegurar que el estado sea 'reservado' 
+        // pero NO tocar show_on_web (se mantiene como esté)
+        
+        await supabase.from('inventario').update(finalUpdates).eq('id', id);
         fetchInventory();
     };
 
     const counts = useMemo(() => ({
-        VISIBLE: inv.filter(v => ['activo', 'reservado', 'vendido'].includes(v.inventory_status) && v.show).length,
+        VISIBLE: inv.filter(v => v.show).length, 
         OCULTO: inv.filter(v => !v.show).length,
         DESTACADOS: inv.filter(v => v.show && v.featured).length,
         NUEVOS: inv.filter(v => v.show && v.isNew).length,
@@ -74,7 +84,7 @@ export default function MiWebPage() {
                 case 'NUEVOS': return v.show && v.isNew;
                 case 'RESERVADOS': return v.inventory_status === 'reservado';
                 case 'VENDIDOS': return v.inventory_status === 'vendido';
-                default: return ['activo', 'reservado', 'vendido'].includes(v.inventory_status) && v.show;
+                default: return v.show; 
             }
         });
     }, [tab, inv, search]);
@@ -83,7 +93,6 @@ export default function MiWebPage() {
         <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans pb-20 text-left">
             <style jsx global>{`
                 @font-face { font-family: 'Genos'; src: url('/fonts/genos/Genos-VariableFont_wght.ttf') format('truetype'); }
-                .grid button { cursor: pointer; }
                 button { cursor: pointer; }
             `}</style>
 
@@ -182,6 +191,7 @@ export default function MiWebPage() {
                                                 <div className="absolute top-2 left-2 flex flex-col gap-1.5 items-start">
                                                     {v.inventory_status === 'vendido' && <span className="bg-[#22c55e] text-black text-[9px] font-black px-2 py-1 rounded uppercase shadow-xl">Vendido</span>}
                                                     {v.inventory_status === 'reservado' && <span className="bg-yellow-600 text-white text-[9px] font-black px-2 py-1 rounded shadow-xl border border-yellow-400/50 uppercase">Reservado</span>}
+                                                    {v.inventory_status === 'pausado' && <span className="bg-gray-600 text-white text-[9px] font-black px-2 py-1 rounded shadow-xl uppercase">Pausado</span>}
                                                     {v.featured && <span className="bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Destacado</span>}
                                                     {v.isNew && <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Nuevo</span>}
                                                     {!v.show && <span className="bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Oculto en Web</span>}
@@ -201,25 +211,25 @@ export default function MiWebPage() {
                                                 <Star size={13} className={v.featured && v.show ? "fill-yellow-500" : ""} />
                                                 <span className="text-[7px] font-black uppercase tracking-tighter">Destacar</span>
                                             </button>
-                                            <button onClick={() => handleAction(v.id, { is_new: !v.isNew })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.isNew ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}>
-                                                <Zap size={13} className={v.isNew && v.show ? "fill-blue-500" : ""} />
-                                                <span className="text-[7px] font-black uppercase tracking-tighter">Nuevo</span>
-                                            </button>
-                                            <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'reservado' ? 'activo' : 'reservado' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.inventory_status === 'reservado' ? 'text-yellow-600 bg-yellow-600/5' : 'text-slate-500 hover:text-yellow-500') : 'text-slate-600'}`}>
+                                            
+                                            <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'reservado' ? 'activo' : 'reservado' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'reservado' ? 'text-yellow-600 bg-yellow-600/5' : 'text-slate-500 hover:text-yellow-500'}`}>
                                                 <DollarSign size={13}/>
                                                 <span className="text-[7px] font-black uppercase tracking-tighter">Reservar</span>
                                             </button>
-                                            <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'vendido' ? 'activo' : 'vendido' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.inventory_status === 'vendido' ? 'text-[#22c55e] bg-[#22c55e]/5' : 'text-slate-500 hover:text-[#22c55e]') : 'text-slate-600'}`}>
+                                            
+                                            <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'vendido' ? 'activo' : 'vendido' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'vendido' ? 'text-[#22c55e] bg-[#22c55e]/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
                                                 <Check size={13}/>
                                                 <span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
                                             </button>
+
+                                            <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'pausado' ? 'activo' : 'pausado' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'pausado' ? 'text-red-500 bg-red-500/5' : 'text-slate-500 hover:text-red-500'}`}>
+                                                <PauseCircle size={13}/>
+                                                <span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
+                                            </button>
+
                                             <button onClick={() => handleAction(v.id, { show_on_web: !v.show })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.show ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
                                                 {v.show ? <Eye size={13} /> : <EyeOff size={13} />}
                                                 <span className="text-[7px] font-black uppercase tracking-tighter">{v.show ? 'Ocultar' : 'Mostrar'}</span>
-                                            </button>
-                                            <button onClick={() => handleAction(v.id, { inventory_status: 'activo' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.inventory_status === 'activo' ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-blue-400') : 'text-slate-600'}`}>
-                                                <Plus size={13} className="rotate-45" />
-                                                <span className="text-[7px] font-black uppercase tracking-tighter">Visible</span>
                                             </button>
                                         </div>
                                     </div>
@@ -232,7 +242,8 @@ export default function MiWebPage() {
                                         <tr>
                                             <th className="p-4 text-left">Unidad</th>
                                             <th className="p-4 text-right">Precio Web</th>
-                                            <th className="p-4 text-right">Estado</th>
+                                            <th className="p-4 text-right">Estado Inv.</th>
+                                            <th className="p-4 text-right">Visible Web</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
@@ -240,9 +251,10 @@ export default function MiWebPage() {
                                             <tr key={v.id} className="hover:bg-white/[0.02] transition-colors group">
                                                 <td className="p-4 font-black text-white uppercase tracking-tight">{v.brand} {v.model}</td>
                                                 <td className="p-4 text-right font-mono font-black text-[#22c55e] text-sm">{v.priceDisplay}</td>
+                                                <td className="p-4 text-right uppercase text-[9px] font-bold">{v.inventory_status}</td>
                                                 <td className="p-4 text-right">
                                                     <span className={`text-[9px] font-black px-2 py-1 rounded uppercase ${v.show ? 'bg-blue-600/20 text-blue-400' : 'bg-red-600/20 text-red-400'}`}>
-                                                        {v.show ? 'Visible' : 'Oculto'}
+                                                        {v.show ? 'Sí' : 'No'}
                                                     </span>
                                                 </td>
                                             </tr>
