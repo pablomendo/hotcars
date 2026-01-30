@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   Star, Eye, EyeOff, Check, Settings, Zap, Plus, DollarSign, 
-  Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle
+  Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle,
+  Instagram, Facebook, MessageCircle, Share2, Image as ImageIcon,
+  Type, Globe, Trash2, Upload, MapPin, Clock, Phone
 } from 'lucide-react';
 
 export default function MiWebPage() {
@@ -13,6 +15,40 @@ export default function MiWebPage() {
     const [tab, setTab] = useState('VISIBLE');
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    
+    // --- ESTADOS DE CONFIGURACIÓN ---
+    const [openConfig, setOpenConfig] = useState(false);
+    const [userData] = useState({ plan_type: 'VIP' }); // FORZADO VIP DESARROLLO
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [previewImage, setPreviewImage] = useState('/portada_mi_web.jpg');
+    const [showSocialsInFooter, setShowSocialsInFooter] = useState(false);
+
+    const [config, setConfig] = useState({
+        subdomain: 'miagencia',
+        customDomain: '',
+        title: 'TITULAR DE MI WEB',
+        subtitle: 'SUBTITULO DE MI WEB',
+        instagram: '',
+        facebook: '',
+        tiktok: '',
+        whatsapp: '',
+        direccion: '',
+        horarios: '',
+        telefono: ''
+    });
+
+    const handleTriggerFile = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const imageUrl = URL.createObjectURL(file);
+            setPreviewImage(imageUrl);
+        }
+    };
 
     useEffect(() => {
         fetchInventory();
@@ -47,18 +83,11 @@ export default function MiWebPage() {
         } catch (err) { console.error(err); } finally { setLoading(false); }
     };
 
-    // CORRECCIÓN CRÍTICA: Lógica de actualización respetando las reglas de negocio
     const handleAction = async (id: string, updates: any) => {
         let finalUpdates = { ...updates };
-
-        // REGLA: Si se cambia el estado a 'pausado', se fuerza show_on_web a false
         if (updates.inventory_status === 'pausado') {
             finalUpdates.show_on_web = false;
         }
-        
-        // REGLA: Si se está reservando, asegurar que el estado sea 'reservado' 
-        // pero NO tocar show_on_web (se mantiene como esté)
-        
         await supabase.from('inventario').update(finalUpdates).eq('id', id);
         fetchInventory();
     };
@@ -143,29 +172,171 @@ export default function MiWebPage() {
 
             <div className="max-w-[1600px] mx-auto px-6 pt-64 lg:pt-56">
                 <div className="flex flex-col lg:flex-row gap-8">
-                    <aside className="lg:w-1/4">
-                        <div className="sticky top-56 bg-[#141b1f] border border-white/5 p-6 rounded-2xl space-y-8 shadow-2xl">
-                            <div>
-                                <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em] mb-4 flex items-center gap-2 text-left">
-                                    <SettingsIcon size={14} className="text-[#22c55e]"/> Configuración Web
-                                </h3>
-                                <div className="space-y-4 text-left">
-                                    <ToggleItem label='Auto-ocultar vendidos' active={true} />
-                                    <ToggleItem label='Banner "Financiación"' active={true} />
-                                    <ToggleItem label='Chat flotante WhatsApp' active={true} />
-                                </div>
-                            </div>
+                    <main className="lg:w-full">
+                        
+                        <div className="flex justify-start mb-6">
+                            <button 
+                                onClick={() => setOpenConfig(!openConfig)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 transition-all ${openConfig ? 'bg-white/10 text-[#22c55e] border-[#22c55e]/30' : 'bg-white/5 text-slate-500 hover:text-white'}`}
+                            >
+                                <SettingsIcon size={16}/> 
+                                <span className="text-[10px] font-bold uppercase tracking-wider font-sans">Configurar mi web</span>
+                            </button>
                         </div>
-                    </aside>
 
-                    <main className="lg:w-3/4">
+                        {openConfig && (
+                            <div className="w-full space-y-4 mb-12 animate-in fade-in slide-in-from-top-2 duration-300 font-sans">
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <ConfigCard title="Editar nombre de dominio" description="miagencia.hotcars.com.ar">
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center justify-end gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
+                                                <input 
+                                                    className="bg-transparent text-xs text-white outline-none w-full font-bold uppercase text-right placeholder:text-white/20 placeholder:lowercase" 
+                                                    placeholder="miagencia"
+                                                    value={config.subdomain}
+                                                    onChange={(e) => setConfig({...config, subdomain: e.target.value.toLowerCase()})}
+                                                />
+                                                <span className="text-slate-500 text-[13px] font-bold">.hotcars.com.ar</span>
+                                            </div>
+                                            <div className="flex justify-center">
+                                                <button className="bg-[#22c55e] text-black text-[10px] font-black px-4 py-1.5 rounded uppercase">Confirmar</button>
+                                            </div>
+                                        </div>
+                                    </ConfigCard>
+
+                                    <ConfigCard title="Dominio Personalizado" description="Uso de dominio propio .com.ar">
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center justify-end gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
+                                                <input 
+                                                    className="bg-transparent text-xs text-white outline-none w-full font-bold uppercase text-right placeholder:text-white/20 placeholder:lowercase" 
+                                                    placeholder="miagencia.com.ar"
+                                                    value={config.customDomain}
+                                                    onChange={(e) => setConfig({...config, customDomain: e.target.value.toLowerCase()})}
+                                                />
+                                                <Globe size={14} className="text-slate-500" />
+                                            </div>
+                                            <div className="flex justify-center">
+                                                <button className="bg-[#22c55e] text-black text-[10px] font-black px-4 py-1.5 rounded uppercase">Confirmar</button>
+                                            </div>
+                                        </div>
+                                    </ConfigCard>
+
+                                    <ConfigCard title="Redes y Contacto" description="Configuración vertical">
+                                        <div className="flex flex-col gap-2">
+                                            <SocialInput icon={<Instagram size={14}/>} placeholder="Instagram" value={config.instagram} onChange={(val:string) => setConfig({...config, instagram: val})} />
+                                            <SocialInput icon={<Facebook size={14}/>} placeholder="Facebook" value={config.facebook} onChange={(val:string) => setConfig({...config, facebook: val})} />
+                                            <SocialInput icon={<Share2 size={14}/>} placeholder="TikTok" value={config.tiktok} onChange={(val:string) => setConfig({...config, tiktok: val})} />
+                                            <SocialInput icon={<MessageCircle size={14} className="text-green-500" />} placeholder="WhatsApp" value={config.whatsapp} onChange={(val:string) => setConfig({...config, whatsapp: val})} />
+                                        </div>
+                                    </ConfigCard>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <ConfigCard title="Editar Portada" description="Imagen principal 16:9">
+                                        <div className="relative aspect-video rounded-xl border border-white/10 overflow-hidden bg-slate-900 group">
+                                            <img src={previewImage} className="w-full h-full object-cover opacity-60" alt="Preview" />
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                                                <input 
+                                                    className="bg-transparent text-white text-lg font-black uppercase tracking-[4px] text-center outline-none w-full mb-1 placeholder:text-white/20"
+                                                    value={config.title}
+                                                    onChange={(e) => setConfig({...config, title: e.target.value})}
+                                                />
+                                                <input 
+                                                    className="bg-transparent text-slate-300 text-[10px] uppercase tracking-widest text-center outline-none w-full placeholder:text-white/10"
+                                                    value={config.subtitle}
+                                                    onChange={(e) => setConfig({...config, subtitle: e.target.value})}
+                                                />
+                                                <div className="flex flex-col items-center gap-4 mt-6">
+                                                    <button 
+                                                        onClick={handleTriggerFile}
+                                                        className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-black px-5 py-2 rounded uppercase border border-white/10 transition-all flex items-center gap-2"
+                                                    >
+                                                        <Upload size={14} /> Agregar Foto
+                                                    </button>
+                                                    <button className="bg-[#22c55e] text-black text-[10px] font-black px-5 py-2 rounded uppercase shadow-xl">Confirmar</button>
+                                                </div>
+                                            </div>
+                                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                                        </div>
+                                    </ConfigCard>
+
+                                    <ConfigCard title="Banners Promocionales" description="Sección publicitaria">
+                                        <div className="grid grid-cols-1 gap-3 aspect-video flex flex-col">
+                                            <div className="flex-1 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:border-[#22c55e]/30 transition-all cursor-pointer relative">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 1</span>
+                                            </div>
+                                            <div className="flex-1 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:border-[#22c55e]/30 transition-all cursor-pointer relative">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 2</span>
+                                            </div>
+                                        </div>
+                                    </ConfigCard>
+                                </div>
+
+                                <ConfigCard title="Pie de Página" description="Información de contacto horizontal">
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex flex-row items-center gap-2 mt-2">
+                                            <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
+                                                <MapPin size={14} className="text-slate-500" />
+                                                <input 
+                                                    className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase placeholder:text-white/10" 
+                                                    placeholder="Direccion: Av. Ejemplo 1234"
+                                                    value={config.direccion}
+                                                    onChange={(e) => setConfig({...config, direccion: e.target.value})}
+                                                />
+                                            </div>
+                                            <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
+                                                <Clock size={14} className="text-slate-500" />
+                                                <input 
+                                                    className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase placeholder:text-white/10" 
+                                                    placeholder="Horarios: Lun a Vie 9 a 18 hs"
+                                                    value={config.horarios}
+                                                    onChange={(e) => setConfig({...config, horarios: e.target.value})}
+                                                />
+                                            </div>
+                                            <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
+                                                <Phone size={14} className="text-slate-500" />
+                                                <input 
+                                                    className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase placeholder:text-white/10" 
+                                                    placeholder="Telefono: +54 9 11 0000 0000"
+                                                    value={config.telefono}
+                                                    onChange={(e) => setConfig({...config, telefono: e.target.value})}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <FooterPreview config={config} showSocials={showSocialsInFooter} />
+
+                                        <div className="flex flex-col gap-4 border-t border-white/5 pt-4">
+                                            <div className="flex items-center justify-between px-2">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mostrar iconos de redes:</span>
+                                                    <button 
+                                                        onClick={() => setShowSocialsInFooter(!showSocialsInFooter)}
+                                                        className={`relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none ${showSocialsInFooter ? 'bg-[#22c55e]' : 'bg-white/10'}`}
+                                                    >
+                                                        <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-200 ${showSocialsInFooter ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </button>
+                                                </div>
+                                                <button className="bg-[#22c55e] text-black text-[10px] font-black px-6 py-2 rounded uppercase shadow-xl hover:brightness-110 transition-all">
+                                                    Confirmar cambios
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ConfigCard>
+
+                            </div>
+                        )}
+
+                        {/* ──────── LISTADO DE UNIDADES ──────── */}
                         <div className="flex flex-wrap items-center gap-3 mb-8">
                             <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
                                 <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white/10 text-[#22c55e]' : 'text-slate-500'}`}>
-                                    <LayoutGrid size={16}/> <span className="text-[10px] font-bold uppercase tracking-wider">Grilla</span>
+                                    <LayoutGrid size={16}/> <span className="text-[10px] font-bold uppercase tracking-wider font-sans">Grilla</span>
                                 </button>
                                 <button onClick={() => setViewMode('list')} className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white/10 text-[#22c55e]' : 'text-slate-500'}`}>
-                                    <List size={16}/> <span className="text-[10px] font-bold uppercase tracking-wider">Lista</span>
+                                    <List size={16}/> <span className="text-[10px] font-bold uppercase tracking-wider font-sans">Lista</span>
                                 </button>
                             </div>
 
@@ -197,7 +368,7 @@ export default function MiWebPage() {
                                                     {!v.show && <span className="bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Oculto en Web</span>}
                                                 </div>
                                             </div>
-                                            <div className="text-left">
+                                            <div className="text-left font-sans">
                                                 <h4 className="text-xs font-bold text-white uppercase tracking-tight truncate leading-none">{v.brand} {v.model}</h4>
                                                 <div className="flex justify-between items-end mt-3">
                                                     <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">{v.year} • {v.km?.toLocaleString('es-AR')} KM</span>
@@ -206,45 +377,33 @@ export default function MiWebPage() {
                                             </div>
                                         </div>
 
-                                        <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5">
+                                        <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5 font-sans">
                                             <button onClick={() => handleAction(v.id, { is_featured: !v.featured })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.featured ? 'text-yellow-500 bg-yellow-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}>
                                                 <Star size={13} className={v.featured && v.show ? "fill-yellow-500" : ""} />
                                                 <span className="text-[7px] font-black uppercase tracking-tighter">Destacar</span>
                                             </button>
-                                            
+                                            <button onClick={() => handleAction(v.id, { is_new: !v.isNew })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.isNew ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}>
+                                                <Zap size={13} className={v.isNew && v.show ? "fill-blue-500" : ""} />
+                                                <span className="text-[7px] font-black uppercase tracking-tighter">Nuevo</span>
+                                            </button>
                                             <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'reservado' ? 'activo' : 'reservado' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'reservado' ? 'text-yellow-600 bg-yellow-600/5' : 'text-slate-500 hover:text-yellow-500'}`}>
-                                                <DollarSign size={13}/>
-                                                <span className="text-[7px] font-black uppercase tracking-tighter">Reservar</span>
+                                                <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Reservar</span>
                                             </button>
-                                            
                                             <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'vendido' ? 'activo' : 'vendido' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'vendido' ? 'text-[#22c55e] bg-[#22c55e]/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
-                                                <Check size={13}/>
-                                                <span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
+                                                <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
                                             </button>
-
-                                            <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'pausado' ? 'activo' : 'pausado' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'pausado' ? 'text-red-500 bg-red-500/5' : 'text-slate-500 hover:text-red-500'}`}>
-                                                <PauseCircle size={13}/>
-                                                <span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
-                                            </button>
-
                                             <button onClick={() => handleAction(v.id, { show_on_web: !v.show })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.show ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
-                                                {v.show ? <Eye size={13} /> : <EyeOff size={13} />}
-                                                <span className="text-[7px] font-black uppercase tracking-tighter">{v.show ? 'Ocultar' : 'Mostrar'}</span>
+                                                {v.show ? <Eye size={13} /> : <EyeOff size={13} />}<span className="text-[7px] font-black uppercase tracking-tighter">{v.show ? 'Ocultar' : 'Mostrar'}</span>
                                             </button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden shadow-2xl overflow-x-auto text-left">
+                            <div className="bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden shadow-2xl overflow-x-auto text-left font-sans">
                                 <table className="w-full text-left text-[11px] min-w-[600px]">
                                     <thead className="bg-black/40 text-slate-500 uppercase font-black border-b border-white/5 tracking-widest">
-                                        <tr>
-                                            <th className="p-4 text-left">Unidad</th>
-                                            <th className="p-4 text-right">Precio Web</th>
-                                            <th className="p-4 text-right">Estado Inv.</th>
-                                            <th className="p-4 text-right">Visible Web</th>
-                                        </tr>
+                                        <tr><th className="p-4">Unidad</th><th className="p-4 text-right">Precio Web</th><th className="p-4 text-right">Estado Inv.</th><th className="p-4 text-right">Visible Web</th></tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
                                         {filtered.map((v) => (
@@ -252,11 +411,7 @@ export default function MiWebPage() {
                                                 <td className="p-4 font-black text-white uppercase tracking-tight">{v.brand} {v.model}</td>
                                                 <td className="p-4 text-right font-mono font-black text-[#22c55e] text-sm">{v.priceDisplay}</td>
                                                 <td className="p-4 text-right uppercase text-[9px] font-bold">{v.inventory_status}</td>
-                                                <td className="p-4 text-right">
-                                                    <span className={`text-[9px] font-black px-2 py-1 rounded uppercase ${v.show ? 'bg-blue-600/20 text-blue-400' : 'bg-red-600/20 text-red-400'}`}>
-                                                        {v.show ? 'Sí' : 'No'}
-                                                    </span>
-                                                </td>
+                                                <td className="p-4 text-right"><span className={`text-[9px] font-black px-2 py-1 rounded uppercase ${v.show ? 'bg-blue-600/20 text-blue-400' : 'bg-red-600/20 text-red-400'}`}>{v.show ? 'Sí' : 'No'}</span></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -270,13 +425,59 @@ export default function MiWebPage() {
     );
 }
 
-function ToggleItem({ label, active }: any) {
+function ConfigCard({ title, description, children }: { title: string; description: string; children: React.ReactNode; }) {
     return (
-        <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{label}</span>
-            <div className={`w-7 h-3.5 rounded-full relative transition-all cursor-pointer ${active ? 'bg-[#22c55e]' : 'bg-slate-700'}`}>
-                <div className={`w-2.5 h-2.5 bg-white rounded-full absolute top-0.5 transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
+        <div className="bg-[#141b1f] border border-white/5 rounded-xl p-5 font-sans h-full">
+            <div className="mb-4">
+                <div className="text-[13px] font-black text-slate-500 uppercase tracking-[2px] leading-none">{title}</div>
+                <div className="text-[12px] opacity-40 uppercase tracking-tighter mt-1">{description}</div>
             </div>
+            {children}
+        </div>
+    );
+}
+
+function SocialInput({ icon, placeholder, value, onChange }: any) {
+    return (
+        <div className="flex items-center gap-3 bg-black/40 border border-white/5 rounded-lg px-4 py-2">
+            <span className="text-slate-500">{icon}</span>
+            <input 
+                className="bg-transparent text-[11px] text-white outline-none w-full font-bold uppercase tracking-tighter placeholder:text-white/20" 
+                placeholder={placeholder} 
+                value={value} 
+                onChange={(e) => onChange(e.target.value)} 
+            />
+        </div>
+    );
+}
+
+function FooterPreview({ config, showSocials }: { config: any, showSocials: boolean }) {
+    return (
+        <div className="p-5 bg-black/40 border border-[#22c55e]/10 rounded-xl flex flex-col items-center justify-center min-h-[100px] transition-all relative overflow-hidden">
+            <div className="absolute top-0 left-0 bg-[#22c55e]/10 px-3 py-1 rounded-br-lg text-[8px] font-black uppercase text-[#22c55e] tracking-widest">
+                Vista Previa
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 text-white/90 mt-4">
+                <div className={`flex items-center gap-2 text-[10px] uppercase font-bold tracking-tighter ${!config.direccion ? 'opacity-20' : 'opacity-100'}`}>
+                    <MapPin size={12} className="text-[#22c55e]" /> {config.direccion || "Dirección de Agencia"}
+                </div>
+                <div className={`flex items-center gap-2 text-[10px] uppercase font-bold tracking-tighter ${!config.horarios ? 'opacity-20' : 'opacity-100'}`}>
+                    <Clock size={12} className="text-[#22c55e]" /> {config.horarios || "Horarios de Atención"}
+                </div>
+                <div className={`flex items-center gap-2 text-[10px] uppercase font-bold tracking-tighter ${!config.telefono ? 'opacity-20' : 'opacity-100'}`}>
+                    <Phone size={12} className="text-[#22c55e]" /> {config.telefono || "Teléfono"}
+                </div>
+            </div>
+
+            {showSocials && (
+                <div className="flex gap-8 pt-5 mt-4 border-t border-white/5 w-full justify-center animate-in fade-in slide-in-from-bottom-1 duration-300">
+                    <Instagram size={18} className={config.instagram ? "text-white opacity-80" : "text-white/10"} />
+                    <Facebook size={18} className={config.facebook ? "text-white opacity-80" : "text-white/10"} />
+                    <Share2 size={18} className={config.tiktok ? "text-white opacity-80" : "text-white/10"} />
+                    <MessageCircle size={18} className={config.whatsapp ? "text-[#22c55e]" : "text-white/10"} />
+                </div>
+            )}
         </div>
     );
 }
