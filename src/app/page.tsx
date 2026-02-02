@@ -63,8 +63,6 @@ export default function MarketplaceDashboard() {
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&display=swap');
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* FIX DEFINITIVO PARA EL BORDE BLANCO */
         img {
           display: block;
           max-width: 100%;
@@ -72,56 +70,71 @@ export default function MarketplaceDashboard() {
       `}</style>
       
       <nav 
-        className="flex justify-between items-center p-6 bg-white border-b border-gray-300 sticky top-0 z-50 shadow-sm"
+        className="flex justify-between items-center p-4 md:p-6 bg-white border-b border-gray-300 sticky top-0 z-50 shadow-sm"
         onClick={(e) => e.stopPropagation()}
       >
-        <h1 className="text-2xl font-black tracking-tighter uppercase text-[#0f172a]">
+        <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase text-[#0f172a]">
           HOTCARS <span className="text-[#2596be]">PRO</span>
         </h1>
-        <div className="px-4 py-2 bg-gray-200 border border-gray-300 rounded-xl text-xs font-bold text-gray-600 uppercase">
+        <div className="px-3 py-1.5 md:px-4 md:py-2 bg-gray-200 border border-gray-300 rounded-xl text-[10px] md:text-xs font-bold text-gray-600 uppercase">
           PABLO MENDO
         </div>
       </nav>
 
-      {/* --- HERO SECTION CORREGIDA --- */}
-      <section className="w-full relative flex flex-col bg-[#288b55]">
-        <div className="w-full overflow-hidden leading-[0] font-[0]">
+      {/* --- HERO SECTION --- */}
+      <section className="w-full relative flex flex-col bg-[#288b55] overflow-hidden">
+        {/* Mobile Hero (9:16) */}
+        <div className="md:hidden w-full aspect-[9/16] relative">
           <img 
-            src="/front_verde.png" 
-            alt="Hero" 
-            className="w-full h-auto object-cover align-top"
-            style={{ marginBottom: '-1px' }} // Pequeño hack para solapar cualquier línea residual
+            src="/hero-mobile-hotcars.jpg" 
+            alt="Hero Mobile" 
+            className="w-full h-full object-cover"
           />
+          {/* Mobile CTA */}
+          <div className="absolute bottom-12 left-0 w-full px-6 flex flex-col gap-3 pointer-events-auto">
+            <button className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm">
+              Registrate
+            </button>
+            <button className="w-full py-4 bg-white text-[#0f172a] font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border-2 border-white">
+              Ingresar
+            </button>
+          </div>
         </div>
-        
-        <div className="absolute inset-0 flex flex-col justify-center px-12 lg:px-24 pointer-events-none">
-          <h1 
-            className="font-black tracking-tighter uppercase text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] mb-4 leading-tight"
-            style={{ fontSize: typeof window !== 'undefined' && window.innerWidth > 768 ? '42px' : '20px' }}
-          >
-            Bienvenidos al <br />
-            <span className="text-[#288b55]">Marketplace de </span>
-            <span className="text-[#288b55]">HOT</span><span className="text-white">CARS</span>
-          </h1>
-          <div className="space-y-1 text-sm md:text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-normal">
-            <p>• Obtén las mejores ofertas</p>
-            <p>• Comparte publicaciones con reglas claras</p>
-            <p>• Profesionalizate con tu propia página web</p>
+
+        {/* Desktop Hero */}
+        <div className="hidden md:block w-full overflow-hidden leading-[0] font-[0] relative">
+          <img 
+            src="/hero-desktop-hotcars.jpg" 
+            alt="Hero Desktop" 
+            className="w-full h-auto object-cover align-top"
+          />
+          <div className="absolute inset-0 flex flex-col justify-center px-12 lg:px-24 pointer-events-none">
+            <h1 className="font-black tracking-tighter uppercase text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] mb-4 leading-tight text-[42px]">
+              Bienvenidos al <br />
+              <span className="text-[#288b55]">Marketplace de </span>
+              <span className="text-[#288b55]">HOT</span><span className="text-white">CARS</span>
+            </h1>
+            <div className="space-y-1 text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-normal">
+              <p>• Obtén las mejores ofertas</p>
+              <p>• Comparte publicaciones con reglas claras</p>
+              <p>• Profesionalizate con tu propia página web</p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* --- FRANJA VERDE --- */}
-      <section className="w-full bg-[#288b55] py-24 relative"> 
-        <div className="max-w-[1600px] mx-auto px-8">
+      {/* --- FRANJA VERDE (CATEGORÍAS) --- */}
+      <section className="w-full bg-[#288b55] py-12 md:py-24 relative"> 
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8">
           <h2 
-            className="text-center text-white uppercase italic mb-12 tracking-tighter"
-            style={{ fontFamily: "'Genos', sans-serif", fontSize: '36px' }}
+            className="text-center text-white uppercase italic mb-8 md:mb-12 tracking-tighter text-2xl md:text-[36px]"
+            style={{ fontFamily: "'Genos', sans-serif" }}
           >
             ¿Qué categoría estás buscando?
           </h2>
           
-          <div className="flex justify-start lg:justify-center items-center gap-12 overflow-x-auto no-scrollbar">
+          {/* Grid 2 cols Mobile / Flex Desktop */}
+          <div className="grid grid-cols-2 md:flex md:justify-center items-center gap-6 md:gap-12">
             {categories.map((cat, idx) => (
               <div
                 key={idx}
@@ -129,16 +142,18 @@ export default function MarketplaceDashboard() {
                   e.stopPropagation();
                   setSelectedCategory(cat.name);
                 }}
-                className="flex-none cursor-pointer text-center group"
+                className="flex flex-col items-center cursor-pointer text-center group"
               >
-                <img 
-                  src={cat.img} 
-                  alt={cat.label} 
-                  className={`w-64 h-auto object-contain transition-transform duration-300 
-                    ${cat.name === 'PICKUP' ? (selectedCategory === 'PICKUP' ? 'scale-[1.35]' : 'scale-[1.25]') : (selectedCategory === cat.name ? 'scale-[1.1]' : 'scale-[1.0]')} 
-                    ${selectedCategory === cat.name ? 'brightness-110 drop-shadow-2xl' : 'opacity-80 group-hover:opacity-100'}`} 
-                />
-                <p className="text-white text-[12px] font-bold uppercase tracking-widest italic mt-2">
+                <div className="w-full flex justify-center items-center">
+                  <img 
+                    src={cat.img} 
+                    alt={cat.label} 
+                    className={`w-full max-w-[150px] md:max-w-none md:w-64 h-auto object-contain transition-transform duration-300 
+                      ${cat.name === 'PICKUP' ? (selectedCategory === 'PICKUP' ? 'scale-[1.15]' : 'scale-[1.1]') : (selectedCategory === cat.name ? 'scale-[1.1]' : 'scale-[1.0]')} 
+                      ${selectedCategory === cat.name ? 'brightness-110 drop-shadow-2xl' : 'opacity-80 md:group-hover:opacity-100'}`} 
+                  />
+                </div>
+                <p className="text-white text-[10px] md:text-[12px] font-bold uppercase tracking-widest italic mt-2">
                   {cat.label}
                 </p>
               </div>
@@ -149,13 +164,13 @@ export default function MarketplaceDashboard() {
 
       {/* --- INVENTARIO --- */}
       <div 
-        className="max-w-[1400px] mx-auto px-8 mt-12 pb-24"
+        className="max-w-[1400px] mx-auto px-4 md:px-8 mt-8 md:mt-12 pb-24"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-col items-center border-b border-gray-400 pb-6 mb-10 gap-6">
+        <div className="flex flex-col items-center border-b border-gray-400 pb-6 mb-8 md:mb-10 gap-4 md:gap-6">
           <h2 
-            className="italic uppercase font-medium text-[#0f172a] text-center" 
-            style={{ fontFamily: "'Genos', sans-serif", fontSize: '36px' }}
+            className="italic uppercase font-medium text-[#0f172a] text-center text-2xl md:text-[36px]" 
+            style={{ fontFamily: "'Genos', sans-serif" }}
           >
             Inventario de toda la red
           </h2>
@@ -172,56 +187,54 @@ export default function MarketplaceDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {/* Grid Responsive: 2 cols Mobile / 2 cols Tablet / 3-4 cols Desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-8">
           {filteredVehicles.map((v) => (
-            <div key={v.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-xl">
+            <div key={v.id} className="group bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col">
               <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                 {v.fotos?.[0] ? (
                   <img src={v.fotos[0]} alt="" className="w-full h-full object-cover align-top" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase italic text-[10px]">Sin Foto</div>
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase italic text-[8px] md:text-[10px]">Sin Foto</div>
                 )}
               </div>
 
-              <div className="p-5">
-                <h3 className="text-lg font-bold tracking-tight uppercase truncate text-[#0f172a] mb-1">{v.marca} {v.modelo}</h3>
-                <div className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">
+              <div className="p-3 md:p-5 flex-grow">
+                <h3 className="text-xs md:text-lg font-bold tracking-tight uppercase truncate text-[#0f172a] mb-0.5 md:mb-1">{v.marca} {v.modelo}</h3>
+                <div className="text-gray-500 text-[8px] md:text-[10px] font-black uppercase tracking-widest mb-1">
                   {v.anio} • {v.km} KM
                 </div>
-                <div className="flex items-center gap-1 text-gray-400 mb-4 font-bold uppercase text-[9px]">
-                  <MapPin size={12} />
-                  <span>
+                <div className="flex items-center gap-1 text-gray-400 mb-2 md:mb-4 font-bold uppercase text-[7px] md:text-[9px]">
+                  <MapPin size={10} className="md:w-3 md:h-3" />
+                  <span className="truncate">
                     {v.localidad && v.provincia 
                       ? `${v.localidad}, ${v.provincia}` 
-                      : v.localidad || v.provincia || 'Ubicación no especificada'}
+                      : v.localidad || v.provincia || 'Ubicación'}
                   </span>
                 </div>
-                <div className="flex justify-between items-center mb-5">
-                  <span className="text-[#288b55] font-black text-xl">
+                <div className="flex justify-between items-center mb-3 md:mb-5">
+                  <span className="text-[#288b55] font-black text-sm md:text-xl">
                     {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}
                   </span>
                 </div>
-                <button className="w-full py-3 bg-[#0f172a] hover:bg-[#288b55] transition-all rounded-lg flex items-center justify-center gap-2 text-white font-black text-xs uppercase tracking-widest shadow-md">
-                  <Eye size={16} /> Ver Detalle
+                <button className="w-full py-2 md:py-3 bg-[#0f172a] hover:bg-[#288b55] transition-all rounded-lg flex items-center justify-center gap-2 text-white font-black text-[9px] md:text-xs uppercase tracking-widest shadow-md">
+                  <Eye size={12} className="md:w-4 md:h-4" /> Ver Detalle
                 </button>
               </div>
 
-              <div className="grid grid-cols-4 border-t border-gray-200 divide-x divide-gray-200 h-12 bg-[#e2e8f0]">
+              {/* Redes Footer Mobile y Desktop */}
+              <div className="grid grid-cols-4 border-t border-gray-200 divide-x divide-gray-200 h-10 md:h-12 bg-[#e2e8f0]">
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#0f172a]">
-                  <Instagram size={16} />
-                  <span className="text-[8px] font-bold uppercase mt-0.5">Instagram</span>
+                  <Instagram size={14} className="md:w-4 md:h-4" />
                 </button>
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#0f172a]">
-                  <Facebook size={16} />
-                  <span className="text-[8px] font-bold uppercase mt-0.5">Facebook</span>
+                  <Facebook size={14} className="md:w-4 md:h-4" />
                 </button>
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#25d366]">
-                  <MessageCircle size={16} />
-                  <span className="text-[8px] font-bold uppercase mt-0.5">WhatsApp</span>
+                  <MessageCircle size={14} className="md:w-4 md:h-4" />
                 </button>
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#2596be]">
-                  <Send size={16} />
-                  <span className="text-[8px] font-bold uppercase mt-0.5">Mensaje</span>
+                  <Send size={14} className="md:w-4 md:h-4" />
                 </button>
               </div>
             </div>
