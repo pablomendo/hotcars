@@ -101,7 +101,7 @@ export default function MarketplaceDashboard() {
           >
             Bienvenidos al <br />
             <span className="text-[#288b55]">Marketplace de </span>
-            <span className="text-[#288b55]">HOT</span><span>CARS</span>
+            <span className="text-[#288b55]">HOT</span><span className="text-white">CARS</span>
           </h1>
           <div className="space-y-1 text-sm md:text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-normal">
             <p>• Obtén las mejores ofertas</p>
@@ -207,7 +207,6 @@ export default function MarketplaceDashboard() {
               </div>
 
               <div className="grid grid-cols-4 border-t border-gray-200 divide-x divide-gray-200 h-12 bg-[#e2e8f0]">
-                {/* Botones de redes... */}
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#0f172a]">
                   <Instagram size={16} />
                   <span className="text-[8px] font-bold uppercase mt-0.5">Instagram</span>
