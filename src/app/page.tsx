@@ -83,10 +83,10 @@ export default function MarketplaceDashboard() {
     return inv.filter(v => {
       const matchSearch = `${v.marca} ${v.modelo} ${v.version || ''}`.toLowerCase().includes(search.toLowerCase());
       const matchCat = selectedCategory ? v.categoria?.toUpperCase() === selectedCategory : true;
-      const matchMoneda = selectedCategory ? v.moneda === monedaFiltro : true;
-      return matchSearch && matchCat && matchMoneda;
+      // ELIMINADO EL FILTRO DE MONEDA AUTOMÁTICO PARA QUE VEAS TODO
+      return matchSearch && matchCat;
     });
-  }, [search, selectedCategory, inv, monedaFiltro]);
+  }, [search, selectedCategory, inv]);
 
   if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
 
@@ -110,7 +110,7 @@ export default function MarketplaceDashboard() {
           <img src="/hero-mobile-hotcars.jpg" alt="Hero Mobile" className="w-full h-full object-cover" />
           <div className="absolute inset-0 flex flex-col justify-end pb-12 px-6 pointer-events-none">
             <div className="flex flex-col gap-3 pointer-events-auto">
-              <p className="text-white text-center font-bold text-lg drop-shadow-[0_2px_4_rgba(0,0,0,0.9)] leading-tight mb-4 px-2">
+              <p className="text-white text-center font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-tight mb-4 px-2">
                 Profesionalizate, publicá, compartí y gestioná tu inventario con tu propia web de <span className="text-white italic uppercase">HOT</span><span className="text-[#288b55] italic uppercase">CARS</span>
               </p>
               <button className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
@@ -231,7 +231,6 @@ export default function MarketplaceDashboard() {
                   <button className="w-full py-1.5 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors"><Eye size={12} /> Ver Detalle</button>
                 </div>
               </div>
-              {/* BOTONERA DE MENSAJES: TEXTO ACLARADO A GRAY-400 */}
               <div className="grid grid-cols-4 border-t border-gray-200 divide-x h-10 bg-gray-100 flex-shrink-0">
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors"><Instagram size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Instagram</span></button>
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors"><Facebook size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Facebook</span></button>
