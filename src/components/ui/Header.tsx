@@ -21,11 +21,9 @@ export default function Header() {
         if (isMobileMenuOpen) {
             document.body.style.overflow = 'hidden';
         } else {
-            // Quitamos el forzado de documentElement que colapsa acordeones
             document.body.style.overflow = ''; 
         }
         
-        // Limpieza al desmontar el componente
         return () => {
             document.body.style.overflow = '';
         };
@@ -48,7 +46,8 @@ export default function Header() {
                     </button>
 
                     <div className="flex-shrink-0">
-                        <Link href="/dashboard" className="flex items-center">
+                        {/* CORRECCIÓN: Apunta al Main del Marketplace (Hero) */}
+                        <Link href="/" className="flex items-center">
                             <Image 
                                 src="/logo_hotcars_blanco.png" 
                                 alt="HotCars Logo" 

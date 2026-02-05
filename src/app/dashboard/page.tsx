@@ -9,7 +9,7 @@ import CommunityCard from '@/components/ui/CommunityCard';
 import AlertsList from '@/components/ui/AlertsList';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
-import { TrendingUp, BarChart3, Loader2 } from 'lucide-react';
+import { TrendingUp, BarChart3, Loader2, Clock } from 'lucide-react';
 
 export default function DashboardPage() {
     const [isMounted, setIsMounted] = useState(false);
@@ -18,7 +18,6 @@ export default function DashboardPage() {
     
     const DOLAR_BLUE = 1500;
 
-    // Función de normalización según reglas de negocio
     const normalizeStatus = (status) => {
         const s = status?.toLowerCase().trim();
         if (s === 'activo' || s === 'publicado') return 'activo';
@@ -45,8 +44,7 @@ export default function DashboardPage() {
                     model: v.modelo,
                     price: v.pv,
                     cost: v.pc,
-                    // Normalización aplicada al inicio para consistencia en todo el dashboard
-                    rawStatus: normalizeStatus(v.estado)
+                    rawStatus: normalizeStatus(v.inventory_status || v.estado)
                 }));
 
                 setInventory(mappedData);
@@ -61,16 +59,11 @@ export default function DashboardPage() {
         fetchInventory();
     }, []);
 
-    // 1. AUTOS ACTIVOS: Solo estado 'activo' (incluye ahora los 'publicado')
-    const activeVehicles = useMemo(() => {
-        return inventory.filter(v => v.rawStatus === 'activo');
-    }, [inventory]);
+    const availableVehicles = useMemo(() => inventory.filter(v => v.rawStatus === 'activo'), [inventory]);
+    const reservedVehicles = useMemo(() => inventory.filter(v => v.rawStatus === 'reservado'), [inventory]);
 
-    // 2. POTENCIAL DE GANANCIA: Activo + Reservado + Pausado
     const potentialValue = useMemo(() => {
-        const relevantVehicles = inventory.filter(v => 
-            ['activo', 'reservado', 'pausado'].includes(v.rawStatus)
-        );
+        const relevantVehicles = inventory.filter(v => ['activo', 'reservado', 'pausado'].includes(v.rawStatus));
         return relevantVehicles.reduce((total, v) => {
             const margen = Number(v.price) - Number(v.cost);
             const margenDolar = v.moneda === 'ARS' ? (margen / DOLAR_BLUE) : margen;
@@ -78,32 +71,19 @@ export default function DashboardPage() {
         }, 0);
     }, [inventory]);
 
-    // 3. ESTADO DE INVENTARIO: Activo + Reservado + Pausado
     const inventoryStatus = useMemo(() => {
-        const relevantVehicles = inventory.filter(v => 
-            ['activo', 'reservado', 'pausado'].includes(v.rawStatus)
-        );
+        const relevantVehicles = inventory.filter(v => ['activo', 'reservado', 'pausado'].includes(v.rawStatus));
         const total = relevantVehicles.length;
         if (total === 0) return { r: 0, l: 0, c: 0 };
-        
         const now = new Date().getTime();
         let c = 0, l = 0, r = 0;
-        
         relevantVehicles.forEach(v => {
             const diff = Math.floor((now - new Date(v.created_at).getTime()) / 86400000);
-            if (diff >= 45) c++; 
-            else if (diff >= 31) l++; 
-            else r++;
+            if (diff >= 45) c++; else if (diff >= 31) l++; else r++;
         });
-        
-        return { 
-            r: Math.round((r/total)*100), 
-            l: Math.round((l/total)*100), 
-            c: Math.round((c/total)*100) 
-        };
+        return { r: Math.round((r/total)*100), l: Math.round((l/total)*100), c: Math.round((c/total)*100) };
     }, [inventory]);
 
-    // 4. UNIDAD CLAVO: Solo 'activo' + >= 45 días
     const kpiData = useMemo(() => {
         const now = new Date().getTime();
         const clavoCount = inventory.filter(v => {
@@ -112,32 +92,26 @@ export default function DashboardPage() {
         }).length;
 
         return [
-            { id: 'activos', title: 'Autos Activos', value: activeVehicles.length, badge: 'En vivo', badgeType: 'up', subtext: 'Inventario real' },
+            { id: 'activos', title: 'Autos Disponibles', value: availableVehicles.length, badge: 'En Stock', badgeType: 'up', subtext: 'Listos para vender' },
+            { id: 'reservados', title: 'Autos Reservados', value: reservedVehicles.length, badge: 'Señados', badgeType: 'neutral', subtext: 'Reservas activas' },
             { id: 'mensajes', title: 'Mensajes', value: 15, subtext: 'Leads acumulados' },
-            { id: 'flips', title: 'Flips Compartidos', value: 1, subtext: '1 solicitud de flip' },
-            { id: 'dias', title: 'Días Prom. Venta', value: 28, badge: '2.5%', badgeType: 'down', subtext: 'desde mes pasado' },
             { id: 'buscados', title: 'Modelos Buscados', value: mockSearchTickets.length, subtext: 'Pedidos comunidad' },
-            { id: 'clavos', title: 'Unidad Clavo', value: clavoCount, isCurrency: false, subtext: 'Acción requerida' }
+            { id: 'clavos', title: 'Unidad Clavo', value: clavoCount, isCurrency: false, subtext: 'Revisar precio' },
+            { id: 'flips', title: 'Flips Compartidos', value: 1, subtext: 'Solicitudes' }
         ];
-    }, [inventory, activeVehicles.length]);
+    }, [inventory, availableVehicles.length, reservedVehicles.length]);
 
     const [items, setItems] = useState([]);
     useEffect(() => { if (isMounted) setItems(kpiData); }, [kpiData, isMounted]);
 
     const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
     
-    if (isLoading) return (
-        <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]">
-            <Loader2 className="h-12 w-12 animate-spin text-[#a3e635]" />
-        </div>
-    );
+    if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]"><Loader2 className="h-12 w-12 animate-spin text-[#a3e635]" /></div>;
 
-    const formatter = new Intl.NumberFormat('en-US', { 
-        maximumFractionDigits: 0 
-    }).format(potentialValue);
+    const formatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(potentialValue);
 
     return (
-        <div className="bg-[#0b1114] min-h-screen w-full pt-32 pb-10 px-4 md:px-8 overflow-y-auto">
+        <div className="bg-[#0b1114] min-h-screen w-full pt-32 pb-10 px-4 md:px-8 overflow-y-auto font-sans">
             <div className="max-w-[1600px] mx-auto space-y-6">
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => {
                     if (e.active.id !== e.over?.id) {
@@ -150,55 +124,59 @@ export default function DashboardPage() {
                 }}>
                     <SortableContext items={items.map(i => i.id)} strategy={horizontalListSortingStrategy}>
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            {items.map((item) => (
-                                <SortableKPI key={item.id} {...(item as any)} />
-                            ))}
+                            {items.map((item) => <SortableKPI key={item.id} {...(item as any)} />)}
                         </div>
                     </SortableContext>
                 </DndContext>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-[#1a2b2b] p-6 rounded-xl border border-white/10 shadow-2xl">
-                        <div className="flex justify-between items-start mb-1">
-                            <div>
-                                <h3 className="text-white text-lg font-bold tracking-tight">Potencial de Ganancia</h3>
-                                <p className="text-gray-500 text-xs italic">Comisión Neta (Venta - Compra)</p>
-                            </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* POTENCIAL DE GANANCIA */}
+                    <div className="bg-[#1a2b2b] p-6 rounded-xl border border-white/10 shadow-2xl flex flex-col justify-between">
+                        <div className="flex justify-between items-start">
+                            <h3 className="text-white text-xl font-bold">Potencial de Ganancia</h3>
                             <TrendingUp className="text-[#a3e635] w-5 h-5" />
                         </div>
-                        <div className="flex items-baseline gap-3 mt-6">
-                            <span className="text-[#a3e635] text-xs font-bold uppercase">USD</span>
-                            <span className="text-[#a3e635] text-4xl font-bold tracking-tighter">
-                                {formatter}
-                            </span>
+                        <div className="flex justify-end items-baseline gap-3 mt-4">
+                            <span className="text-[#a3e635] text-xs font-black uppercase tracking-widest">USD</span>
+                            <span className="text-[#a3e635] text-4xl font-black tracking-tighter">{formatter}</span>
                         </div>
                         <div className="flex gap-1.5 h-1.5 w-full mt-8">
-                            <div className="flex-1 bg-red-500 rounded-sm opacity-80"></div>
-                            <div className="flex-1 bg-orange-500 rounded-sm opacity-80"></div>
-                            <div className="flex-1 bg-yellow-500 rounded-sm opacity-80"></div>
-                            <div className="flex-1 bg-lime-500 rounded-sm opacity-80"></div>
-                            <div className="flex-1 bg-green-500 rounded-sm opacity-80"></div>
-                            <div className="flex-1 bg-emerald-600 rounded-sm opacity-80"></div>
+                            {['bg-red-600', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500', 'bg-emerald-600'].map((color, i) => (
+                                <div key={i} className={`flex-1 ${color} rounded-sm opacity-80 shadow-[0_0_8px_rgba(163,230,53,0.1)]`}></div>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="bg-[#1a2b2b] p-6 rounded-xl border border-white/10 shadow-2xl">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <h3 className="text-white text-lg font-bold">Estado de Inventario</h3>
-                                <p className="text-gray-400 text-xs italic text-blue-400">Salud según días publicados</p>
-                            </div>
+                    {/* DIAS PROMEDIO DE VENTAS */}
+                    <div className="bg-[#1a2b2b] p-6 rounded-xl border border-white/10 shadow-2xl flex flex-col justify-between">
+                        <div className="flex justify-between items-start">
+                            <h3 className="text-white text-xl font-bold tracking-tight">Días Promedio de Ventas</h3>
+                            <Clock className="text-blue-400 w-5 h-5" />
+                        </div>
+                        <div className="flex justify-end items-baseline gap-2 mt-4">
+                            <span className="text-white text-4xl font-black tracking-tighter">28</span>
+                            <span className="text-gray-500 text-sm font-bold uppercase">Días</span>
+                        </div>
+                        <div className="flex gap-1.5 h-1.5 w-full mt-8 opacity-20">
+                            {[...Array(6)].map((_, i) => <div key={i} className="flex-1 bg-blue-400 rounded-sm"></div>)}
+                        </div>
+                    </div>
+
+                    {/* ESTADO DE INVENTARIO */}
+                    <div className="bg-[#1a2b2b] p-6 rounded-xl border border-white/10 shadow-2xl flex flex-col justify-between">
+                        <div className="flex justify-between items-start">
+                            <h3 className="text-white text-xl font-bold">Estado de Inventario</h3>
                             <BarChart3 className="text-blue-400 w-5 h-5" />
                         </div>
-                        <div className="flex h-3 w-full rounded-full overflow-hidden bg-white/5 mt-6">
+                        <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+                            <div><p className="text-[9px] text-gray-500 font-black uppercase">Rotación</p><p className="text-lg text-white font-bold">{inventoryStatus.r}%</p></div>
+                            <div><p className="text-[9px] text-gray-500 font-black uppercase">Lento</p><p className="text-lg text-yellow-500 font-bold">{inventoryStatus.l}%</p></div>
+                            <div><p className="text-[9px] text-red-400 font-black uppercase tracking-tighter">Clavo</p><p className="text-lg text-red-500 font-bold">{inventoryStatus.c}%</p></div>
+                        </div>
+                        <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-white/5 mt-4 border border-white/5">
                             <div style={{ width: `${inventoryStatus.r}%` }} className="bg-[#22c55e]" />
                             <div style={{ width: `${inventoryStatus.l}%` }} className="bg-[#eab308]" />
                             <div style={{ width: `${inventoryStatus.c}%` }} className="bg-[#ef4444]" />
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 mt-4 text-center font-bold">
-                            <div><p className="text-[10px] text-gray-500 uppercase">Rotación</p><p className="text-lg text-white">{inventoryStatus.r}%</p></div>
-                            <div><p className="text-[10px] text-gray-500 uppercase">Lento</p><p className="text-lg text-yellow-500">{inventoryStatus.l}%</p></div>
-                            <div><p className="text-[10px] text-red-400 uppercase">Riesgo</p><p className="text-lg text-red-500">{inventoryStatus.c}%</p></div>
                         </div>
                     </div>
                 </div>
@@ -208,7 +186,7 @@ export default function DashboardPage() {
                         <CommunityCard stats={mockCommunityStats} />
                     </div>
                     <div className="h-full">
-                        <AlertsList alerts={generateMatchingAlerts(activeVehicles, mockSearchTickets)} />
+                        <AlertsList alerts={generateMatchingAlerts(availableVehicles, mockSearchTickets)} />
                     </div>
                 </div>
             </div>

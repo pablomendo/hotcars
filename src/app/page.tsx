@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation'; // Importado para navegación
 import { Search, Loader2, Instagram, Facebook, MessageCircle, Send, Eye, MapPin, X, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import dbAutos from '@/app/api/base-autos/db_7f8e9a2b1c4d.json';
 
 export default function MarketplaceDashboard() {
+  const router = useRouter(); // Instancia de router
   const [inv, setInv] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -83,10 +85,14 @@ export default function MarketplaceDashboard() {
     return inv.filter(v => {
       const matchSearch = `${v.marca} ${v.modelo} ${v.version || ''}`.toLowerCase().includes(search.toLowerCase());
       const matchCat = selectedCategory ? v.categoria?.toUpperCase() === selectedCategory : true;
-      // ELIMINADO EL FILTRO DE MONEDA AUTOMÁTICO PARA QUE VEAS TODO
       return matchSearch && matchCat;
     });
   }, [search, selectedCategory, inv]);
+
+  // DISPARADOR ÚNICO DEL DETALLE - CORREGIDO A PLURAL
+  const handleViewDetail = (id) => {
+    router.push(`/vehiculos/${id}`);
+  };
 
   if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
 
@@ -178,7 +184,6 @@ export default function MarketplaceDashboard() {
 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-6 items-start">
           
-          {/* TICKET DE RED: FIJO 330PX */}
           {selectedCategory && (
             <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col shadow-sm h-[330px] w-full">
               <div className="flex flex-col items-center w-full cursor-pointer mb-2 flex-shrink-0" onClick={() => setIsOpenMobile(!isOpenMobile)}>
@@ -210,7 +215,7 @@ export default function MarketplaceDashboard() {
             </div>
           )}
 
-          {/* CARDS VEHICULOS: FIJOS 330PX */}
+          {/* CARDS VEHICULOS */}
           {filteredVehicles.map((v) => (
             <div key={v.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[330px] w-full transition-all hover:shadow-xl">
               <div className="relative h-[150px] w-full bg-gray-100 flex-shrink-0">
@@ -228,7 +233,13 @@ export default function MarketplaceDashboard() {
                 </div>
                 <div className="mt-auto">
                   <div className="mb-1.5"><span className="text-[#288b55] font-black text-sm md:text-base">{v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}</span></div>
-                  <button className="w-full py-1.5 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors"><Eye size={12} /> Ver Detalle</button>
+                  {/* DISPARADOR ÚNICO: Ver Detalle */}
+                  <button 
+                    onClick={() => handleViewDetail(v.id)}
+                    className="w-full py-1.5 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors"
+                  >
+                    <Eye size={12} /> Ver Detalle
+                  </button>
                 </div>
               </div>
               <div className="grid grid-cols-4 border-t border-gray-200 divide-x h-10 bg-gray-100 flex-shrink-0">

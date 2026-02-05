@@ -1,6 +1,6 @@
 import { Vehicle } from '@/lib/types';
 import { calculateGain, isClavo, isValidForKPI } from '@/lib/logic';
-import { AlertTriangle, Clock } from 'lucide-react';
+import { AlertTriangle, Clock, Instagram } from 'lucide-react';
 
 interface VehicleCardProps {
     vehicle: Vehicle;
@@ -14,6 +14,28 @@ export default function VehicleCard({ vehicle, hasOpportunity }: VehicleCardProp
 
     // Format currency
     const fmt = (n?: number) => n ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n) : 'N/A';
+
+    // Generar URL para la Placa de Instagram (Evitando Error 431)
+    const handleGeneratePlate = () => {
+        const baseUrl = '/api/og';
+        // Usamos solo la primera foto si existe y es una URL válida
+        const fotoUrl = Array.isArray(vehicle.images) && vehicle.images.length > 0 
+            ? vehicle.images[0] 
+            : (vehicle.mainImage || '');
+
+        const params = new URLSearchParams({
+            marca: vehicle.brand || '',
+            modelo: vehicle.model || '',
+            version: vehicle.version || '',
+            precio: vehicle.prices.salePrice?.toString() || '',
+            moneda: 'ARS', // O la moneda que manejes en el objeto vehicle
+            km: vehicle.kilometers?.toString() || '0',
+            anio: vehicle.year?.toString() || '',
+            foto: fotoUrl // IMPORTANTE: Debe ser una URL, no Base64
+        });
+
+        window.open(`${baseUrl}?${params.toString()}`, '_blank');
+    };
 
     return (
         <div className="bg-card rounded-xl p-4 border border-border flex flex-col gap-3 relative hover:border-primary transition-colors duration-200">
@@ -75,6 +97,15 @@ export default function VehicleCard({ vehicle, hasOpportunity }: VehicleCardProp
                     </p>
                 )}
             </div>
+
+            {/* BOTÓN GENERAR PLACA INSTAGRAM */}
+            <button
+                onClick={handleGeneratePlate}
+                className="mt-2 w-full flex items-center justify-center gap-2 bg-[#2596be]/10 hover:bg-[#2596be]/20 text-[#2596be] py-2 rounded-lg border border-[#2596be]/30 transition-all duration-200 cursor-pointer group"
+            >
+                <Instagram className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-bold uppercase tracking-wider">Crear Placa IG</span>
+            </button>
         </div>
     );
 }
