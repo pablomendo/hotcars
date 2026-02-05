@@ -215,7 +215,7 @@ export default function MarketplaceDashboard() {
             </div>
           )}
 
-          {/* CARDS VEHICULOS */}
+          {/* CARDS VEHICULOS - CON NUEVA JERARQUÍA VISUAL */}
           {filteredVehicles.map((v) => (
             <div key={v.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[330px] w-full transition-all hover:shadow-xl">
               <div className="relative h-[150px] w-full bg-gray-100 flex-shrink-0">
@@ -227,26 +227,45 @@ export default function MarketplaceDashboard() {
               </div>
               <div className="p-3 flex flex-col flex-grow overflow-hidden">
                 <div className="flex-grow overflow-hidden">
-                  <h3 className="text-[12px] md:text-[14px] font-bold tracking-tight uppercase truncate text-[#0f172a] mb-0.5">{v.marca} {v.modelo}</h3>
-                  <div className="text-gray-500 text-[10px] md:text-[11px] font-black uppercase mb-1">{v.anio} • {v.km} KM</div>
-                  <div className="flex items-center gap-1 text-gray-400 mb-2 font-bold uppercase text-[9px] md:text-[10px] truncate"><MapPin size={10} /> {v.localidad || 'Ubicación'}</div>
+                  {/* TÍTULO CON AÑO INTEGRADO */}
+                  <h3 className="text-[12px] md:text-[14px] font-bold tracking-tight uppercase truncate text-[#0f172a] mb-0.5">
+                    {v.marca} {v.modelo} <span className="text-gray-400 ml-1">{v.anio}</span>
+                  </h3>
+                  
+                  {/* KILOMETRAJE DESTACADO */}
+                  <div className="text-[#0f172a] text-[10px] md:text-[11px] font-black uppercase mb-0.5">
+                    {v.km?.toLocaleString('de-DE')} KM
+                  </div>
+
+                  {/* VERSIÓN EN AZUL HOTCARS */}
+                  <div className="text-[#2596be] text-[9px] md:text-[10px] font-bold uppercase truncate mb-1.5">
+                    {v.version}
+                  </div>
+
+                  <div className="flex items-center gap-1 text-gray-400 mb-2 font-bold uppercase text-[9px] md:text-[10px] truncate">
+                    <MapPin size={10} /> {v.localidad || 'Ubicación'}
+                  </div>
                 </div>
                 <div className="mt-auto">
-                  <div className="mb-1.5"><span className="text-[#288b55] font-black text-sm md:text-base">{v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}</span></div>
+                  <div className="mb-1.5">
+                    <span className="text-[#288b55] font-black text-sm md:text-base">
+                      {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}
+                    </span>
+                  </div>
                   {/* DISPARADOR ÚNICO: Ver Detalle */}
                   <button 
                     onClick={() => handleViewDetail(v.id)}
-                    className="w-full py-1.5 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors"
+                    className="w-full py-1.5 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors cursor-pointer"
                   >
                     <Eye size={12} /> Ver Detalle
                   </button>
                 </div>
               </div>
               <div className="grid grid-cols-4 border-t border-gray-200 divide-x h-10 bg-gray-100 flex-shrink-0">
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors"><Instagram size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Instagram</span></button>
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors"><Facebook size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Facebook</span></button>
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors"><MessageCircle size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">WhatsApp</span></button>
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors"><Send size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Mensaje</span></button>
+                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Instagram size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Instagram</span></button>
+                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Facebook size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Facebook</span></button>
+                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><MessageCircle size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">WhatsApp</span></button>
+                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Send size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Mensaje</span></button>
               </div>
             </div>
           ))}
