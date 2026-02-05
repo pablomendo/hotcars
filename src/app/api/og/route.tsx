@@ -23,78 +23,68 @@ export async function GET(req: NextRequest) {
 
     if (error || !v) return new Response("Vehículo no encontrado", { status: 404 });
 
-    const marca = v.marca || 'Vehículo';
+    const marca = v.marca || '';
     const modelo = v.modelo || '';
     const version = v.version || '';
     const precio = Number(v.pv || 0).toLocaleString('de-DE');
     const moneda = v.moneda === 'USD' ? 'U$S' : '$';
     const km = v.km?.toLocaleString('de-DE') || '0';
     const anio = v.anio?.toString() || '';
-    const fotoUrl = v.fotos?.[0] || 'https://via.placeholder.com/1080x1920?text=HotCars+Pro';
+    const fotoUrl = v.fotos?.[0] || '';
 
-    // Lógica comercial dinámica
     const aceptaPermuta = v.acepta_permuta === true || v.permuta === true;
     const esFinanciable = v.financiacion === true || v.cuotas === true;
 
     return new ImageResponse(
       (
-        <div
-          style={{
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: '#12242e',
-            padding: '40px',
-            fontFamily: 'sans-serif',
-          }}
-        >
-          <div style={{ display: 'flex', width: '100%', height: '60%', borderRadius: '30px', overflow: 'hidden', border: '4px solid #1e3a4a' }}>
+        <div style={{
+          height: '100%',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: '#0f172a',
+          padding: '50px 50px 180px 50px', // Aumentamos el padding inferior a 180px para zona segura
+          fontFamily: 'sans-serif',
+        }}>
+          {/* FOTO PRINCIPAL */}
+          <div style={{ display: 'flex', width: '100%', height: '60%', borderRadius: '40px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
             <img src={fotoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', marginTop: '40px', flexGrow: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ color: '#288b55', fontSize: '30px', fontWeight: '900', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                HotCars <span style={{ color: '#2596be' }}>PRO</span>
-              </span>
-            </div>
-
-            <h1 style={{ color: 'white', fontSize: '70px', fontWeight: '900', margin: '10px 0', textTransform: 'uppercase', lineHeight: '0.9' }}>
-              {marca} {modelo}
+          {/* CONTENIDO COMERCIAL */}
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop: '30px', flexGrow: 1 }}>
+            
+            <h1 style={{ color: 'white', fontSize: '80px', fontWeight: '900', margin: '0', textTransform: 'uppercase', letterSpacing: '-3px' }}>
+              {marca} {modelo} <span style={{ color: '#64748b', marginLeft: '20px' }}>{anio}</span>
             </h1>
             
-            <p style={{ color: '#2596be', fontSize: '35px', fontWeight: '700', margin: '0 0 30px 0', textTransform: 'uppercase' }}>
+            <p style={{ color: '#2596be', fontSize: '34px', fontWeight: '700', margin: '5px 0 20px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {version}
             </p>
 
-            <div style={{ display: 'flex', gap: '30px', marginBottom: '30px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ color: '#526b77', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Año</span>
-                    <span style={{ color: 'white', fontSize: '30px', fontWeight: '700' }}>{anio}</span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ color: '#526b77', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Kilómetros</span>
-                    <span style={{ color: 'white', fontSize: '30px', fontWeight: '700' }}>{km} KM</span>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '40px', marginBottom: '30px' }}>
+               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ color: '#64748b', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Kilometraje</span>
+                  <span style={{ color: 'white', fontSize: '32px', fontWeight: '800' }}>{km} KM</span>
+               </div>
+
+               <div style={{ display: 'flex', gap: '15px' }}>
+                  {aceptaPermuta && (
+                    <div style={{ backgroundColor: '#2596be', padding: '10px 20px', borderRadius: '12px' }}>
+                      <span style={{ color: 'white', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Acepta Permuta</span>
+                    </div>
+                  )}
+                  {esFinanciable && (
+                    <div style={{ backgroundColor: '#288b55', padding: '10px 20px', borderRadius: '12px' }}>
+                      <span style={{ color: 'white', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Financiación</span>
+                    </div>
+                  )}
+               </div>
             </div>
 
-            {/* SECCIÓN COMERCIAL DINÁMICA */}
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-              {aceptaPermuta && (
-                <div style={{ backgroundColor: '#2596be', padding: '10px 20px', borderRadius: '12px', display: 'flex' }}>
-                  <span style={{ color: 'white', fontSize: '18px', fontWeight: '900', textTransform: 'uppercase' }}>Acepta Permuta</span>
-                </div>
-              )}
-              {esFinanciable && (
-                <div style={{ backgroundColor: 'white', padding: '10px 20px', borderRadius: '12px', display: 'flex', border: '2px solid #288b55' }}>
-                  <span style={{ color: '#288b55', fontSize: '18px', fontWeight: '900', textTransform: 'uppercase' }}>Financiación</span>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', backgroundColor: '#288b55', padding: '25px 40px', borderRadius: '20px', marginTop: 'auto' }}>
-              <span style={{ color: 'white', fontSize: '80px', fontWeight: '900', letterSpacing: '-2px' }}>
+            {/* PRECIO SUBIDO PARA ZONA SEGURA */}
+            <div style={{ display: 'flex', backgroundColor: '#288b55', padding: '25px 50px', borderRadius: '30px', marginTop: 'auto', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
+              <span style={{ color: 'white', fontSize: '85px', fontWeight: '900', letterSpacing: '-4px' }}>
                 {moneda} {precio}
               </span>
             </div>
