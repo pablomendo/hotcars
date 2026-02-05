@@ -2,18 +2,17 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation'; // Importado para navegación
+import { useRouter } from 'next/navigation';
 import { Search, Loader2, Instagram, Facebook, MessageCircle, Send, Eye, MapPin, X, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import dbAutos from '@/app/api/base-autos/db_7f8e9a2b1c4d.json';
 
 export default function MarketplaceDashboard() {
-  const router = useRouter(); // Instancia de router
+  const router = useRouter();
   const [inv, setInv] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [user, setUser] = useState(null);
-  const [monedaFiltro, setMonedaFiltro] = useState('USD');
   
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [ticketData, setTicketData] = useState({
@@ -55,7 +54,7 @@ export default function MarketplaceDashboard() {
       if (error) throw error;
       setInv(data || []);
     } catch (err) {
-      console.error("Error:", err);
+      console.error("Error HotCars:", err);
     } finally {
       setIsLoading(false);
     }
@@ -89,9 +88,14 @@ export default function MarketplaceDashboard() {
     });
   }, [search, selectedCategory, inv]);
 
-  // DISPARADOR ÚNICO DEL DETALLE - CORREGIDO A PLURAL
   const handleViewDetail = (id) => {
     router.push(`/vehiculos/${id}`);
+  };
+
+  // CORRECCIÓN DEFINITIVA ERROR URI_TOO_LONG EN MARKETPLACE
+  const handleInstagramPlate = (id) => {
+    const t = Date.now();
+    window.open(`/api/og?id=${id}&t=${t}`, '_blank');
   };
 
   if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
@@ -215,7 +219,7 @@ export default function MarketplaceDashboard() {
             </div>
           )}
 
-          {/* CARDS VEHICULOS - CON NUEVA JERARQUÍA VISUAL */}
+          {/* CARDS VEHICULOS */}
           {filteredVehicles.map((v) => (
             <div key={v.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[330px] w-full transition-all hover:shadow-xl">
               <div className="relative h-[150px] w-full bg-gray-100 flex-shrink-0">
@@ -227,17 +231,14 @@ export default function MarketplaceDashboard() {
               </div>
               <div className="p-3 flex flex-col flex-grow overflow-hidden">
                 <div className="flex-grow overflow-hidden">
-                  {/* TÍTULO CON AÑO INTEGRADO */}
                   <h3 className="text-[12px] md:text-[14px] font-bold tracking-tight uppercase truncate text-[#0f172a] mb-0.5">
                     {v.marca} {v.modelo} <span className="text-gray-400 ml-1">{v.anio}</span>
                   </h3>
                   
-                  {/* KILOMETRAJE DESTACADO */}
                   <div className="text-[#0f172a] text-[10px] md:text-[11px] font-black uppercase mb-0.5">
                     {v.km?.toLocaleString('de-DE')} KM
                   </div>
 
-                  {/* VERSIÓN EN AZUL HOTCARS */}
                   <div className="text-[#2596be] text-[9px] md:text-[10px] font-bold uppercase truncate mb-1.5">
                     {v.version}
                   </div>
@@ -252,7 +253,6 @@ export default function MarketplaceDashboard() {
                       {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}
                     </span>
                   </div>
-                  {/* DISPARADOR ÚNICO: Ver Detalle */}
                   <button 
                     onClick={() => handleViewDetail(v.id)}
                     className="w-full py-1.5 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors cursor-pointer"
@@ -262,7 +262,13 @@ export default function MarketplaceDashboard() {
                 </div>
               </div>
               <div className="grid grid-cols-4 border-t border-gray-200 divide-x h-10 bg-gray-100 flex-shrink-0">
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Instagram size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Instagram</span></button>
+                {/* BOTÓN INSTAGRAM CORREGIDO */}
+                <button 
+                  onClick={() => handleInstagramPlate(v.id)}
+                  className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"
+                >
+                  <Instagram size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Instagram</span>
+                </button>
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Facebook size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Facebook</span></button>
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><MessageCircle size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">WhatsApp</span></button>
                 <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Send size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Mensaje</span></button>

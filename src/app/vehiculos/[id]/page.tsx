@@ -74,22 +74,11 @@ export default function VehicleDetailPage() {
     }
   };
 
+  // CORRECCIÓN DEFINITIVA BLINDAJE ERROR URI_TOO_LONG
   const handleGeneratePoster = () => {
-    const rawFoto = vehicle.fotos?.[0] || '';
-    const fotoLimpia = rawFoto.split('?')[0]; 
-
-    const query = new URLSearchParams({
-      marca: vehicle.marca || '',
-      modelo: vehicle.modelo || '',
-      version: vehicle.version || '',
-      precio: Number(vehicle.pv || 0).toLocaleString('de-DE'),
-      moneda: vehicle.moneda === 'USD' ? 'U$S' : '$',
-      km: vehicle.km?.toLocaleString('de-DE') || '0',
-      anio: vehicle.anio?.toString() || '',
-      foto: fotoLimpia 
-    }).toString();
-
-    window.open(`/api/og?${query}`, '_blank');
+    const t = Date.now();
+    // Solo enviamos el ID para que la URL sea mínima
+    window.open(`/api/og?id=${vehicle.id}&t=${t}`, '_blank');
   };
 
   if (loading) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
@@ -149,19 +138,16 @@ export default function VehicleDetailPage() {
 
             <div>
               <div className="pr-10">
-                {/* TÍTULO CON AÑO INCORPORADO */}
                 <h1 className="text-xl md:text-2xl font-black uppercase tracking-tight leading-tight">
                   {vehicle.marca} {vehicle.modelo} <span className="text-gray-400 ml-1">{vehicle.anio}</span>
                 </h1>
                 
-                {/* DATOS TÉCNICOS INMEDIATOS */}
                 <div className="flex items-center gap-2 mt-1">
                    <p className="text-[#0f172a] font-black uppercase text-[12px] tracking-wide">
                      {vehicle.km?.toLocaleString('de-DE')} KM
                    </p>
                 </div>
 
-                {/* VERSIÓN DEBAJO */}
                 <p className="text-[#2596be] font-bold uppercase text-[11px] tracking-widest mt-1 mb-3">
                   {vehicle.version}
                 </p>

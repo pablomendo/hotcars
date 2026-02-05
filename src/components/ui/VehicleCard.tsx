@@ -15,26 +15,17 @@ export default function VehicleCard({ vehicle, hasOpportunity }: VehicleCardProp
     // Format currency
     const fmt = (n?: number) => n ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n) : 'N/A';
 
-    // Generar URL para la Placa de Instagram (Evitando Error 431)
+    /**
+     * CORRECCIÓN DEFINITIVA ERROR 431 / URI_TOO_LONG
+     * Enviamos únicamente el ID del vehículo.
+     * La API se encarga de buscar los datos en Supabase para mantener la URL corta.
+     */
     const handleGeneratePlate = () => {
         const baseUrl = '/api/og';
-        // Usamos solo la primera foto si existe y es una URL válida
-        const fotoUrl = Array.isArray(vehicle.images) && vehicle.images.length > 0 
-            ? vehicle.images[0] 
-            : (vehicle.mainImage || '');
-
-        const params = new URLSearchParams({
-            marca: vehicle.brand || '',
-            modelo: vehicle.model || '',
-            version: vehicle.version || '',
-            precio: vehicle.prices.salePrice?.toString() || '',
-            moneda: 'ARS', // O la moneda que manejes en el objeto vehicle
-            km: vehicle.kilometers?.toString() || '0',
-            anio: vehicle.year?.toString() || '',
-            foto: fotoUrl // IMPORTANTE: Debe ser una URL, no Base64
-        });
-
-        window.open(`${baseUrl}?${params.toString()}`, '_blank');
+        const timestamp = Date.now();
+        
+        // La URL resultante es mínima, evitando que Vercel rebote la petición
+        window.open(`${baseUrl}?id=${vehicle.id}&t=${timestamp}`, '_blank');
     };
 
     return (

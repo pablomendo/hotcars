@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'edge';
 
-// Inicializamos Supabase (Asegurate de tener estas variables en Vercel)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -16,7 +15,6 @@ export async function GET(req: NextRequest) {
 
     if (!id) return new Response("ID no proporcionado", { status: 400 });
 
-    // Buscamos los datos reales para evitar URLs largas
     const { data: v, error } = await supabase
       .from('inventario')
       .select('*')
@@ -33,6 +31,10 @@ export async function GET(req: NextRequest) {
     const km = v.km?.toLocaleString('de-DE') || '0';
     const anio = v.anio?.toString() || '';
     const fotoUrl = v.fotos?.[0] || 'https://via.placeholder.com/1080x1920?text=HotCars+Pro';
+
+    // Lógica comercial dinámica
+    const aceptaPermuta = v.acepta_permuta === true || v.permuta === true;
+    const esFinanciable = v.financiacion === true || v.cuotas === true;
 
     return new ImageResponse(
       (
@@ -62,11 +64,11 @@ export async function GET(req: NextRequest) {
               {marca} {modelo}
             </h1>
             
-            <p style={{ color: '#2596be', fontSize: '35px', fontWeight: '700', margin: '0 0 40px 0', textTransform: 'uppercase' }}>
+            <p style={{ color: '#2596be', fontSize: '35px', fontWeight: '700', margin: '0 0 30px 0', textTransform: 'uppercase' }}>
               {version}
             </p>
 
-            <div style={{ display: 'flex', gap: '30px', marginBottom: '50px' }}>
+            <div style={{ display: 'flex', gap: '30px', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ color: '#526b77', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Año</span>
                     <span style={{ color: 'white', fontSize: '30px', fontWeight: '700' }}>{anio}</span>
@@ -75,6 +77,20 @@ export async function GET(req: NextRequest) {
                     <span style={{ color: '#526b77', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Kilómetros</span>
                     <span style={{ color: 'white', fontSize: '30px', fontWeight: '700' }}>{km} KM</span>
                 </div>
+            </div>
+
+            {/* SECCIÓN COMERCIAL DINÁMICA */}
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+              {aceptaPermuta && (
+                <div style={{ backgroundColor: '#2596be', padding: '10px 20px', borderRadius: '12px', display: 'flex' }}>
+                  <span style={{ color: 'white', fontSize: '18px', fontWeight: '900', textTransform: 'uppercase' }}>Acepta Permuta</span>
+                </div>
+              )}
+              {esFinanciable && (
+                <div style={{ backgroundColor: 'white', padding: '10px 20px', borderRadius: '12px', display: 'flex', border: '2px solid #288b55' }}>
+                  <span style={{ color: '#288b55', fontSize: '18px', fontWeight: '900', textTransform: 'uppercase' }}>Financiación</span>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', backgroundColor: '#288b55', padding: '25px 40px', borderRadius: '20px', marginTop: 'auto' }}>
