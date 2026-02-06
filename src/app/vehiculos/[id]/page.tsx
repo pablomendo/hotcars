@@ -74,10 +74,8 @@ export default function VehicleDetailPage() {
     }
   };
 
-  // CORRECCIÓN DEFINITIVA BLINDAJE ERROR URI_TOO_LONG
   const handleGeneratePoster = () => {
     const t = Date.now();
-    // Solo enviamos el ID para que la URL sea mínima
     window.open(`/api/og?id=${vehicle.id}&t=${t}`, '_blank');
   };
 
@@ -121,7 +119,7 @@ export default function VehicleDetailPage() {
           
           <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex-grow">
             <h3 className="font-black text-[10px] uppercase text-[#288b55] mb-3 tracking-widest">Descripción</h3>
-            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+            <p className="text-base text-gray-600 leading-relaxed whitespace-pre-line">
               {vehicle.descripcion && vehicle.descripcion.trim() !== "" ? vehicle.descripcion : "El vendedor no agregó descripción"}
             </p>
           </div>
@@ -138,7 +136,7 @@ export default function VehicleDetailPage() {
 
             <div>
               <div className="pr-10">
-                <h1 className="text-xl md:text-2xl font-black uppercase tracking-tight leading-tight">
+                <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight leading-tight">
                   {vehicle.marca} {vehicle.modelo} <span className="text-gray-400 ml-1">{vehicle.anio}</span>
                 </h1>
                 
@@ -148,7 +146,8 @@ export default function VehicleDetailPage() {
                    </p>
                 </div>
 
-                <p className="text-[#2596be] font-bold uppercase text-[11px] tracking-widest mt-1 mb-3">
+                {/* Versión ampliada y sin cortes */}
+                <p className="text-[#2596be] font-bold uppercase text-sm tracking-widest mt-2 mb-3 leading-snug break-words">
                   {vehicle.version}
                 </p>
 
@@ -215,15 +214,11 @@ export default function VehicleDetailPage() {
                 { l: "Modelo", v: vehicle.modelo },
                 { l: "Versión", v: vehicle.version },
                 { l: "Año", v: vehicle.anio },
-                { l: "Kilómetros", v: vehicle.km?.toLocaleString() },
-                { l: "Categoría", v: vehicle.categoria },
-                { l: "Moneda", v: vehicle.moneda },
-                { l: "Provincia", v: vehicle.provincia },
-                { l: "Localidad", v: vehicle.localidad }
+                { l: "Kilómetros", v: vehicle.km?.toLocaleString() }
               ].map((item, i) => (
                 <div key={i} className="flex justify-between border-b border-gray-50 pb-1.5">
                   <span className="text-[11px] text-gray-400 uppercase font-bold">{item.l}</span>
-                  <span className="text-[11px] font-black uppercase text-right ml-2 truncate">{item.v || '-'}</span>
+                  <span className="text-[11px] font-black uppercase text-right ml-2">{item.v || '-'}</span>
                 </div>
               ))}
             </div>
