@@ -32,9 +32,10 @@ export async function GET(req: NextRequest) {
     const anio = v.anio?.toString() || '';
     const fotoUrl = v.fotos?.[0] || '';
 
-    // Lógica comercial basada en tu inventario
-    const aceptaPermuta = v.acepta_permuta === true || v.permuta === true;
-    const esFinanciable = v.financiacion === true || v.cuotas === true;
+    // CORRECCIÓN DE CAMPOS: Verificamos los nombres reales de las columnas
+    // Se agregan varias opciones por si el campo es boolean o string
+    const aceptaPermuta = v.acepta_permuta === true || v.acepta_permuta === 'true' || v.permuta === true;
+    const esFinanciable = v.financiacion === true || v.financiacion === 'true' || v.financia === true;
 
     return new ImageResponse(
       (
@@ -44,22 +45,20 @@ export async function GET(req: NextRequest) {
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: '#0f172a',
-          padding: '50px 50px 220px 50px', // Padding inferior extra para zona segura de IG
+          padding: '50px 50px 220px 50px',
           fontFamily: 'sans-serif',
         }}>
-          {/* FOTO PRINCIPAL */}
           <div style={{ display: 'flex', width: '100%', height: '58%', borderRadius: '40px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
             <img src={fotoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
 
-          {/* CONTENIDO COMERCIAL - ZONA SEGURA */}
           <div style={{ display: 'flex', flexDirection: 'column', marginTop: '35px', flexGrow: 1 }}>
             
             <h1 style={{ color: 'white', fontSize: '82px', fontWeight: '900', margin: '0', textTransform: 'uppercase', letterSpacing: '-3px', lineHeight: '1' }}>
               {marca} {modelo} <span style={{ color: '#64748b', marginLeft: '20px' }}>{anio}</span>
             </h1>
             
-            {/* Recuperamos el Azul HotCars: #2596be */}
+            {/* AZUL HOTCARS ORIGINAL: #2596be */}
             <p style={{ color: '#2596be', fontSize: '36px', fontWeight: '700', margin: '10px 0 25px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>
               {version}
             </p>
@@ -70,22 +69,21 @@ export async function GET(req: NextRequest) {
                   <span style={{ color: 'white', fontSize: '32px', fontWeight: '800' }}>{km} KM</span>
                </div>
 
-               {/* Etiquetas Comerciales Dinámicas */}
+               {/* ETIQUETAS COMERCIALES - Solo se muestran si el valor es TRUE en Supabase */}
                <div style={{ display: 'flex', gap: '15px' }}>
                   {aceptaPermuta && (
-                    <div style={{ backgroundColor: '#2596be', padding: '12px 25px', borderRadius: '15px' }}>
+                    <div style={{ backgroundColor: '#2596be', padding: '12px 25px', borderRadius: '15px', display: 'flex' }}>
                       <span style={{ color: 'white', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Acepta Permuta</span>
                     </div>
                   )}
                   {esFinanciable && (
-                    <div style={{ backgroundColor: '#288b55', padding: '12px 25px', borderRadius: '15px' }}>
+                    <div style={{ backgroundColor: '#288b55', padding: '12px 25px', borderRadius: '15px', display: 'flex' }}>
                       <span style={{ color: 'white', fontSize: '20px', fontWeight: '900', textTransform: 'uppercase' }}>Financiación</span>
                     </div>
                   )}
                </div>
             </div>
 
-            {/* PRECIO FINAL - SUBIDO PARA EVITAR EL PLACEHOLDER DE MENSAJE */}
             <div style={{ display: 'flex', backgroundColor: '#288b55', padding: '25px 50px', borderRadius: '30px', marginTop: 'auto', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
               <span style={{ color: 'white', fontSize: '90px', fontWeight: '900', letterSpacing: '-4px' }}>
                 {moneda} {precio}
