@@ -20,14 +20,14 @@ export default function ConfirmPage() {
           </h1>
           
           <p className="text-slate-400 text-sm font-bold leading-relaxed mb-8 uppercase tracking-tight">
-            Enviamos un enlace de activación a tu casilla. <br />
-            <span className="text-white">Confirmalo para activar tu panel de HotCars.</span>
+            Enviamos un boton de activación a tu casilla. <br /><br />
+            <span className="text-white">Confirmalo para activar tu cuenta en HotCars.</span>
           </p>
 
           <div className="space-y-4">
             <div className="bg-black/20 rounded-xl p-4 border border-white/5 flex items-center gap-3 text-left">
               <CheckCircle2 size={18} className="text-[#288b55] shrink-0" />
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+              <p className="text-[11px] text-slate-500 font-black uppercase tracking-widest">
                 Si no lo encontrás, revisá la carpeta de Spam.
               </p>
             </div>
