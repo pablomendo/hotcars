@@ -7,6 +7,13 @@ import {
   Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign
 } from 'lucide-react';
 
+// Límites de unidades ACTIVAS (Activos + Reservados) según Plan
+const PLAN_LIMITS = {
+  Free: 12,
+  Pro: 25,
+  VIP: Infinity
+};
+
 export default function InventoryPage() {
     const [inv, setInv] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -15,6 +22,7 @@ export default function InventoryPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [isMounted, setIsMounted] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const [userPlan, setUserPlan] = useState<string>('Free'); 
 
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
     const [openSection, setOpenSection] = useState<string | null>('unidad');
@@ -28,7 +36,17 @@ export default function InventoryPage() {
         setIsMounted(true);
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            if (user) setUserId(user.id);
+            if (user) {
+                setUserId(user.id);
+                // Traer el plan del usuario desde la tabla 'usuarios'
+                const { data: profile } = await supabase
+                    .from('usuarios')
+                    .select('plan_type')
+                    .eq('id', user.id)
+                    .single();
+                if (profile) setUserPlan(profile.plan_type);
+            }
+            // Cargamos todo el inventario (independientemente de si hay usuario o no)
             fetchInventory(user?.id);
         };
         getUser();
@@ -45,8 +63,9 @@ export default function InventoryPage() {
         };
     }, []);
 
-    const fetchInventory = async (currentUserId?: string | null) => {
+    const fetchInventory = async (currentUserId?: string) => {
         try {
+            // ELIMINADO EL FILTRO .eq('created_by_user_id') para poder ver Terceros y Marketplace
             const { data, error } = await supabase
                 .from('inventario')
                 .select('*')
@@ -55,8 +74,8 @@ export default function InventoryPage() {
             if (error) throw error;
 
             const mappedData = (data || []).map(v => {
-                const pv = Number(v.pv) || 0;
-                const pc = Number(v.pc) || 0;
+                const pvValue = Number(v.pv) || 0;
+                const pcValue = Number(v.pc) || 0;
 
                 return {
                     ...v,
@@ -70,18 +89,19 @@ export default function InventoryPage() {
                     inventory_status: (v.inventory_status || 'activo').toLowerCase(),
                     deal_status: v.deal_status || 'disponible',
                     publish_status: v.publish_status || 'publicado',
-                    isProprio: v.created_by_user_id === (currentUserId || userId),
+                    // Identificamos si es propio comparando con el ID del usuario logueado
+                    isProprio: currentUserId ? v.created_by_user_id === currentUserId : false,
                     prices: {
-                        purchasePrice: pc,
-                        salePrice: pv,
-                        myProfit: pv - pc,      
+                        purchasePrice: pcValue,
+                        salePrice: pvValue,
+                        myProfit: pvValue - pcValue,      
                         currency: v.moneda === 'USD' ? 'USD ' : '$ ARS '
                     }
                 };
             });
             setInv(mappedData);
         } catch (err: any) {
-            console.error("Error en Fetch:", err.message || err);
+            console.error("Error en Fetch HotCars:", err.message);
         } finally {
             setIsLoading(false);
         }
@@ -90,33 +110,41 @@ export default function InventoryPage() {
     const handleAction = async (id: string, action: string) => {
         try {
             let updateData: any = {};
+            
+            if (action === 'ACTIVATE') {
+                const limit = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS] || 12;
+                
+                // Contamos solo TUS unidades activas/reservadas para el límite del plan
+                const activeUnits = inv.filter(v => 
+                    v.isProprio && (v.inventory_status === 'activo' || v.inventory_status === 'reservado')
+                ).length;
+
+                if (userPlan !== 'VIP' && activeUnits >= limit) {
+                    alert(`Límite de unidades activas alcanzado (${limit}/${limit}). Pausá otra unidad para activar esta.`);
+                    return;
+                }
+                updateData = { inventory_status: 'activo' };
+            }
+
             if (action === 'DELETE') {
                 if (!confirm('¿Eliminar unidad?')) return;
                 await supabase.from('inventario').delete().eq('id', id);
-                fetchInventory();
                 return;
             }
 
-            // --- LÓGICA CORREGIDA SEGÚN REGLAS ---
             if (action === 'PAUSE') {
-                // Única excepción que afecta web
                 updateData = { inventory_status: 'pausado', show_on_web: false };
             } 
-            else if (action === 'ACTIVATE') {
-                // Activar NO toca show_on_web (independencia)
-                updateData = { inventory_status: 'activo' };
-            } 
             else if (action === 'RESERVE') {
-                // Reservar SOLO cambia estado, NO toca show_on_web y NO saca de activos
                 updateData = { inventory_status: 'reservado' };
             } 
             else if (action === 'SELL') {
-                // Vender no toca show_on_web automáticamente
                 updateData = { inventory_status: 'vendido' };
             }
 
-            await supabase.from('inventario').update(updateData).eq('id', id);
-            fetchInventory();
+            const { error } = await supabase.from('inventario').update(updateData).eq('id', id);
+            if (error) throw error;
+
         } catch (err: any) { alert(err.message); }
     };
 
@@ -128,7 +156,6 @@ export default function InventoryPage() {
 
             switch (tab) {
                 case 'ACTIVOS':
-                    // Reservados siguen siendo inventario activo
                     return (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado';
                 case 'RESERVADOS':
                     return v.inventory_status === 'reservado';
@@ -146,7 +173,7 @@ export default function InventoryPage() {
                     return false;
             }
         });
-    }, [tab, search, inv, userId]);
+    }, [tab, search, inv]);
 
     const counts = useMemo(() => ({
         ACTIVOS:    inv.filter(v => (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado').length,
@@ -156,7 +183,7 @@ export default function InventoryPage() {
         BORRADORES: inv.filter(v => v.publish_status === 'borrador').length,
         PROPIOS:    inv.filter(v => v.isProprio).length,
         TERCEROS:   inv.filter(v => !v.isProprio && (v.inventory_status === 'activo' || v.inventory_status === 'reservado') && v.publish_status === 'publicado').length,
-    }), [inv, userId]);
+    }), [inv]);
 
     if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]"><Loader2 className="h-10 w-10 animate-spin text-[#22c55e]" /></div>;
 

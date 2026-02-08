@@ -17,7 +17,7 @@ export default function MiWebPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     
     const [openConfig, setOpenConfig] = useState(false);
-    const [userData] = useState({ plan_type: 'FREE' }); 
+    const [userData, setUserData] = useState({ plan_type: 'FREE' }); 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [previewImage, setPreviewImage] = useState('/portada_mi_web.jpg');
     const [showSocialsInFooter, setShowSocialsInFooter] = useState(false);
@@ -61,6 +61,18 @@ export default function MiWebPage() {
     };
 
     useEffect(() => {
+        const fetchUserData = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('usuarios')
+                    .select('plan_type')
+                    .eq('id', user.id)
+                    .single();
+                if (profile) setUserData({ plan_type: profile.plan_type.toUpperCase() });
+            }
+        };
+        fetchUserData();
         fetchInventory();
         const channel = supabase
             .channel('hotcars-sync-real')
@@ -73,11 +85,37 @@ export default function MiWebPage() {
 
     const fetchInventory = async () => {
         try {
-            const { data, error } = await supabase.from('inventario').select('*').order('created_at', { ascending: false });
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // CONSULTA SINCRONIZADA: Solo lo real del usuario, excluyendo borradores
+            const { data, error } = await supabase
+                .from('inventario')
+                .select('*')
+                .eq('created_by_user_id', user.id)
+                .neq('publish_status', 'borrador')
+                .order('created_at', { ascending: false });
+
             if (!error && data) {
-                const limit = limits[userData.plan_type as keyof typeof limits];
-                const mappedData = data.map((v, index) => {
-                    const isOverLimit = (index + 1) > limit;
+                const limitWeb = limits[userData.plan_type as keyof typeof limits] || 10;
+                let visibleCount = 0;
+
+                const mappedData = data.map((v) => {
+                    const status = (v.inventory_status || 'activo').toLowerCase();
+                    let shouldShow = !!v.show_on_web;
+
+                    // Bloqueo estricto: Pausados nunca van a la web
+                    if (status === 'pausado') shouldShow = false;
+
+                    // Validación de cupo por plan
+                    if (shouldShow) {
+                        if (visibleCount < limitWeb) {
+                            visibleCount++;
+                        } else {
+                            shouldShow = false; 
+                        }
+                    }
+
                     return {
                         ...v,
                         brand: v.marca, 
@@ -85,11 +123,10 @@ export default function MiWebPage() {
                         year: v.anio, 
                         km: v.km,
                         image: v.fotos?.[0] || null,
-                        inventory_status: (v.inventory_status || 'activo').toLowerCase(),
-                        show: isOverLimit ? false : !!v.show_on_web,
+                        inventory_status: status,
+                        show: shouldShow, 
                         featured: !!v.is_featured,
                         isNew: !!v.is_new,
-                        isOverLimit,
                         priceDisplay: `${v.moneda === 'USD' ? 'U$S ' : '$ '}${Number(v.pv || 0).toLocaleString('es-AR')}`
                     };
                 });
@@ -100,13 +137,26 @@ export default function MiWebPage() {
 
     const handleAction = async (id: string, updates: any) => {
         const item = inv.find(v => v.id === id);
-        if (updates.show_on_web === true && item?.isOverLimit) return;
+        
+        if (updates.show_on_web === true) {
+            if (item?.inventory_status === 'pausado') {
+                alert("No podés mostrar en la web una unidad que está pausada en el inventario.");
+                return;
+            }
 
-        let finalUpdates = { ...updates };
-        if (updates.inventory_status === 'pausado') {
-            finalUpdates.show_on_web = false;
+            const limit = limits[userData.plan_type as keyof typeof limits] || 10;
+            const currentShowing = inv.filter(v => v.show).length;
+            
+            if (userData.plan_type !== 'VIP' && currentShowing >= limit) {
+                alert(
+                    `¡Límite alcanzado! Tu plan ${userData.plan_type} permite hasta ${limit} unidades visibles.\n\n` +
+                    `Subí a un plan superior para mostrar más unidades simultáneamente.`
+                );
+                return;
+            }
         }
-        await supabase.from('inventario').update(finalUpdates).eq('id', id);
+
+        await supabase.from('inventario').update(updates).eq('id', id);
         fetchInventory();
     };
 
@@ -134,6 +184,8 @@ export default function MiWebPage() {
             }
         });
     }, [tab, inv, search]);
+
+    if (loading) return <div className="bg-[#0b1114] min-h-screen flex items-center justify-center text-white">Cargando...</div>;
 
     return (
         <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans pb-20 text-left">
@@ -282,7 +334,7 @@ export default function MiWebPage() {
                                             {v.inventory_status === 'pausado' && <span className="bg-gray-600 text-white text-[9px] font-black px-2 py-1 rounded shadow-xl uppercase">Pausado</span>}
                                             {v.featured && <span className="bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Destacado</span>}
                                             {v.isNew && <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Nuevo</span>}
-                                            {!v.show && <span className={`text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase ${v.isOverLimit ? 'bg-yellow-500 text-black' : 'bg-red-600 text-white'}`}>{v.isOverLimit ? 'Límite Free' : 'Oculto'}</span>}
+                                            {!v.show && <span className="bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Oculto</span>}
                                         </div>
                                     </div>
                                     <div className="text-left font-sans">
@@ -295,7 +347,7 @@ export default function MiWebPage() {
                                     <button onClick={() => handleAction(v.id, { is_new: !v.isNew })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.isNew ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}><Zap size={13} className={v.isNew && v.show ? "fill-blue-500" : ""} /><span className="text-[7px] font-black uppercase tracking-tighter">Nuevo</span></button>
                                     <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'reservado' ? 'activo' : 'reservado' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'reservado' ? 'text-yellow-600 bg-yellow-600/5' : 'text-slate-500 hover:text-yellow-500'}`}><DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Reservar</span></button>
                                     <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'vendido' ? 'activo' : 'vendido' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'vendido' ? 'text-[#22c55e] bg-[#22c55e]/5' : 'text-slate-500 hover:text-[#22c55e]'}`}><Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span></button>
-                                    <button onClick={() => handleAction(v.id, { show_on_web: !v.show })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.isOverLimit && !v.show ? 'text-yellow-500/30' : !v.show ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>{v.show ? <Eye size={13} /> : <EyeOff size={13} />}<span className="text-[7px] font-black uppercase tracking-tighter">{v.isOverLimit && !v.show ? 'Max Plan' : v.show ? 'Ocultar' : 'Mostrar'}</span></button>
+                                    <button onClick={() => handleAction(v.id, { show_on_web: !v.show })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.show ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>{v.show ? <Eye size={13} /> : <EyeOff size={13} />}<span className="text-[7px] font-black uppercase tracking-tighter">{v.show ? 'Ocultar' : 'Mostrar'}</span></button>
                                 </div>
                             </div>
                         ))}

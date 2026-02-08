@@ -16,7 +16,7 @@ export default function Header() {
         avatar: null
     };
 
-    // CORRECCIÓN: Manejo de scroll más limpio para no romper componentes largos
+    // 1. TODOS los Hooks se ejecutan siempre al principio
     useEffect(() => {
         if (isMobileMenuOpen) {
             document.body.style.overflow = 'hidden';
@@ -33,6 +33,13 @@ export default function Header() {
         setIsMobileMenuOpen(false);
     }, [pathname]);
 
+    // 2. Lógica de ocultamiento DESPUÉS de los hooks
+    const authRoutes = ['/register', '/login', '/register/confirm'];
+    if (authRoutes.includes(pathname)) {
+        return null;
+    }
+
+    // 3. Renderizado normal
     return (
         <>
             <header className="fixed top-0 left-0 right-0 z-[100] w-full h-20 bg-[#12242e] border-b border-white/5 text-white px-6">
@@ -46,7 +53,6 @@ export default function Header() {
                     </button>
 
                     <div className="flex-shrink-0">
-                        {/* CORRECCIÓN: Apunta al Main del Marketplace (Hero) */}
                         <Link href="/" className="flex items-center">
                             <Image 
                                 src="/logo_hotcars_blanco.png" 
@@ -108,32 +114,6 @@ export default function Header() {
                             <MobileNavLink href="/flips">Flips Compartidos</MobileNavLink>
                             <MobileNavLink href="/messages">Mensajes</MobileNavLink>
                             <MobileNavLink href="/searched">Vehículos Buscados</MobileNavLink>
-                            
-                            <div className="pt-4">
-                                <div className="flex items-center gap-3 bg-black/30 rounded-xl p-4 border border-white/5">
-                                    <Search className="w-5 h-5 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar unidades..."
-                                        className="bg-transparent text-sm text-white focus:outline-none w-full font-medium"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mt-auto pt-6 border-t border-white/10">
-                            <div className="flex items-center justify-between bg-black/20 p-4 rounded-2xl border border-white/5">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-[#134e4d] flex items-center justify-center text-white border border-white/10">
-                                        <User size={24} />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-white">{userProfile.name}</span>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#00984a]">Plan {userProfile.plan}</span>
-                                    </div>
-                                </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><path d="m9 18 6-6-6-6"/></svg>
-                            </div>
                         </div>
                     </div>
                 )}

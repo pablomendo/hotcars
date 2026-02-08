@@ -92,10 +92,14 @@ export default function MarketplaceDashboard() {
     router.push(`/vehiculos/${id}`);
   };
 
-  // CORRECCIÓN DEFINITIVA ERROR URI_TOO_LONG EN MARKETPLACE
   const handleInstagramPlate = (id) => {
     const t = Date.now();
     window.open(`/api/og?id=${id}&t=${t}`, '_blank');
+  };
+
+  // Función para manejar el login/registro - CORREGIDO PARA EVITAR 404
+  const handleAuthRedirect = (path) => {
+    router.push(path);
   };
 
   if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
@@ -123,8 +127,8 @@ export default function MarketplaceDashboard() {
               <p className="text-white text-center font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-tight mb-4 px-2">
                 Profesionalizate, publicá, compartí y gestioná tu inventario con tu propia web de <span className="text-white italic uppercase">HOT</span><span className="text-[#288b55] italic uppercase">CARS</span>
               </p>
-              <button className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
-              <button className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm">Ingresar</button>
+              <button onClick={() => handleAuthRedirect('/register')} className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
+              <button onClick={() => handleAuthRedirect('/login')} className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm">Ingresar</button>
             </div>
           </div>
         </div>
@@ -144,8 +148,8 @@ export default function MarketplaceDashboard() {
               <p className="font-medium opacity-90 leading-relaxed">Usá el inventario de HotCars, compartí las publicaciones en tu web <br />y transformá consultas en ventas seguras.</p>
             </div>
             <div className="flex gap-4 pointer-events-auto">
-              <button className="px-12 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
-              <button className="px-12 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all">Ingresar</button>
+              <button onClick={() => handleAuthRedirect('/register')} className="px-12 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
+              <button onClick={() => handleAuthRedirect('/login')} className="px-12 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all">Ingresar</button>
             </div>
           </div>
         </div>
@@ -219,7 +223,6 @@ export default function MarketplaceDashboard() {
             </div>
           )}
 
-          {/* CARDS VEHICULOS */}
           {filteredVehicles.map((v) => (
             <div key={v.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[330px] w-full transition-all hover:shadow-xl">
               <div className="relative h-[150px] w-full bg-gray-100 flex-shrink-0">
@@ -234,15 +237,12 @@ export default function MarketplaceDashboard() {
                   <h3 className="text-[12px] md:text-[14px] font-bold tracking-tight uppercase truncate text-[#0f172a] mb-0.5">
                     {v.marca} {v.modelo} <span className="text-gray-400 ml-1">{v.anio}</span>
                   </h3>
-                  
                   <div className="text-[#0f172a] text-[10px] md:text-[11px] font-black uppercase mb-0.5">
                     {v.km?.toLocaleString('de-DE')} KM
                   </div>
-
                   <div className="text-[#2596be] text-[9px] md:text-[10px] font-bold uppercase truncate mb-1.5">
                     {v.version}
                   </div>
-
                   <div className="flex items-center gap-1 text-gray-400 mb-2 font-bold uppercase text-[9px] md:text-[10px] truncate">
                     <MapPin size={10} /> {v.localidad || 'Ubicación'}
                   </div>
@@ -262,7 +262,6 @@ export default function MarketplaceDashboard() {
                 </div>
               </div>
               <div className="grid grid-cols-4 border-t border-gray-200 divide-x h-10 bg-gray-100 flex-shrink-0">
-                {/* BOTÓN INSTAGRAM CORREGIDO */}
                 <button 
                   onClick={() => handleInstagramPlate(v.id)}
                   className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"

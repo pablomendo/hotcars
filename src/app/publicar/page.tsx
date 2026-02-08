@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { ChevronRight, ArrowLeft, PlusCircle, RefreshCcw, Camera, ImageIcon, Sparkles, Info, MapPin, Share2, ChevronDown } from "lucide-react";
+import { ChevronRight, ArrowLeft, PlusCircle, RefreshCcw, Camera, ImageIcon, Sparkles, Info, MapPin, Share2, ChevronDown, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation"; 
 
@@ -91,6 +91,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   const highlightsRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
   const finalRef = useRef<HTMLDivElement>(null);
+
+  const [vehiclePhotos, setVehiclePhotos] = useState<string[]>([]);
 
   useEffect(() => {
     if (selectedCategory) {
@@ -198,19 +200,56 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
     e.preventDefault();
-    let file;
-    if ('dataTransfer' in e) file = e.dataTransfer.files[0];
-    else file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (upload) => setMainPhoto(upload.target?.result as string);
-      reader.readAsDataURL(file);
+    let files: FileList | null = null;
+    if ('dataTransfer' in e) files = (e as React.DragEvent).dataTransfer.files;
+    else files = (e.target as HTMLInputElement).files;
+
+    if (files) {
+      const remainingSlots = 14 - vehiclePhotos.length;
+      const filesToProcess = Array.from(files).slice(0, remainingSlots);
+
+      filesToProcess.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (upload) => {
+          const result = upload.target?.result as string;
+          setVehiclePhotos(prev => {
+            if (prev.length < 14) {
+              const newPhotos = [...prev, result];
+              setMainPhoto(newPhotos[0]);
+              return newPhotos;
+            }
+            return prev;
+          });
+        };
+        reader.readAsDataURL(file);
+      });
     }
+  };
+
+  const swapPhotos = (index: number) => {
+    if (index === 0 || index >= vehiclePhotos.length) return;
+    setVehiclePhotos(prev => {
+      const newPhotos = [...prev];
+      const temp = newPhotos[0];
+      newPhotos[0] = newPhotos[index];
+      newPhotos[index] = temp;
+      setMainPhoto(newPhotos[0]);
+      return newPhotos;
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    setVehiclePhotos(prev => {
+      const newPhotos = prev.filter((_, i) => i !== index);
+      setMainPhoto(newPhotos.length > 0 ? newPhotos[0] : null);
+      return newPhotos;
+    });
   };
 
   const resetAll = () => {
     setStep(1); setSelectedCategory(""); setSelectedBrand(""); setSelectedModel("");
     setSelectedYear(""); setSelectedVersion(""); setKm(""); setMainPhoto(null);
+    setVehiclePhotos([]);
     setSelectedHighlights([]); setPvStr(""); setPcStr(""); setDescription(""); setIsManual(false);
     setProvincia(""); setLocalidad(""); setShareUser("");
     setOpenSection(null); 
@@ -270,7 +309,10 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
             descripcion: description,
             estado: "ACTIVO",
             compartido_con: shareUser,
-            fotos: mainPhoto ? [mainPhoto] : []
+            fotos: vehiclePhotos,
+            puntos_clave: selectedHighlights,
+            acepta_permuta: selectedHighlights.includes("Acepta permuta"),
+            financiacion: selectedHighlights.includes("Financiación")
           }
         ]);
 
@@ -481,29 +523,50 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
           {step >= 2.5 && (
             <div ref={highlightsRef} className="w-full text-left animate-in fade-in duration-500">
-              <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google">Descripción y Puntos Clave</h2>
-              <div className="bg-white p-6 rounded-[20px] shadow-lg border border-gray-100 flex flex-col gap-6">
-                {filteredHighlights.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {filteredHighlights.map((tag) => (
-                      <button key={tag} onClick={() => toggleHighlight(tag)} className={`h-[34px] px-2 rounded-lg text-[11px] font-bold uppercase transition-all border flex items-center justify-center text-center leading-tight ${selectedHighlights.includes(tag) ? "bg-[#00984a] border-[#00984a] text-white shadow-md" : "bg-gray-50 border-[#00984a] text-gray-600 hover:bg-gray-100"}`}>{tag}</button>
+              <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google text-center md:text-left">Condición de Venta, Puntos clave y Descripción</h2>
+              <div className="bg-white p-6 rounded-[32px] shadow-lg border border-gray-100 flex flex-col gap-6">
+                
+                {/* 1. SECCIÓN: CONDICIÓN DE VENTA */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Condición de venta</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {["Acepta permuta", "Financiación"].map((tag) => (
+                      <button key={tag} onClick={() => toggleHighlight(tag)} className={`h-11 px-2 rounded-xl text-[11px] font-bold uppercase transition-all border flex items-center justify-center text-center leading-tight ${selectedHighlights.includes(tag) ? "bg-[#00984a] border-[#00984a] text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>{tag}</button>
                     ))}
                   </div>
-                )}
-                <div className="w-full flex flex-col items-center gap-4">
-                  <div className="w-full bg-[#f8f9fa] border border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-2 shadow-inner">
-                      <div className="bg-gray-200 text-gray-500 text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-tighter">presiona boton azul para generar descripcion por ia</div>
-                      <textarea className="w-full min-h-[80px] bg-transparent text-sm text-gray-700 outline-none resize-none text-center font-medium" placeholder="..." value={description} onChange={(e) => setDescription(e.target.value)} />
-                  </div>
-                  <button 
-                    onClick={handleGenerateIA} 
-                    disabled={isGeneratingIA || iaAttempts === 0}
-                    className="bg-blue-600 text-white font-black py-3 px-8 rounded-xl text-[10px] uppercase flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit disabled:opacity-50"
-                  >
-                    <Sparkles className={`h-4 w-4 ${isGeneratingIA ? "animate-spin" : ""}`} /> 
-                    {isGeneratingIA ? "Generando..." : "Generar descripción"}
-                  </button>
                 </div>
+
+                {/* 2. SECCIÓN: PUNTOS CLAVE */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Puntos clave</label>
+                  {filteredHighlights.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {filteredHighlights.filter(h => h !== "Acepta permuta" && h !== "Financiación").map((tag) => (
+                        <button key={tag} onClick={() => toggleHighlight(tag)} className={`h-11 px-2 rounded-xl text-[10px] font-bold uppercase transition-all border flex items-center justify-center text-center leading-tight ${selectedHighlights.includes(tag) ? "bg-[#00984a] border-[#00984a] text-white shadow-md" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}>{tag}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. SECCIÓN: DESCRIPCIÓN */}
+                <div className="flex flex-col gap-3">
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Descripción</label>
+                  <div className="w-full flex flex-col items-center gap-4">
+                    <div className="w-full bg-[#f8f9fa] border border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-2 shadow-inner">
+                        <div className="bg-gray-200 text-gray-500 text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-tighter">presiona boton azul para generar descripcion por ia</div>
+                        <textarea className="w-full min-h-[100px] bg-transparent text-sm text-gray-700 outline-none resize-none text-center font-medium" placeholder="..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                    </div>
+                    <button 
+                      onClick={handleGenerateIA} 
+                      disabled={isGeneratingIA || iaAttempts === 0}
+                      className="bg-blue-600 text-white font-black py-3 px-8 rounded-xl text-[10px] uppercase flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit disabled:opacity-50"
+                    >
+                      <Sparkles className={`h-4 w-4 ${isGeneratingIA ? "animate-spin" : ""}`} /> 
+                      {isGeneratingIA ? "Generando..." : "Generar descripción"}
+                    </button>
+                  </div>
+                </div>
+
                 {step === 2.5 && <button onClick={() => { setStep(3); smartScroll(photoRef); }} className="w-full bg-[#00984a] text-white font-black py-4 rounded-xl uppercase shadow-md active:scale-95 transition-all">Siguiente</button>}
                 {step > 2.5 && <div className="w-full flex justify-end"><button onClick={() => {setStep(2.5); smartScroll(highlightsRef);}} className="text-[10px] font-bold text-[#2563eb] uppercase underline">Editar descripción</button></div>}
               </div>
@@ -517,19 +580,19 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-6 gap-3 items-start">
                     <div onDragOver={(e) => e.preventDefault()} onDrop={handlePhotoUpload} className="col-span-4 aspect-[4/3] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative group overflow-hidden shadow-inner">
-                      {mainPhoto ? (
+                      {vehiclePhotos[0] ? (
                         <div className="relative w-full h-full">
-                           <img src={mainPhoto} alt="Principal" className="w-full h-full object-contain object-center" style={{ filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${shadows}%)` }} />
-                          <button onClick={() => setMainPhoto(null)} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"><RefreshCcw className="h-4 w-4" /></button>
+                           <img src={vehiclePhotos[0]} alt="Principal" className="w-full h-full object-contain object-center" style={{ filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${shadows}%)` }} />
+                          <button onClick={() => removePhoto(0)} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"><RefreshCcw className="h-4 w-4" /></button>
                         </div>
                       ) : (
                         <>
-                          <input type="file" onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                          <input type="file" multiple onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
                           <Camera className="h-10 w-10 text-gray-200 mb-3" />
                           <p className="text-[10px] font-bold text-gray-400 uppercase text-center max-w-[150px] leading-relaxed">Subir o arrastrar fotos</p>
                         </>
                       )}
-                      <div className="absolute top-3 left-3 text-[#00984a] text-[9px] font-black uppercase tracking-wider">Principal</div>
+                      <div className="absolute top-3 left-3 text-[#00984a] text-[9px] font-black uppercase tracking-wider">Foto Portada</div>
                     </div>
                     <div className="col-span-2 flex flex-col gap-3">
                       <div className="flex flex-col gap-2">
@@ -556,16 +619,71 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
-                        {[1, 2].map((i) => (<div key={i} className="aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"><ImageIcon className="h-4 w-4 text-gray-200" /></div>))}
+                        {[1, 2].map((i) => (
+                          <div key={i} className="aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors relative group overflow-hidden">
+                            {vehiclePhotos[i] ? (
+                              <>
+                                <img src={vehiclePhotos[i]} alt={`Photo ${i}`} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                                  <button onClick={() => swapPhotos(i)} className="text-[8px] font-black text-white uppercase bg-[#00984a] px-2 py-1 rounded">Portada</button>
+                                  <button onClick={() => removePhoto(i)} className="text-[8px] font-black text-white uppercase bg-red-500 px-2 py-1 rounded">Borrar</button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <input type="file" multiple onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                                <ImageIcon className="h-4 w-4 text-gray-200" />
+                              </>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-6 gap-3">{[3, 4, 5, 6, 7, 8].map((i) => (<div key={i} className="aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"><ImageIcon className="h-4 w-4 text-gray-200" /></div>))}</div>
-                  <div className="grid grid-cols-6 gap-3">{[9, 10, 11, 12, 13, 14].map((i) => (<div key={i} className="aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"><ImageIcon className="h-4 w-4 text-gray-200" /></div>))}</div>
+                  <div className="grid grid-cols-6 gap-3">
+                    {[3, 4, 5, 6, 7, 8].map((i) => (
+                      <div key={i} className="aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors relative group overflow-hidden">
+                        {vehiclePhotos[i] ? (
+                          <>
+                            <img src={vehiclePhotos[i]} alt={`Photo ${i}`} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                              <button onClick={() => swapPhotos(i)} className="text-[8px] font-black text-white uppercase bg-[#00984a] px-2 py-1 rounded">Portada</button>
+                              <button onClick={() => removePhoto(i)} className="text-[8px] font-black text-white uppercase bg-red-500 px-2 py-1 rounded">Borrar</button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <input type="file" multiple onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                            <ImageIcon className="h-4 w-4 text-gray-200" />
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-6 gap-3">
+                    {[9, 10, 11, 12, 13, 14].map((i) => (
+                      <div key={i} className="aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors relative group overflow-hidden">
+                        {vehiclePhotos[i] ? (
+                          <>
+                            <img src={vehiclePhotos[i]} alt={`Photo ${i}`} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                              <button onClick={() => swapPhotos(i)} className="text-[8px] font-black text-white uppercase bg-[#00984a] px-2 py-1 rounded">Portada</button>
+                              <button onClick={() => removePhoto(i)} className="text-[8px] font-black text-white uppercase bg-red-500 px-2 py-1 rounded">Borrar</button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <input type="file" multiple onChange={handlePhotoUpload} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                            <ImageIcon className="h-4 w-4 text-gray-200" />
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-4 mt-2">
                   <button onClick={() => iaAttempts > 0 && setIaAttempts(prev => prev - 1)} disabled={iaAttempts === 0} className={`w-fit self-center py-1.5 px-4 rounded-lg font-bold uppercase text-[9px] flex items-center justify-center gap-2 transition-all shadow-sm ${iaAttempts > 0 ? "bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white hover:scale-[1.01]" : "bg-gray-200 text-gray-400 shadow-none"}`}><Sparkles className={`h-3 w-3 ${iaAttempts > 0 ? "animate-pulse" : ""}`} />Mejorar portada IA ({iaAttempts})</button>
-                  <button disabled={!mainPhoto} onClick={() => {setStep(4); smartScroll(finalRef);}} className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors uppercase shadow-md active:scale-95 ${mainPhoto ? 'bg-[#00984a] text-white' : 'bg-gray-200 text-gray-400 shadow-none'}`}>Siguiente</button>
+                  <button disabled={vehiclePhotos.length === 0} onClick={() => {setStep(4); smartScroll(finalRef);}} className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors uppercase shadow-md active:scale-95 ${vehiclePhotos.length > 0 ? 'bg-[#00984a] text-white' : 'bg-gray-200 text-gray-400 shadow-none'}`}>Siguiente</button>
                 </div>
               </div>
             </div>
@@ -574,21 +692,33 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
           {step === 4 && (
             <div ref={finalRef} className="w-full text-left animate-in fade-in duration-500 pb-10">
               <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <button onClick={() => setOpenSection(openSection === 'fotos' ? null : 'fotos')} className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-all">
+                <div 
+                  onClick={() => setOpenSection(openSection === 'fotos' ? null : 'fotos')} 
+                  className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
+                >
                   <div className="flex items-center gap-3">
                     <span className="text-[11px] font-black uppercase text-gray-500 tracking-widest">Fotos</span>
-                    {mainPhoto && (
+                    {vehiclePhotos[0] && (
                       <div className="w-6 h-6 rounded bg-gray-200 overflow-hidden border border-gray-300">
-                        <img src={mainPhoto} alt="Thumb" className="w-full h-full object-cover" />
+                        <img src={vehiclePhotos[0]} alt="Thumb" className="w-full h-full object-cover" />
                       </div>
                     )}
                   </div>
-                  {openSection === 'fotos' ? <ChevronDown size={18} className="text-[#00984a]"/> : <button onClick={() => setStep(3)} className="text-[10px] font-bold text-[#2563eb] uppercase underline">Editar</button>}
-                </button>
+                  {openSection === 'fotos' ? (
+                    <ChevronDown size={18} className="text-[#00984a]"/>
+                  ) : (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setStep(3); }} 
+                      className="text-[10px] font-bold text-[#2563eb] uppercase underline"
+                    >
+                      Editar
+                    </button>
+                  )}
+                </div>
                 {openSection === 'fotos' && (
                   <div className="p-4 border-t border-gray-100 animate-in slide-in-from-top duration-300 flex justify-center">
                     <div className="w-32 aspect-video relative rounded-lg overflow-hidden border border-gray-200">
-                      <img src={mainPhoto || ""} alt="Preview" className="w-full h-full object-cover" />
+                      <img src={vehiclePhotos[0] || ""} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   </div>
                 )}
