@@ -83,7 +83,7 @@ export default function DashboardPage() {
     const reservedVehicles = useMemo(() => inventory.filter((v: any) => v.rawStatus === 'reservado'), [inventory]);
 
     const potentialValue = useMemo(() => {
-        const relevantVehicles = inventory.filter((v: any) => ['activo', 'reservado', 'pausado'].includes(v.rawStatus));
+        const relevantVehicles = inventory.filter((v: any) => ['activo', 'reservado'].includes(v.rawStatus));
         return relevantVehicles.reduce((total, v: any) => {
             const margen = Number(v.price) - Number(v.cost);
             const margenDolar = v.moneda === 'ARS' ? (margen / DOLAR_BLUE) : margen;

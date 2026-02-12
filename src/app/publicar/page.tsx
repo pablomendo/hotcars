@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import { ChevronRight, ArrowLeft, PlusCircle, RefreshCcw, Camera, ImageIcon, Sparkles, Info, MapPin, Share2, ChevronDown, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ArrowLeft, PlusCircle, RefreshCcw, Camera, ImageIcon, Sparkles, Info, MapPin, Share2, ChevronDown, CheckCircle2, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation"; 
 
@@ -69,6 +69,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   const [shadows, setShadows] = useState(100);
   const [iaAttempts, setIaAttempts] = useState(2);
   const [isGeneratingIA, setIsGeneratingIA] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<"loading" | "success" | "paused">("loading");
 
   const [currency, setCurrency] = useState("ARS");
   const [pvStr, setPvStr] = useState("");
@@ -94,6 +96,28 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
   const [vehiclePhotos, setVehiclePhotos] = useState<string[]>([]);
 
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<string>("FREE");
+  // NUEVO: Estado para avisar preventivamente del estado de inventario
+  const [willBePaused, setWillBePaused] = useState(false);
+
+  // EFECTO CRÍTICO: Captura de usuario para conteo de plan
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        const { data: profile } = await supabase
+          .from('usuarios')
+          .select('plan_type')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (profile) setUserPlan(profile.plan_type);
+      }
+    };
+    fetchUser();
+  }, []);
+
   useEffect(() => {
     if (selectedCategory) {
       fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}`)
@@ -104,7 +128,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     if (selectedCategory && selectedBrand && !isManual) {
-      fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}&brand=${selectedBrand.toUpperCase()}`)
+      const brandToFetch = selectedBrand === "MERCEDES-BENZ" ? "MERCEDES BENZ" : selectedBrand.toUpperCase();
+      fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}&brand=${brandToFetch}`)
         .then(res => res.json())
         .then(data => { if (Array.isArray(data)) setAvailableModels(data.sort()); });
     }
@@ -112,7 +137,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     if (selectedCategory && selectedBrand && selectedModel && !isManual) {
-      fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}&brand=${selectedBrand.toUpperCase()}&model=${selectedModel.toUpperCase()}`)
+      const brandToFetch = selectedBrand === "MERCEDES-BENZ" ? "MERCEDES BENZ" : selectedBrand.toUpperCase();
+      fetch(`/api/base-autos?category=${selectedCategory.toUpperCase()}&brand=${brandToFetch}&model=${selectedModel.toUpperCase()}`)
         .then(res => res.json())
         .then(data => { if (Array.isArray(data)) setAvailableVersions(data.sort()); });
     }
@@ -253,6 +279,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     setSelectedHighlights([]); setPvStr(""); setPcStr(""); setDescription(""); setIsManual(false);
     setProvincia(""); setLocalidad(""); setShareUser("");
     setOpenSection(null); 
+    setPublishStatus("loading");
+    setWillBePaused(false);
   };
 
   const handleGenerateIA = async () => {
@@ -287,12 +315,68 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     }
   };
 
-  const finalizarPublicacion = async () => {
+  // NUEVA TÉCNICA: Handshake Adelantado de Límites
+  const handleNextFromPhotos = async () => {
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setUserId(user.id);
+      else { alert("Error: No se pudo identificar al usuario."); return; }
+    }
+
     try {
-      const { data, error } = await supabase
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('plan_type')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      const currentPlan = userData?.plan_type || 'FREE';
+      
+      const { data: planData } = await supabase
+        .from('plan_limits')
+        .select('max_inventory_vehicles')
+        .ilike('plan_type', currentPlan)
+        .maybeSingle();
+
+      const limit = planData?.max_inventory_vehicles ?? (currentPlan.toUpperCase() === 'FREE' ? 12 : 25);
+      
+      const { count } = await supabase
+        .from('inventario')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_user_id', userId)
+        .eq('inventory_status', 'activo');
+
+      if (limit !== null && (count ?? 0) >= limit) {
+        setWillBePaused(true);
+      } else {
+        setWillBePaused(false);
+      }
+
+      setStep(4);
+      smartScroll(finalRef);
+    } catch (e) {
+      setStep(4);
+      smartScroll(finalRef);
+    }
+  };
+
+  const finalizarPublicacion = async () => {
+    if (!userId) {
+      alert("Error: Usuario no identificado. Por favor, reintenta.");
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishStatus("loading");
+    try {
+      // Usamos el estado willBePaused calculado previamente para mayor seguridad
+      const inventory_status = willBePaused ? 'pausado' : 'activo';
+
+      const { error } = await supabase
         .from('inventario')
         .insert([
           {
+            owner_user_id: userId,
             categoria: selectedCategory,
             marca: selectedBrand,
             modelo: selectedModel,
@@ -307,8 +391,9 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
             ganancia_flipper: flipperGain,
             ganancia_dueno: ownerGain,
             descripcion: description,
-            estado: "ACTIVO",
-            compartido_con: shareUser,
+            inventory_status: inventory_status,
+            commercial_status: 'disponible',
+            compartido_con: userPlan === "FREE" ? "PUBLICO" : shareUser,
             fotos: vehiclePhotos,
             puntos_clave: selectedHighlights,
             acepta_permuta: selectedHighlights.includes("Acepta permuta"),
@@ -317,13 +402,21 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
         ]);
 
       if (error) throw error;
-      alert("¡Publicación guardada exitosamente!");
-      
-      if (onClose) onClose();
-      router.push("/inventario");
-      resetAll();
+
+      if (willBePaused) {
+        setPublishStatus("paused");
+      } else {
+        setPublishStatus("success");
+      }
+
+      setTimeout(() => {
+        router.push("/inventario");
+        if (onClose) onClose();
+      }, willBePaused ? 4000 : 2000);
+
     } catch (error: any) {
       alert("Error al conectar con Supabase: " + error.message);
+      setIsPublishing(false);
     }
   };
 
@@ -333,6 +426,47 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     <div className="min-h-screen w-full font-sans bg-[#f0f2f5] flex flex-col items-center">
       <Header />
       
+      {isPublishing && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[32px] shadow-2xl p-10 flex flex-col items-center gap-6 max-w-sm w-full text-center animate-in zoom-in-95 duration-300">
+            {publishStatus === "loading" && (
+              <>
+                <div className="w-14 h-14 border-4 border-gray-100 border-t-[#00984a] rounded-full animate-spin"></div>
+                <div className="space-y-2">
+                  <p className="text-xl font-black uppercase tracking-tight text-gray-900">Publicando unidad</p>
+                  <p className="text-sm font-bold text-gray-400">Subiendo datos y fotos...</p>
+                </div>
+              </>
+            )}
+            
+            {publishStatus === "paused" && (
+              <>
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-10 h-10 text-orange-600" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xl font-black uppercase tracking-tight text-orange-600">Publicado en Pausa</p>
+                  <p className="text-sm font-bold text-gray-600 leading-relaxed">Alcanzaste el límite de tu plan. La unidad se guardó pero no estará visible hasta que liberes cupo.</p>
+                </div>
+                <button onClick={() => router.push('/planes')} className="w-full bg-orange-600 text-white font-black py-4 rounded-xl uppercase shadow-lg">Mejorar Plan Ahora</button>
+              </>
+            )}
+
+            {publishStatus === "success" && (
+              <>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xl font-black uppercase tracking-tight text-green-600">¡Publicado con éxito!</p>
+                  <p className="text-sm font-bold text-gray-400">Redirigiendo al inventario...</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {step === 1 && (
         <div className="w-full animate-in fade-in duration-500 pt-20">
           <div className="w-full h-64 md:h-72 flex flex-col pt-16 md:pt-20 items-center text-center px-6 bg-[#00984a]">
@@ -359,8 +493,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
       {step >= 2 && (
         <div className="w-full max-w-[590px] px-4 pt-24 pb-20 flex flex-col items-center gap-10 animate-in fade-in duration-500">
           <div className="flex justify-between items-center w-full">
-            <button onClick={() => { if (step === 2) { if (onClose) onClose(); else router.push('/inventario'); } else { setStep(step - 1); } }} className="flex items-center font-bold text-[11px] uppercase text-[#2563eb]"><ArrowLeft className="mr-1 h-3.5 w-3.5" /> Volver</button>
-            <button onClick={resetAll} className="flex items-center font-bold text-[11px] uppercase text-red-500 ml-auto"><RefreshCcw className="mr-1 h-3.5 w-3.5" /> Reiniciar</button>
+            <button onClick={() => { if (step === 2) { if (onClose) onClose(); else router.push('/inventario'); } else { setStep(step - 1); } }} className="flex items-center font-bold text-[#2563eb] uppercase text-[11px]"><ArrowLeft className="mr-1 h-3.5 w-3.5" /> Volver</button>
+            <button onClick={resetAll} className="flex items-center font-bold text-red-500 ml-auto uppercase text-[11px]"><RefreshCcw className="mr-1 h-3.5 w-3.5" /> Reiniciar</button>
           </div>
 
           <div ref={brandRef} className="w-full text-left">
@@ -508,12 +642,30 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 <div className="mt-2 p-5 bg-gray-50 border border-gray-200 rounded-2xl space-y-4 shadow-inner">
                     <div className="flex items-center justify-between">
                         <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2"><Share2 size={12} className="text-gray-400"/> Flip Compartido</label>
-                        <button type="button" onClick={() => shareUser ? setShareUser("") : setShareUser("PUBLICO")} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border ${shareUser ? "bg-[#2563eb] border-[#2563eb] text-white shadow-md" : "bg-gray-200 border-gray-300 text-gray-500"}`}>{shareUser ? "Flip activado" : "Activar Flip"}</button>
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            if (userPlan !== "FREE") {
+                              shareUser ? setShareUser("") : setShareUser("PUBLICO");
+                            }
+                          }} 
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border ${userPlan === "FREE" || shareUser ? "bg-[#2563eb] border-[#2563eb] text-white shadow-md" : "bg-gray-200 border-gray-300 text-gray-500"} ${userPlan === "FREE" ? "opacity-100 cursor-not-allowed" : ""}`}
+                          disabled={userPlan === "FREE"}
+                        >
+                          {userPlan === "FREE" || shareUser ? "Flip activado" : "Activar Flip"}
+                        </button>
                     </div>
-                    <div className={`relative transition-all duration-300 ${shareUser ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                    <div className={`relative transition-all duration-300 ${userPlan === "FREE" || shareUser ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10"><span className="text-[7px] font-black text-[#2563eb] uppercase">compartir primero con</span></div>
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1f2937] font-black text-sm">@</div>
-                        <input type="text" placeholder="tipear usuario..." value={shareUser === "PUBLICO" ? "" : shareUser} onChange={(e) => setShareUser(e.target.value)} className="w-full h-12 bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#1f2937] text-gray-800 font-bold uppercase shadow-sm transition-all" />
+                        <input 
+                          type="text" 
+                          placeholder="tipear usuario..." 
+                          value={userPlan === "FREE" ? "PUBLICO" : (shareUser === "PUBLICO" ? "" : shareUser)} 
+                          onChange={(e) => setShareUser(e.target.value)} 
+                          className="w-full h-12 bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#1f2937] text-gray-800 font-bold uppercase shadow-sm transition-all" 
+                          disabled={userPlan === "FREE"}
+                        />
                     </div>
                 </div>
                 <button onClick={() => { setStep(2.5); smartScroll(highlightsRef); }} className="w-full mt-2 bg-[#00984a] text-white font-black py-4 rounded-xl uppercase shadow-md active:scale-95 transition-all">Siguiente</button>
@@ -526,7 +678,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
               <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google text-center md:text-left">Condición de Venta, Puntos clave y Descripción</h2>
               <div className="bg-white p-6 rounded-[32px] shadow-lg border border-gray-100 flex flex-col gap-6">
                 
-                {/* 1. SECCIÓN: CONDICIÓN DE VENTA */}
                 <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Condición de venta</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -536,7 +687,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                   </div>
                 </div>
 
-                {/* 2. SECCIÓN: PUNTOS CLAVE */}
                 <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Puntos clave</label>
                   {filteredHighlights.length > 0 && (
@@ -548,7 +698,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                   )}
                 </div>
 
-                {/* 3. SECCIÓN: DESCRIPCIÓN */}
                 <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Descripción</label>
                   <div className="w-full flex flex-col items-center gap-4">
@@ -683,7 +832,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 </div>
                 <div className="flex flex-col gap-4 mt-2">
                   <button onClick={() => iaAttempts > 0 && setIaAttempts(prev => prev - 1)} disabled={iaAttempts === 0} className={`w-fit self-center py-1.5 px-4 rounded-lg font-bold uppercase text-[9px] flex items-center justify-center gap-2 transition-all shadow-sm ${iaAttempts > 0 ? "bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white hover:scale-[1.01]" : "bg-gray-200 text-gray-400 shadow-none"}`}><Sparkles className={`h-3 w-3 ${iaAttempts > 0 ? "animate-pulse" : ""}`} />Mejorar portada IA ({iaAttempts})</button>
-                  <button disabled={vehiclePhotos.length === 0} onClick={() => {setStep(4); smartScroll(finalRef);}} className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors uppercase shadow-md active:scale-95 ${vehiclePhotos.length > 0 ? 'bg-[#00984a] text-white' : 'bg-gray-200 text-gray-400 shadow-none'}`}>Siguiente</button>
+                  <button disabled={vehiclePhotos.length === 0} onClick={handleNextFromPhotos} className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors uppercase shadow-md active:scale-95 ${vehiclePhotos.length > 0 ? 'bg-[#00984a] text-white' : 'bg-gray-200 text-gray-400 shadow-none'}`}>Siguiente</button>
                 </div>
               </div>
             </div>
@@ -724,6 +873,16 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 )}
               </div>
 
+              {willBePaused && (
+                <div className="mb-6 bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl flex items-center gap-4 animate-in fade-in zoom-in-95 duration-300">
+                  <AlertCircle className="text-orange-500 shrink-0" size={20} />
+                  <div>
+                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight">Atención: Límite de plan alcanzado</p>
+                    <p className="text-[10px] text-gray-500 font-medium">Esta unidad se publicará automáticamente en estado <strong>Pausado</strong> hasta que liberes cupo.</p>
+                  </div>
+                </div>
+              )}
+
               <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google">Finalizar Publicación</h2>
               <div className="bg-white p-8 rounded-lg shadow-xl border border-gray-100 flex flex-col gap-8">
                 <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
@@ -754,7 +913,20 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                   <div className="text-[#00984a] text-[10px] font-black uppercase text-center">Ganancia por esta unidad</div>
                 </div>
                 <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">
-                  <button onClick={finalizarPublicacion} className="w-full bg-[#00984a] text-white font-black py-5 rounded-lg text-sm uppercase shadow-lg hover:bg-[#007a3b] transition-all active:scale-95">Finalizar y Publicar</button>
+                  <button 
+                    onClick={finalizarPublicacion} 
+                    disabled={isPublishing}
+                    className="w-full bg-[#00984a] text-white font-black py-5 rounded-lg text-sm uppercase shadow-lg hover:bg-[#007a3b] transition-all active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {isPublishing ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Publicando...
+                      </span>
+                    ) : (
+                      'Publicar Unidad'
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

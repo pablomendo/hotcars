@@ -26,11 +26,11 @@ export default function LoginPage() {
 
       if (loginError) throw loginError;
 
-      // 2. Validación de Plan (La lógica que me pasaste)
+      // 2. Validación de Plan (Corregido: usamos auth_id para comparar con el UUID de Supabase)
       const { data: userProfile, error: profileError } = await supabase
         .from('usuarios')
         .select('plan_status, plan_type')
-        .eq('id', data.user.id)
+        .eq('auth_id', data.user.id)
         .single();
 
       if (profileError || !userProfile || userProfile.plan_status !== 'activo') {

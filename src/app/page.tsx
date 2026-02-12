@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation'; // Importado useSearchParams
 import { Search, Loader2, Instagram, Facebook, MessageCircle, Send, Eye, MapPin, X, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import dbAutos from '@/app/api/base-autos/db_7f8e9a2b1c4d.json';
 
 export default function MarketplaceDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // Hook para leer parámetros de la URL
   const [inv, setInv] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -31,6 +32,22 @@ export default function MarketplaceDashboard() {
     { name: "CAMION", label: "Camiones", img: "/slider_front/iveco1.jpg" },
     { name: "MOTO", label: "Motos", img: "/slider_front/moto.jpg" },
   ];
+
+  // LÓGICA PARA CAPTURAR FILTROS DESDE EL BREADCRUMB
+  useEffect(() => {
+    const cat = searchParams.get('categoria');
+    const marc = searchParams.get('marca');
+    const mod = searchParams.get('modelo');
+
+    if (cat) {
+      setSelectedCategory(cat.toUpperCase());
+    }
+    if (marc) {
+      // Si hay marca y modelo, los concatenamos en el buscador
+      const searchString = mod ? `${marc} ${mod}` : marc;
+      setSearch(searchString);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchInventory();
@@ -63,6 +80,7 @@ export default function MarketplaceDashboard() {
   const resetAllFilters = () => {
     setSelectedCategory(null);
     setSearch('');
+    router.push('/'); // Limpiamos la URL de parámetros
   };
 
   const dataVehiculos = useMemo(() => {
@@ -97,7 +115,6 @@ export default function MarketplaceDashboard() {
     window.open(`/api/og?id=${id}&t=${t}`, '_blank');
   };
 
-  // Función para manejar el login/registro - CORREGIDO PARA EVITAR 404
   const handleAuthRedirect = (path) => {
     router.push(path);
   };
@@ -155,7 +172,7 @@ export default function MarketplaceDashboard() {
         </div>
       </section>
 
-      {/* --- CATEGORÍAS --- */}
+      {/* --- CATEGORÍAS (FRANJA VERDE) --- */}
       <section className="w-full bg-[#288b55] py-12 md:py-20 relative"> 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8">
           <h2 className="text-center text-white uppercase italic mb-8 md:mb-12 tracking-tighter text-2xl md:text-[36px]" style={{ fontFamily: "'Genos', sans-serif" }}>
@@ -175,12 +192,12 @@ export default function MarketplaceDashboard() {
       </section>
 
       {/* --- INVENTARIO --- */}
-      <div className="w-full mt-8 md:mt-12 pb-24">
+      <div className="w-full mt-8 md:mt-12 pb-24 text-left">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex items-center justify-center relative mb-8 gap-4">
           <h2 className="italic uppercase font-medium text-[#0f172a] text-center text-2xl md:text-[36px]" style={{ fontFamily: "'Genos', sans-serif" }}>
             {selectedCategory ? `${categories.find(c => c.name === selectedCategory)?.label} disponibles` : "Inventario de toda la red"}
           </h2>
-          {selectedCategory && <button onClick={resetAllFilters} className="text-gray-400 hover:text-red-600 transition-colors"><X size={28} /></button>}
+          {(selectedCategory || search) && <button onClick={resetAllFilters} className="text-gray-400 hover:text-red-600 transition-colors"><X size={28} /></button>}
         </div>
 
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex justify-center mb-12">
