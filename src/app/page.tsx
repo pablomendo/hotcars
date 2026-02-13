@@ -218,7 +218,7 @@ function MarketplaceContent() {
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex justify-center mb-12">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-            <input type="text" placeholder="¿Qué modelo tenés en mente?" className="bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-3 text-sm w-full outline-none focus:border-[#288b55]" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <input type="text" placeholder="¿Qué tipo de vehiculo estas buscando?" className="bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-3 text-sm w-full outline-none focus:border-[#288b55]" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </div>
 
