@@ -20,8 +20,11 @@ export default function DashboardPage() {
     
     const DOLAR_BLUE = 1500;
 
-    const normalizeStatus = (status: string) => {
-        const s = status?.toLowerCase().trim();
+    const normalizeStatus = (invStatus: string, commStatus: string) => {
+        const s = invStatus?.toLowerCase().trim();
+        const c = commStatus?.toLowerCase().trim();
+        // Prioridad: Si está reservado o señado en comercial, manda sobre el inventario
+        if (c === 'reservado' || c === 'señado') return 'reservado';
         if (s === 'activo' || s === 'publicado') return 'activo';
         if (s === 'reservado' || s === 'señado') return 'reservado';
         if (s === 'pausado') return 'pausado';
@@ -37,37 +40,39 @@ export default function DashboardPage() {
                 const { data: { user } } = await supabase.auth.getUser();
                 
                 if (user) {
-                    // 2. Obtener perfil del usuario (Plan y Nombre)
-                    const { data: profile } = await supabase
-                        .from('usuarios')
-                        .select('plan_type, nombre')
-                        .eq('auth_id', user.id)
-                        .single();
+                    // 2. Obtener perfil e inventario
+                    // Agregamos commercial_status a la selección
+                    const [profileRes, inventoryRes] = await Promise.all([
+                        supabase
+                            .from('usuarios')
+                            .select('plan_type, nombre')
+                            .eq('auth_id', user.id)
+                            .single(),
+                        supabase
+                            .from('inventario')
+                            .select('id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda')
+                            .order('created_at', { ascending: false })
+                    ]);
                     
-                    if (profile) {
-                        setUserPlan(profile.plan_type);
-                        setUserName(profile.nombre);
+                    if (profileRes.data) {
+                        setUserPlan(profileRes.data.plan_type || 'FREE');
+                        setUserName(profileRes.data.nombre || '');
                     }
+
+                    if (inventoryRes.error) throw inventoryRes.error;
+                    
+                    const mappedData = (inventoryRes.data || []).map(v => ({
+                        ...v,
+                        brand: v.marca,
+                        model: v.modelo,
+                        price: v.pv,
+                        cost: v.pc,
+                        // Enviamos ambos estados para la normalización
+                        rawStatus: normalizeStatus(v.inventory_status, v.commercial_status)
+                    }));
+
+                    setInventory(mappedData);
                 }
-
-                // 3. Obtener Inventario
-                const { data, error } = await supabase
-                    .from('inventario')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                
-                const mappedData = (data || []).map(v => ({
-                    ...v,
-                    brand: v.marca,
-                    model: v.modelo,
-                    price: v.pv,
-                    cost: v.pc,
-                    rawStatus: normalizeStatus(v.inventory_status || v.estado)
-                }));
-
-                setInventory(mappedData);
             } catch (err: any) {
                 console.error("Error HotCars:", err.message);
             } finally {

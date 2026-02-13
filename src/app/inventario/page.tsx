@@ -4,12 +4,14 @@ import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw
 } from 'lucide-react';
 
 export default function InventoryPage() {
     const [inv, setInv] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    // NUEVO: Estado para gestionar la carga individual por unidad
+    const [processingId, setProcessingId] = useState<string | null>(null);
     const [tab, setTab] = useState('ACTIVOS');
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -27,27 +29,70 @@ export default function InventoryPage() {
 
     useEffect(() => {
         setIsMounted(true);
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUserId(user.id);
-                const { data: profile } = await supabase
-                    .from('usuarios')
-                    .select('plan_type')
-                    .eq('id', user.id)
-                    .maybeSingle(); 
-                if (profile) setUserPlan(profile.plan_type);
-                fetchInventory(user.id);
-            } else {
+        const initializeData = async () => {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    setUserId(user.id);
+                    
+                    // EJECUCIÓN EN PARALELO PARA MÁXIMA VELOCIDAD
+                    const [profileRes, inventoryRes] = await Promise.all([
+                        supabase
+                            .from('usuarios')
+                            .select('plan_type')
+                            .eq('id', user.id)
+                            .maybeSingle(),
+                        // SELECT OPTIMIZADO: Solo traemos campos necesarios para la vista
+                        supabase
+                            .from('inventario')
+                            .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id')
+                            .eq('owner_user_id', user.id)
+                            .order('created_at', { ascending: false })
+                    ]);
+
+                    if (profileRes.data) setUserPlan(profileRes.data.plan_type);
+                    
+                    if (inventoryRes.data) {
+                        const mappedData = inventoryRes.data.map(v => {
+                            const pvValue = Number(v.pv) || 0;
+                            const pcValue = Number(v.pc) || 0;
+                            return {
+                                ...v,
+                                brand: v.marca,
+                                model: v.modelo,
+                                year: v.anio,
+                                km: v.km,
+                                images: v.fotos || [],
+                                location: v.provincia || '',
+                                city: v.localidad || '',
+                                inventory_status: (v.inventory_status || 'activo').toLowerCase(),
+                                commercial_status: (v.commercial_status || 'disponible').toLowerCase(),
+                                isProprio: true,
+                                prices: {
+                                    purchasePrice: pcValue,
+                                    salePrice: pvValue,
+                                    myProfit: pvValue - pcValue,      
+                                    currency: v.moneda === 'USD' ? 'USD ' : '$ ARS '
+                                }
+                            };
+                        });
+                        setInv(mappedData);
+                    }
+                }
+            } catch (err: any) {
+                console.error("Error en inicialización:", err.message);
+            } finally {
                 setIsLoading(false);
             }
         };
-        getUser();
+
+        initializeData();
 
         const channel = supabase
             .channel('inventory-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {
-                fetchInventory(userId || undefined);
+                // Se mantiene la función original de refresco
+                if (userId) fetchInventory(userId);
             })
             .subscribe();
 
@@ -61,7 +106,7 @@ export default function InventoryPage() {
         try {
             const { data, error } = await supabase
                 .from('inventario')
-                .select('*')
+                .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id')
                 .eq('owner_user_id', currentUserId)
                 .order('created_at', { ascending: false });
 
@@ -100,19 +145,24 @@ export default function InventoryPage() {
     };
 
     const handleAction = async (id: string, action: string) => {
+        setProcessingId(id); // Marcamos el ID en proceso
         try {
             if (action === 'DELETE') {
-                if (!confirm('¿Eliminar unidad permanentemente?')) return;
+                if (!confirm('¿Eliminar unidad permanentemente?')) {
+                    setProcessingId(null);
+                    return;
+                }
                 const { error } = await supabase.from('inventario').delete().eq('id', id);
                 if (error) throw error;
                 setInv(prev => prev.filter(item => item.id !== id));
                 if (selectedAuto?.id === id) setSelectedAuto(null);
+                setProcessingId(null);
                 return;
             }
 
             let updateData: any = {};
             
-            if (action === 'ACTIVATE') {
+            if (action === 'ACTIVATE' || action === 'RENEW') {
                 const { data: planData } = await supabase
                     .from('plan_limits')
                     .select('max_inventory_vehicles')
@@ -124,9 +174,13 @@ export default function InventoryPage() {
 
                 if (userPlan.toUpperCase() !== 'VIP' && activeUnits >= limit) {
                     alert(`Has alcanzado el límite de unidades activas para tu Plan ${userPlan} (${activeUnits}/${limit}). Pasate al plan Pro para gestionar más vehículos.`);
+                    setProcessingId(null);
                     return; 
                 }
-                updateData = { inventory_status: 'activo' };
+                updateData = { 
+                    inventory_status: 'activo',
+                    expires_at: action === 'RENEW' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined 
+                };
             } else if (action === 'PAUSE') {
                 updateData = { inventory_status: 'pausado', show_on_web: false };
             } else if (action === 'RESERVE') {
@@ -137,10 +191,18 @@ export default function InventoryPage() {
                 updateData = { commercial_status: 'disponible' };
             }
 
+            // ACTUALIZACIÓN OPTIMISTA: Reflejamos el cambio en UI antes de la DB
+            setInv(prev => prev.map(item => item.id === id ? { ...item, ...updateData } : item));
+
             const { error } = await supabase.from('inventario').update(updateData).eq('id', id);
             if (error) throw error;
             fetchInventory(userId || undefined);
-        } catch (err: any) { alert(err.message); }
+        } catch (err: any) { 
+            alert(err.message);
+            fetchInventory(userId || undefined); // Revertir si falla
+        } finally {
+            setProcessingId(null);
+        }
     };
 
     const filtered = useMemo(() => {
@@ -260,87 +322,107 @@ export default function InventoryPage() {
 
                 {viewMode === 'grid' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {filtered.map((v) => (
-                            <div key={v.id} onClick={() => setSelectedAuto(v)} className="bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden flex flex-col group transition-all hover:border-white/20 cursor-pointer">
-                                <div className="relative w-full aspect-[16/10] bg-slate-900 overflow-hidden">
-                                    {v.images[0] ? (
-                                        <img src={v.images[0]} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
-                                    )}
-                                    {v.commercial_status === 'reservado' && (
-                                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-600 rounded text-[9px] font-bold text-white z-10">RESERVADO</div>
-                                    )}
-                                    {v.commercial_status === 'vendido' && (
-                                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-green-600 rounded text-[9px] font-bold text-white z-10">VENDIDO</div>
-                                    )}
-                                </div>
-
-                                <div className="p-4 flex-1 text-left">
-                                    <h3 className="font-bold text-xs uppercase truncate text-white tracking-tight">{v.brand} {v.model}</h3>
-                                    <p className="text-[10px] text-slate-500 mb-2" suppressHydrationWarning>
-                                        {v.year} • {isMounted ? v.km?.toLocaleString('es-AR') : '--'} KM
-                                    </p>
-
-                                    <div className="mb-1 opacity-50">
-                                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate block">
-                                            {v.location} {v.city ? `• ${v.city}` : ''}
-                                        </span>
+                        {filtered.map((v) => {
+                            const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
+                            const isProcessing = processingId === v.id;
+                            return (
+                                <div key={v.id} onClick={() => !isProcessing && setSelectedAuto(v)} className={`bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden flex flex-col group transition-all hover:border-white/20 cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
+                                    <div className="relative w-full aspect-[16/10] bg-slate-900 overflow-hidden">
+                                        {isProcessing ? (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20">
+                                                <Loader2 className="animate-spin text-[#22c55e]" size={24} />
+                                            </div>
+                                        ) : null}
+                                        {v.images[0] ? (
+                                            <img src={v.images[0]} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
+                                        )}
+                                        {isExpired && (
+                                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 rounded text-[9px] font-bold text-white z-10">VENCIDA</div>
+                                        )}
+                                        {v.commercial_status === 'reservado' && (
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-600 rounded text-[9px] font-bold text-white z-10">RESERVADO</div>
+                                        )}
+                                        {v.commercial_status === 'vendido' && (
+                                            <div className="absolute top-2 right-2 px-2 py-0.5 bg-green-600 rounded text-[9px] font-bold text-white z-10">VENDIDO</div>
+                                        )}
                                     </div>
 
-                                    <div className="flex justify-between items-end mb-3">
-                                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">PRECIO VENTA</span>
-                                        <span className="text-sm font-black text-[#22c55e] leading-none" suppressHydrationWarning>
-                                            {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="space-y-1.5 border-t border-white/5 pt-3">
-                                        <div className="flex justify-between items-end opacity-50">
-                                            <span className="text-[9px] uppercase font-bold tracking-tighter text-white">PRECIO CLIENTE / COMPRA</span>
-                                            <span className="text-[11px] font-mono leading-none text-white" suppressHydrationWarning>
-                                                {v.prices.currency}{isMounted ? v.prices.purchasePrice.toLocaleString('es-AR') : '--'}
+                                    <div className="p-4 flex-1 text-left">
+                                        <h3 className="font-bold text-xs uppercase truncate text-white tracking-tight">{v.brand} {v.model}</h3>
+                                        <p className="text-[10px] text-slate-500 mb-2" suppressHydrationWarning>
+                                            {v.year} • {isMounted ? v.km?.toLocaleString('es-AR') : '--'} KM
+                                        </p>
+
+                                        <div className="mb-1 opacity-50">
+                                            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate block">
+                                                {v.location} {v.city ? `• ${v.city}` : ''}
                                             </span>
                                         </div>
 
-                                        <div className="flex justify-between items-end mt-1">
-                                            <span className="text-[9px] uppercase font-bold tracking-tighter">MI GANANCIA</span>
-                                            <span className="text-[11px] font-mono font-normal text-white" suppressHydrationWarning>
-                                                {v.prices.currency}{isMounted ? v.prices.myProfit.toLocaleString('es-AR') : '--'}
+                                        <div className="flex justify-between items-end mb-3">
+                                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">PRECIO VENTA</span>
+                                            <span className="text-sm font-black text-[#22c55e] leading-none" suppressHydrationWarning>
+                                                {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
                                             </span>
                                         </div>
+                                        
+                                        <div className="space-y-1.5 border-t border-white/5 pt-3">
+                                            <div className="flex justify-between items-end opacity-50">
+                                                <span className="text-[9px] uppercase font-bold tracking-tighter text-white">PRECIO CLIENTE / COMPRA</span>
+                                                <span className="text-[11px] font-mono leading-none text-white" suppressHydrationWarning>
+                                                    {v.prices.currency}{isMounted ? v.prices.purchasePrice.toLocaleString('es-AR') : '--'}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex justify-between items-end mt-1">
+                                                <span className="text-[9px] uppercase font-bold tracking-tighter">MI GANANCIA</span>
+                                                <span className="text-[11px] font-mono font-normal text-white" suppressHydrationWarning>
+                                                    {v.prices.currency}{isMounted ? v.prices.myProfit.toLocaleString('es-AR') : '--'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5" onClick={(e) => e.stopPropagation()}>
+                                        <button onClick={() => handleAction(v.id, 'EDIT')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-blue-400">
+                                            <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
+                                        </button>
+                                        
+                                        {isExpired ? (
+                                            <button onClick={() => handleAction(v.id, 'RENEW')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-blue-500 bg-blue-500/5">
+                                                <RefreshCcw size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Renovar</span>
+                                            </button>
+                                        ) : (
+                                            <>
+                                                {v.inventory_status === 'pausado' ? (
+                                                    <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-green-500 bg-green-500/5">
+                                                        <Play size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Activar</span>
+                                                    </button>
+                                                ) : (
+                                                    <button onClick={() => handleAction(v.id, 'PAUSE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-yellow-500">
+                                                        <PauseCircle size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+
+                                        <button onClick={() => handleAction(v.id, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.commercial_status === 'reservado' ? 'text-orange-500 bg-orange-500/5' : 'text-slate-500 hover:text-orange-500'}`}>
+                                            <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">{v.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</span>
+                                        </button>
+
+                                        <button onClick={() => handleAction(v.id, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.commercial_status === 'vendido' ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
+                                            <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
+                                        </button>
+                                        
+                                        <button onClick={() => handleAction(v.id, 'DELETE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-600 hover:text-red-500">
+                                            <Trash2 size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Borrar</span>
+                                        </button>
                                     </div>
                                 </div>
-
-                                <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5" onClick={(e) => e.stopPropagation()}>
-                                    <button onClick={() => handleAction(v.id, 'EDIT')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-blue-400">
-                                        <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
-                                    </button>
-                                    
-                                    {v.inventory_status === 'pausado' ? (
-                                        <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-green-500 bg-green-500/5">
-                                            <Play size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Activar</span>
-                                        </button>
-                                    ) : (
-                                        <button onClick={() => handleAction(v.id, 'PAUSE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-yellow-500">
-                                            <PauseCircle size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
-                                        </button>
-                                    )}
-
-                                    <button onClick={() => handleAction(v.id, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.commercial_status === 'reservado' ? 'text-orange-500 bg-orange-500/5' : 'text-slate-500 hover:text-orange-500'}`}>
-                                        <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">{v.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</span>
-                                    </button>
-
-                                    <button onClick={() => handleAction(v.id, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.commercial_status === 'vendido' ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
-                                        <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
-                                    </button>
-                                    
-                                    <button onClick={() => handleAction(v.id, 'DELETE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-600 hover:text-red-500">
-                                        <Trash2 size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Borrar</span>
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden shadow-2xl overflow-x-auto">
@@ -354,70 +436,104 @@ export default function InventoryPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {filtered.map((v) => (
-                                    <tr key={v.id} onClick={() => setSelectedAuto(v)} className="hover:bg-white/[0.02] transition-colors group cursor-pointer">
-                                        <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2">
-                                            {v.brand} {v.model}
-                                        </td>
-                                        <td className="p-4 text-right font-mono opacity-50 text-[10px] uppercase">
-                                            {v.isProprio ? 'MÍO' : 'TERCERO'}
-                                        </td>
-                                        <td className="p-4 text-right font-mono font-black text-[#22c55e] text-sm" suppressHydrationWarning>
-                                            {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
-                                        </td>
-                                        <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
-                                            <div className="flex justify-end gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
-                                                {v.inventory_status === 'pausado' ? (
-                                                    <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="text-green-500"><Play size={14}/></button>
-                                                ) : (
-                                                    <button onClick={() => handleAction(v.id, 'PAUSE')} className="text-yellow-500"><PauseCircle size={14}/></button>
-                                                )}
-                                                <button onClick={() => handleAction(v.id, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={v.commercial_status === 'reservado' ? 'text-orange-500' : 'hover:text-orange-400'}><DollarSign size={14}/></button>
-                                                <button onClick={() => handleAction(v.id, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} className={v.commercial_status === 'vendido' ? 'text-green-500' : 'hover:text-[#22c55e]'}><Check size={14}/></button>
-                                                <button onClick={() => handleAction(v.id, 'DELETE')} className="hover:text-red-500"><Trash2 size={14}/></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {filtered.map((v) => {
+                                    const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
+                                    const isProcessing = processingId === v.id;
+                                    return (
+                                        <tr key={v.id} onClick={() => !isProcessing && setSelectedAuto(v)} className={`hover:bg-white/[0.02] transition-colors group cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
+                                            <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2">
+                                                {isProcessing ? <Loader2 size={12} className="animate-spin text-[#22c55e]" /> : null}
+                                                {isExpired && <span className="text-[8px] bg-red-600 px-1 rounded text-white">VENCIDA</span>}
+                                                {v.brand} {v.model}
+                                            </td>
+                                            <td className="p-4 text-right font-mono opacity-50 text-[10px] uppercase">
+                                                {v.isProprio ? 'MÍO' : 'TERCERO'}
+                                            </td>
+                                            <td className="p-4 text-right font-mono font-black text-[#22c55e] text-sm" suppressHydrationWarning>
+                                                {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
+                                            </td>
+                                            <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex justify-end gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
+                                                    {isExpired ? (
+                                                        <button onClick={() => handleAction(v.id, 'RENEW')} className="text-blue-500"><RefreshCcw size={14}/></button>
+                                                    ) : (
+                                                        <>
+                                                            {v.inventory_status === 'pausado' ? (
+                                                                <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="text-green-500"><Play size={14}/></button>
+                                                            ) : (
+                                                                <button onClick={() => handleAction(v.id, 'PAUSE')} className="text-yellow-500"><PauseCircle size={14}/></button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                    <button onClick={() => handleAction(v.id, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={v.commercial_status === 'reservado' ? 'text-orange-500' : 'hover:text-orange-400'}><DollarSign size={14}/></button>
+                                                    <button onClick={() => handleAction(v.id, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} className={v.commercial_status === 'vendido' ? 'text-green-500' : 'hover:text-[#22c55e]'}><Check size={14}/></button>
+                                                    <button onClick={() => handleAction(v.id, 'DELETE')} className="hover:text-red-500"><Trash2 size={14}/></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
                 )}
             </div>
 
-            {selectedAuto && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-                    <div className="bg-[#f3f4f6] w-full max-w-[500px] rounded-2xl shadow-2xl overflow-hidden text-slate-800">
-                        <div className="bg-[#111827] p-5 flex justify-between items-center text-white text-left">
-                            <span className="font-black italic tracking-tighter text-xl uppercase">Hot<span className="text-[#22c55e]">Cars</span> ADMIN</span>
-                            <button onClick={() => setSelectedAuto(null)}><X size={24}/></button>
-                        </div>
-
-                        <div className="p-4 space-y-2 bg-white text-left">
-                            <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                <button onClick={() => setOpenSection(openSection === 'unidad' ? null : 'unidad')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
-                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Información de la Unidad</span>
-                                    {openSection === 'unidad' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
-                                </button>
-                                {openSection === 'unidad' && (
-                                    <div className="p-4 grid grid-cols-2 gap-y-3 border-t border-slate-100 animate-in slide-in-from-top duration-200">
-                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Marca</span><span className="text-xs font-black uppercase">{selectedAuto.brand}</span></div>
-                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Modelo</span><span className="text-xs font-black uppercase">{selectedAuto.model}</span></div>
-                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Estado Inv.</span><span className="text-xs font-black uppercase text-[#00984a]">{selectedAuto.inventory_status}</span></div>
-                                        <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Relación</span><span className="text-xs font-black uppercase text-orange-600">PROPIO (MÍO)</span></div>
-                                    </div>
-                                )}
+            {selectedAuto && (() => {
+                const isExpired = selectedAuto.expires_at && new Date(selectedAuto.expires_at) < new Date();
+                const isProcessingModal = processingId === selectedAuto.id;
+                return (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+                        <div className="bg-[#f3f4f6] w-full max-w-[500px] rounded-2xl shadow-2xl overflow-hidden text-slate-800">
+                            <div className="bg-[#111827] p-5 flex justify-between items-center text-white text-left">
+                                <span className="font-black italic tracking-tighter text-xl uppercase">Hot<span className="text-[#22c55e]">Cars</span> ADMIN</span>
+                                <button onClick={() => setSelectedAuto(null)}><X size={24}/></button>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 pt-4">
-                                <button className="bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"><Pencil size={14}/> Editar</button>
-                                <button onClick={() => handleAction(selectedAuto.id, selectedAuto.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={`py-3.5 rounded-xl text-[10px] font-black uppercase border flex items-center justify-center gap-2 transition-all ${selectedAuto.commercial_status === 'reservado' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}><DollarSign size={14}/> {selectedAuto.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</button>
-                                <button onClick={() => handleAction(selectedAuto.id, selectedAuto.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} className={`py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg transition-all ${selectedAuto.commercial_status === 'vendido' ? 'bg-green-700 text-white' : 'bg-[#22c55e] text-black'}`}><Check size={14}/> {selectedAuto.commercial_status === 'vendido' ? 'Quitar Venta' : 'Vender'}</button>
+                            <div className={`p-4 space-y-2 bg-white text-left ${isProcessingModal ? 'opacity-50 pointer-events-none' : ''}`}>
+                                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                    <button onClick={() => setOpenSection(openSection === 'unidad' ? null : 'unidad')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
+                                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Información de la Unidad</span>
+                                        {openSection === 'unidad' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
+                                    </button>
+                                    {openSection === 'unidad' && (
+                                        <div className="p-4 grid grid-cols-2 gap-y-3 border-t border-slate-100 animate-in slide-in-from-top duration-200">
+                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Marca</span><span className="text-xs font-black uppercase">{selectedAuto.brand}</span></div>
+                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Modelo</span><span className="text-xs font-black uppercase">{selectedAuto.model}</span></div>
+                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Estado Inv.</span><span className="text-xs font-black uppercase text-[#00984a]">{isExpired ? 'VENCIDA' : selectedAuto.inventory_status}</span></div>
+                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Relación</span><span className="text-xs font-black uppercase text-orange-600">PROPIO (MÍO)</span></div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 pt-4">
+                                    <button className="bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"><Pencil size={14}/> Editar</button>
+                                    
+                                    {isExpired ? (
+                                        <button onClick={() => handleAction(selectedAuto.id, 'RENEW')} className="bg-blue-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg">
+                                            {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <RefreshCcw size={14}/>} Renovar
+                                        </button>
+                                    ) : (
+                                        <>
+                                            {selectedAuto.inventory_status === 'pausado' ? (
+                                                <button onClick={() => handleAction(selectedAuto.id, 'ACTIVATE')} className="bg-green-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg">
+                                                    {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <Play size={14}/>} Activar
+                                                </button>
+                                            ) : (
+                                                <button onClick={() => handleAction(selectedAuto.id, 'PAUSE')} className="bg-yellow-500 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg">
+                                                    {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <PauseCircle size={14}/>} Pausar
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+
+                                    <button onClick={() => handleAction(selectedAuto.id, selectedAuto.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={`py-3.5 rounded-xl text-[10px] font-black uppercase border flex items-center justify-center gap-2 transition-all ${selectedAuto.commercial_status === 'reservado' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}><DollarSign size={14}/> {selectedAuto.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
         </div>
     );
 }

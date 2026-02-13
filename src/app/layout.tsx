@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Inter_Tight } from "next/font/google"; 
 import "./globals.css";
-import Header from "@/components/ui/Header";
+import HeaderWrapper from "@/components/ui/HeaderWrapper"; // Componente nuevo que crearemos
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -29,7 +29,8 @@ export default function RootLayout({
     <html lang="es" className={`${bebasNeue.variable} ${googleSans.variable}`}>
       <body className="antialiased font-sans bg-[#f0f2f5] text-text-main">
         <div className="min-h-screen flex flex-col">
-          <Header />
+          {/* Usamos un Wrapper que decide si mostrar o no el Header original */}
+          <HeaderWrapper />
           <main className="flex-1 w-full">
             {children}
           </main>

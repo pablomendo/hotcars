@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation'; // Importado useSearchParams
 import { Search, Loader2, Instagram, Facebook, MessageCircle, Send, Eye, MapPin, X, Bell, ChevronDown, ChevronUp } from 'lucide-react';
-import dbAutos from '@/app/api/base-autos/db_7f8e9a2b1c4d.json';
 
 export default function MarketplaceDashboard() {
   const router = useRouter();
@@ -23,6 +22,9 @@ export default function MarketplaceDashboard() {
     presupuesto: '',
     moneda: 'USD'
   });
+
+  // Estado para las marcas de la DB
+  const [opcionesMarca, setOpcionesMarca] = useState([]);
 
   const categories = [
     { name: "AUTO", label: "Autos", img: "/slider_front/vw_gol.jpeg" },
@@ -50,8 +52,8 @@ export default function MarketplaceDashboard() {
   }, [searchParams]);
 
   useEffect(() => {
-    fetchInventory();
-    checkUser();
+    // Ejecución paralela y carga de marcas desde DB
+    Promise.all([fetchInventory(), checkUser(), fetchMarcasBase()]);
   }, []);
 
   const checkUser = async () => {
@@ -64,9 +66,11 @@ export default function MarketplaceDashboard() {
       setIsLoading(true);
       const { data, error } = await supabase
         .from('inventario')
-        .select('*')
+        .select('id, marca, modelo, version, anio, km, pv, moneda, fotos, localidad, categoria, created_at')
         .eq('inventory_status', 'activo')
-        .order('created_at', { ascending: false });
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(15);
 
       if (error) throw error;
       setInv(data || []);
@@ -77,26 +81,32 @@ export default function MarketplaceDashboard() {
     }
   };
 
+  // NUEVA FUNCIÓN: Obtiene marcas directamente de la tabla de referencia en Supabase
+  const fetchMarcasBase = async () => {
+    try {
+      const { data } = await supabase
+        .from('base_autos')
+        .select('marca')
+        .order('marca', { ascending: true });
+      
+      if (data) {
+        const marcasUnicas = Array.from(new Set(data.map(i => i.marca)));
+        setOpcionesMarca(marcasUnicas);
+      }
+    } catch (err) {
+      console.error("Error al cargar marcas:", err);
+    }
+  };
+
   const resetAllFilters = () => {
     setSelectedCategory(null);
     setSearch('');
     router.push('/'); // Limpiamos la URL de parámetros
   };
 
-  const dataVehiculos = useMemo(() => {
-    if (Array.isArray(dbAutos)) return dbAutos;
-    return dbAutos?.autos || [];
-  }, []);
-
-  const opcionesMarca = useMemo(() => [...new Set(dataVehiculos.map(item => item.marca))], [dataVehiculos]);
-  const opcionesModelo = useMemo(() => {
-    if (!ticketData.marca) return [];
-    return [...new Set(dataVehiculos.filter(item => item.marca === ticketData.marca).map(item => item.modelo))];
-  }, [ticketData.marca, dataVehiculos]);
-  const opcionesVersion = useMemo(() => {
-    if (!ticketData.marca || !ticketData.modelo) return [];
-    return [...new Set(dataVehiculos.filter(item => item.marca === ticketData.marca && item.modelo === ticketData.modelo).map(item => item.version))];
-  }, [ticketData.marca, ticketData.modelo, dataVehiculos]);
+  // Estos useMemo ya no dependen del JSON, sino del estado de la DB o quedan vacíos hasta implementar fetch de modelos
+  const opcionesModelo = useMemo(() => [], [ticketData.marca]);
+  const opcionesVersion = useMemo(() => [], [ticketData.modelo]);
 
   const filteredVehicles = useMemo(() => {
     return inv.filter(v => {
@@ -108,11 +118,6 @@ export default function MarketplaceDashboard() {
 
   const handleViewDetail = (id) => {
     router.push(`/vehiculos/${id}`);
-  };
-
-  const handleInstagramPlate = (id) => {
-    const t = Date.now();
-    window.open(`/api/og?id=${id}&t=${t}`, '_blank');
   };
 
   const handleAuthRedirect = (path) => {
@@ -210,7 +215,7 @@ export default function MarketplaceDashboard() {
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-6 items-start">
           
           {selectedCategory && (
-            <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col shadow-sm h-[330px] w-full">
+            <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col shadow-sm h-[393px] w-full">
               <div className="flex flex-col items-center w-full cursor-pointer mb-2 flex-shrink-0" onClick={() => setIsOpenMobile(!isOpenMobile)}>
                 <Bell className="text-[#288b55] mb-1 w-8 h-8 md:w-10 md:h-10" />
                 <h3 className="font-black uppercase text-[10px] md:text-xs text-[#0f172a] text-center leading-tight">¿No encontrás lo que buscás?</h3>
@@ -241,8 +246,12 @@ export default function MarketplaceDashboard() {
           )}
 
           {filteredVehicles.map((v) => (
-            <div key={v.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[330px] w-full transition-all hover:shadow-xl">
-              <div className="relative h-[150px] w-full bg-gray-100 flex-shrink-0">
+            <div 
+              key={v.id} 
+              onClick={() => handleViewDetail(v.id)}
+              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[393px] w-full transition-all hover:shadow-xl cursor-pointer"
+            >
+              <div className="relative h-[180px] w-full bg-gray-100 flex-shrink-0">
                 {v.fotos?.[0] ? (
                   <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} className="w-full h-full object-cover" />
                 ) : (
@@ -265,29 +274,15 @@ export default function MarketplaceDashboard() {
                   </div>
                 </div>
                 <div className="mt-auto">
-                  <div className="mb-1.5">
-                    <span className="text-[#288b55] font-black text-sm md:text-base">
+                  <div className="mb-2">
+                    <span className="text-[#288b55] font-black text-lg md:text-xl leading-none">
                       {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}
                     </span>
                   </div>
-                  <button 
-                    onClick={() => handleViewDetail(v.id)}
-                    className="w-full py-1.5 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors cursor-pointer"
-                  >
+                  <div className="w-full py-2 bg-[#0f172a] hover:bg-[#288b55] rounded-lg flex items-center justify-center gap-2 text-white font-black text-[10px] md:text-[11px] uppercase transition-colors">
                     <Eye size={12} /> Ver Detalle
-                  </button>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-4 border-t border-gray-200 divide-x h-10 bg-gray-100 flex-shrink-0">
-                <button 
-                  onClick={() => handleInstagramPlate(v.id)}
-                  className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"
-                >
-                  <Instagram size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Instagram</span>
-                </button>
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Facebook size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Facebook</span></button>
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><MessageCircle size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">WhatsApp</span></button>
-                <button className="flex flex-col items-center justify-center text-gray-400 hover:text-[#288b55] transition-colors cursor-pointer"><Send size={14} /><span className="text-[6px] md:text-[7px] font-black uppercase">Mensaje</span></button>
               </div>
             </div>
           ))}

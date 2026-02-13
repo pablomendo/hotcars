@@ -369,6 +369,9 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     setIsPublishing(true);
     setPublishStatus("loading");
     try {
+      // Cálculo de fecha de expiración (hoy + 30 días)
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      
       // Usamos el estado willBePaused calculado previamente para mayor seguridad
       const inventory_status = willBePaused ? 'pausado' : 'activo';
 
@@ -397,7 +400,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
             fotos: vehiclePhotos,
             puntos_clave: selectedHighlights,
             acepta_permuta: selectedHighlights.includes("Acepta permuta"),
-            financiacion: selectedHighlights.includes("Financiación")
+            financiacion: selectedHighlights.includes("Financiación"),
+            expires_at: expiresAt
           }
         ]);
 
