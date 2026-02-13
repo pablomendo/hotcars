@@ -50,7 +50,8 @@ export default function RegisterPage() {
       name: 'Plan VIP', 
       icon: <Crown size={32} className="text-[#288b55] stroke-[1.5px]"/>, 
       features: [
-        'Pagina Web (ilimitada) dominio propio (provisto por usuario)',
+        'Pagina Web (ilimitada)',
+        'dominio propio (provisto por usuario)',
         'Gestión de unidades destacadas en web',
         'Gestion Nuevos ingresos en web',
         'Dashboard de gestión',
@@ -110,7 +111,7 @@ export default function RegisterPage() {
         
         {/* HEADER: Ajustado para móviles */}
         <div className="flex flex-col items-center justify-center mb-8 md:mb-10">
-          <h1 className="text-white text-3xl md:text-4xl font-black uppercase tracking-tighter flex flex-col md:flex-row items-center gap-4 md:gap-6">
+          <h1 className="text-white text-[27px] md:text-[27px] font-black uppercase tracking-tighter flex flex-col md:flex-row items-center gap-4 md:gap-6">
             Elegí tu plan 
             <Image 
               src="/logo_hotcars_blanco.png" 
@@ -125,7 +126,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* SELECTOR DE FACTURACIÓN: Más cómodo en pulgares móviles */}
+        {/* SELECTOR DE FACTURACIÓN */}
         <div className="flex justify-center mb-10 md:mb-12 w-full max-w-xs md:max-w-none px-4">
           <div className="bg-[#141b1f] p-1.5 rounded-xl border border-white/5 flex items-center shadow-xl w-full md:w-auto">
             <button 
@@ -150,7 +151,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* GRID DE PLANES: Mobile vertical, Desktop horizontal */}
+        {/* GRID DE PLANES */}
         <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24 px-2 md:px-4 w-full md:scale-[0.80] md:origin-top">
           {plans.map((p) => {
             const priceMonthly = prices[p.id as keyof typeof prices].monthly;
@@ -200,7 +201,7 @@ export default function RegisterPage() {
           })}
         </div>
 
-        {/* FORMULARIO: Adaptado para no ocupar todo el ancho en móviles y centrarse mejor */}
+        {/* FORMULARIO */}
         <div id="auth-form" className="w-full max-w-xl mx-auto bg-[#141b1f] border border-white/5 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden text-left mb-20">
           <div className="relative z-10">
             <div className="flex flex-col items-center mb-10">
