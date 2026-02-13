@@ -1,11 +1,21 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react'; // Agregado Suspense
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation'; // Importado useSearchParams
 import { Search, Loader2, Instagram, Facebook, MessageCircle, Send, Eye, MapPin, X, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 
+// 1. Envolvemos el componente principal para cumplir con la regla de Next.js
 export default function MarketplaceDashboard() {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>}>
+      <MarketplaceContent />
+    </Suspense>
+  );
+}
+
+// 2. Renombramos la función original a MarketplaceContent (contiene toda tu lógica intacta)
+function MarketplaceContent() {
   const router = useRouter();
   const searchParams = useSearchParams(); // Hook para leer parámetros de la URL
   const [inv, setInv] = useState([]);
