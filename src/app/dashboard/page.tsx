@@ -50,7 +50,8 @@ export default function DashboardPage() {
                             .single(),
                         supabase
                             .from('inventario')
-                            .select('id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda')
+                            .select('id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda, owner_user_id, is_flip')
+                            .eq('owner_user_id', user.id)
                             .order('created_at', { ascending: false })
                     ]);
                     

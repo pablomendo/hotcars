@@ -53,17 +53,35 @@ export default function VehicleDetailPage() {
 
   const handleFlipAction = async () => {
     if (!user || !vehicle) return;
-    const canFlipDirecto = ownerData?.plan_type === 'Free' || vehicle.permitir_flip === true;
-    if (canFlipDirecto) {
-      try {
-        const { error } = await supabase.from('inventario').insert([{ 
-          ...vehicle, id: undefined, owner_user_id: user.id, inventory_status: 'activo', is_flip: true, parent_id: vehicle.id, created_at: new Date() 
+    
+    // CIRUGÍA: Normalización de plan_type para evitar errores de mayúsculas
+    const isOwnerFree = ownerData?.plan_type?.toLowerCase() === 'free';
+    const canFlipDirecto = isOwnerFree || vehicle.permitir_flip === true;
+    
+    try {
+      if (canFlipDirecto) {
+        const { error } = await supabase.from('flip_compartido').insert([{ 
+          auto_id: vehicle.id, 
+          vendedor_user_id: user.id, 
+          status: 'approved',
+          created_at: new Date() 
         }]);
         if (error) throw error;
         alert("¡Unidad sumada a tu inventario!");
         router.push('/inventario');
-      } catch (err) { alert("Error al activar Flip"); }
-    } else { alert(`Solicitud enviada al dueño de la unidad.`); }
+      } else {
+        const { error } = await supabase.from('flip_compartido').insert([{ 
+          auto_id: vehicle.id, 
+          vendedor_user_id: user.id, 
+          status: 'pending',
+          created_at: new Date() 
+        }]);
+        if (error) throw error;
+        alert(`Solicitud enviada al dueño de la unidad.`);
+      }
+    } catch (err) { 
+      alert("Error al procesar la action de Flip"); 
+    }
   };
 
   if (loading) return <div className="flex h-screen w-full items-center justify-center bg-[#f1f5f9]"><Loader2 className="animate-spin text-[#288b55] w-8 h-8" /></div>;
@@ -73,25 +91,29 @@ export default function VehicleDetailPage() {
   const profitLabel = isOwner ? "TU GANANCIA" : "GANANCIA FLIPPER";
   const profitValue = isOwner ? vehicle.ganancia_dueno : vehicle.ganancia_flipper;
   const publishDate = new Date(vehicle.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+  
+  // CIRUGÍA: Definición de variable para el texto del botón basado en la misma lógica del handler
+  const isOwnerFree = ownerData?.plan_type?.toLowerCase() === 'free';
+  const labelBotonFlip = (isOwnerFree || vehicle.permitir_flip) ? 'Activar Flip Compartido' : 'Solicitar Flip Compartido';
 
   return (
     <main className="min-h-screen bg-[#f5f5f5] text-[#333] pb-12 font-sans overflow-x-hidden relative text-left">
       <nav className="bg-white p-3 shadow-sm fixed top-0 left-0 right-0 z-[60] flex justify-between items-center px-6 border-b border-gray-100">
         <h1 className="font-black uppercase text-sm tracking-tighter italic">HOTCARS <span className="text-[#2596be] not-italic">PRO</span></h1>
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X size={20}/></button>
+        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"><X size={20}/></button>
       </nav>
 
       <div className="max-w-[1200px] mx-auto mt-[75px] px-4">
         
         {/* BREADCRUMB FUNCIONAL CON LINKS DE FILTRADO */}
         <div className="flex items-center gap-2 py-4 text-[13px] text-[#3483fa] overflow-x-auto whitespace-nowrap scrollbar-hide">
-          <button onClick={() => router.push('/marketplace')} className="hover:underline">Volver al listado</button>
+          <button onClick={() => router.push('/marketplace')} className="hover:underline cursor-pointer">Volver al listado</button>
           <span className="text-gray-300">|</span>
           
           {/* Link Categoría */}
           <button 
             onClick={() => router.push(`/marketplace?categoria=${vehicle.categoria}`)} 
-            className="hover:underline capitalize"
+            className="hover:underline capitalize cursor-pointer"
           >
             {vehicle.categoria || 'Vehículos'}
           </button>
@@ -101,7 +123,7 @@ export default function VehicleDetailPage() {
           {/* Link Marca */}
           <button 
             onClick={() => router.push(`/marketplace?marca=${vehicle.marca}`)} 
-            className="hover:underline capitalize"
+            className="hover:underline capitalize cursor-pointer"
           >
             {vehicle.marca}
           </button>
@@ -111,7 +133,7 @@ export default function VehicleDetailPage() {
           {/* Link Modelo */}
           <button 
             onClick={() => router.push(`/marketplace?marca=${vehicle.marca}&modelo=${vehicle.modelo}`)} 
-            className="hover:underline capitalize"
+            className="hover:underline capitalize cursor-pointer"
           >
             {vehicle.modelo}
           </button>
@@ -123,7 +145,7 @@ export default function VehicleDetailPage() {
             <section className="md:col-span-8 flex flex-row p-4 gap-4 min-h-[500px] md:h-[600px]">
               <div className="flex flex-col gap-2 overflow-y-auto pr-1 scrollbar-hide w-16">
                 {vehicle.fotos?.map((foto: string, idx: number) => (
-                  <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`flex-shrink-0 w-12 h-12 rounded border-2 overflow-hidden transition-all ${selectedImageIndex === idx ? 'border-[#3483fa]' : 'border-gray-200'}`}>
+                  <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`flex-shrink-0 w-12 h-12 rounded border-2 overflow-hidden transition-all cursor-pointer ${selectedImageIndex === idx ? 'border-[#3483fa]' : 'border-gray-200'}`}>
                     <img src={foto} className="w-full h-full object-cover" alt="Thumb" />
                   </button>
                 ))}
@@ -141,7 +163,20 @@ export default function VehicleDetailPage() {
                 </div>
                 <h1 className="text-2xl font-bold text-[#333] leading-tight mb-1">{vehicle.marca} {vehicle.modelo}</h1>
                 <p className="text-[#3483fa] font-bold text-[14px] uppercase tracking-wide mb-1">{vehicle.version}</p>
-                <div className="flex items-center gap-1.5 text-gray-400 text-[12px] font-bold uppercase mb-6"><MapPin size={13}/> {vehicle.localidad}, {vehicle.provincia}</div>
+                <div className="flex items-center gap-1.5 text-gray-400 text-[12px] font-bold uppercase mb-4"><MapPin size={13}/> {vehicle.localidad}, {vehicle.provincia}</div>
+
+                {/* BADGE DE STATUS COMERCIAL */}
+                {vehicle.commercial_status && vehicle.commercial_status !== 'disponible' && (
+                  <div className="mb-4">
+                    <span className={`px-3 py-1 rounded text-[11px] font-black uppercase tracking-widest ${
+                      vehicle.commercial_status === 'reservado' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 
+                      vehicle.commercial_status === 'vendido' ? 'bg-red-100 text-red-700 border border-red-200' : 
+                      'bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}>
+                      {vehicle.commercial_status}
+                    </span>
+                  </div>
+                )}
 
                 <div className="mb-6">
                   <span className="text-4xl font-black text-[#333] tracking-tighter">{vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}</span>
@@ -153,16 +188,16 @@ export default function VehicleDetailPage() {
                 </div>
 
                 {!isOwner && (
-                  <button onClick={handleFlipAction} className="w-full mb-4 py-3.5 border-2 border-dashed border-[#2596be] text-[#2596be] rounded-lg font-black uppercase text-[12px] flex items-center justify-center gap-2 hover:bg-[#2596be]/5 transition-all">
-                    <Zap size={16} fill="currentColor" /> {ownerData?.plan_type === 'Free' || vehicle.permitir_flip ? 'Activar Flip Compartido' : 'Solicitar Flip Compartido'}
+                  <button onClick={handleFlipAction} className="w-full mb-4 py-3.5 border-2 border-dashed border-[#2596be] text-[#2596be] rounded-lg font-black uppercase text-[12px] flex items-center justify-center gap-2 hover:bg-[#2596be]/5 transition-all cursor-pointer">
+                    <Zap size={16} fill="currentColor" /> {labelBotonFlip}
                   </button>
                 )}
 
                 <div className="flex flex-col gap-3">
-                  <button className="w-full py-3.5 bg-[#3483fa] text-white rounded-lg font-bold text-[16px] hover:bg-[#2968c8] transition-colors">Contactar por WhatsApp</button>
+                  <button className="w-full py-3.5 bg-[#3483fa] text-white rounded-lg font-bold text-[16px] hover:bg-[#2968c8] transition-colors cursor-pointer">Contactar por WhatsApp</button>
                   <div className="grid grid-cols-2 gap-2 mb-4">
-                    <div className={`py-3 rounded-lg border flex items-center justify-center gap-2 ${vehicle.acepta_permuta ? 'bg-white border-gray-200' : 'opacity-30 border-gray-100'}`}><RefreshCw size={14}/><span className="text-[11px] font-bold uppercase">Permuta</span></div>
-                    <div className={`py-3 rounded-lg border flex items-center justify-center gap-2 ${vehicle.financiacion ? 'bg-white border-gray-200' : 'opacity-30 border-gray-100'}`}><Handshake size={14}/><span className="text-[11px] font-bold uppercase">Financiamiento</span></div>
+                    <div className={`py-4 rounded-lg border flex items-center justify-center gap-2 ${vehicle.acepta_permuta ? 'bg-white border-gray-300 cursor-pointer text-[#1a1a1a]' : 'opacity-30 border-gray-100'}`}><RefreshCw size={16}/><span className="text-[12.5px] font-black uppercase">Permuta</span></div>
+                    <div className={`py-4 rounded-lg border flex items-center justify-center gap-2 ${vehicle.financiacion ? 'bg-white border-gray-300 cursor-pointer text-[#1a1a1a]' : 'opacity-30 border-gray-100'}`}><Handshake size={16}/><span className="text-[12.5px] font-black uppercase">Financiamiento</span></div>
                   </div>
                 </div>
 
@@ -177,7 +212,7 @@ export default function VehicleDetailPage() {
                       <span className="text-[12px] text-[#2596be] font-semibold">{ownerVehicleCount} unidades publicadas</span>
                     </div>
                   </div>
-                  <button onClick={() => router.push(`/perfil/${vehicle.owner_user_id}`)} className="w-full py-2.5 text-[#3483fa] font-bold text-[13px] border border-[#3483fa] rounded-lg hover:bg-blue-50 transition-colors">Ver perfil del vendedor</button>
+                  <button onClick={() => router.push(`/perfil/${vehicle.owner_user_id}`)} className="w-full py-2.5 text-[#3483fa] font-bold text-[13px] border border-[#3483fa] rounded-lg hover:bg-blue-50 transition-colors cursor-pointer">Ver perfil del vendedor</button>
                 </div>
             </section>
           </div>
@@ -221,7 +256,7 @@ export default function VehicleDetailPage() {
 
       {isGalleryOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm">
-          <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors z-[110]"><X size={32} /></button>
+          <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors z-[110] cursor-pointer"><X size={32} /></button>
           <img src={vehicle.fotos?.[selectedImageIndex]} alt="Gallery" className="max-w-full max-h-[85vh] object-contain shadow-2xl" />
         </div>
       )}

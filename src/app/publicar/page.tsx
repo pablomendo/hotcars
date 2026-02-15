@@ -60,7 +60,10 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   
   const [provincia, setProvincia] = useState("");
   const [localidad, setLocalidad] = useState("");
+  
+  // ESTADOS PARA FLIP COMPARTIDO
   const [shareUser, setShareUser] = useState("");
+  const [isFlipActive, setIsFlipActive] = useState(false);
 
   const [selectedHighlights, setSelectedHighlights] = useState<string[]>([]);
   const [mainPhoto, setMainPhoto] = useState<string | null>(null);
@@ -98,25 +101,68 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<string>("FREE");
-  // NUEVO: Estado para avisar preventivamente del estado de inventario
   const [willBePaused, setWillBePaused] = useState(false);
 
-  // EFECTO CRÍTICO: Captura de usuario para conteo de plan
+  // CONSULTA MASIVA AL INICIO
+  const fetchLimitsAndPlan = async (uId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('usuarios')
+        .select('plan_type')
+        .eq('id', uId)
+        .maybeSingle();
+      
+      const currentPlan = profile?.plan_type ? profile.plan_type.trim().toUpperCase() : "FREE";
+      setUserPlan(currentPlan);
+
+      // Si el plan es FREE, forzamos isFlipActive a true
+      if (currentPlan === "FREE") {
+        setIsFlipActive(true);
+      } else {
+        setIsFlipActive(false);
+      }
+
+      const { data: planData } = await supabase
+        .from('plan_limits')
+        .select('max_inventory_vehicles')
+        .ilike('plan_type', currentPlan)
+        .maybeSingle();
+
+      const limit = planData?.max_inventory_vehicles ?? (currentPlan === 'FREE' ? 12 : 25);
+
+      const { count } = await supabase
+        .from('inventario')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_user_id', uId)
+        .eq('inventory_status', 'activo');
+
+      if (limit !== null && (count ?? 0) >= limit) {
+        setWillBePaused(true);
+      } else {
+        setWillBePaused(false);
+      }
+    } catch (e) {
+      console.error("Error fetching initial limits:", e);
+    }
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        const { data: profile } = await supabase
-          .from('usuarios')
-          .select('plan_type')
-          .eq('id', user.id)
-          .maybeSingle();
-        if (profile) setUserPlan(profile.plan_type);
       }
     };
     fetchUser();
   }, []);
+
+  const handleSelectCategory = (catName: string) => {
+    setSelectedCategory(catName);
+    setStep(2);
+    if (userId) {
+      fetchLimitsAndPlan(userId);
+    }
+  };
 
   useEffect(() => {
     if (selectedCategory) {
@@ -277,7 +323,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     setSelectedYear(""); setSelectedVersion(""); setKm(""); setMainPhoto(null);
     setVehiclePhotos([]);
     setSelectedHighlights([]); setPvStr(""); setPcStr(""); setDescription(""); setIsManual(false);
-    setProvincia(""); setLocalidad(""); setShareUser("");
+    setProvincia(""); setLocalidad(""); setShareUser(""); setIsFlipActive(false);
     setOpenSection(null); 
     setPublishStatus("loading");
     setWillBePaused(false);
@@ -297,7 +343,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
           year: selectedYear,
           km: km,
           highlights: selectedHighlights,
-          version: selectedVersion
+          version: selectedVersion,
+          condiciones_venta: selectedHighlights.filter(h => ["Acepta permuta", "Financiación"].includes(h)).join(", ")
         }),
       });
 
@@ -315,49 +362,9 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     }
   };
 
-  // NUEVA TÉCNICA: Handshake Adelantado de Límites
-  const handleNextFromPhotos = async () => {
-    if (!userId) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserId(user.id);
-      else { alert("Error: No se pudo identificar al usuario."); return; }
-    }
-
-    try {
-      const { data: userData } = await supabase
-        .from('usuarios')
-        .select('plan_type')
-        .eq('id', userId)
-        .maybeSingle();
-      
-      const currentPlan = userData?.plan_type || 'FREE';
-      
-      const { data: planData } = await supabase
-        .from('plan_limits')
-        .select('max_inventory_vehicles')
-        .ilike('plan_type', currentPlan)
-        .maybeSingle();
-
-      const limit = planData?.max_inventory_vehicles ?? (currentPlan.toUpperCase() === 'FREE' ? 12 : 25);
-      
-      const { count } = await supabase
-        .from('inventario')
-        .select('id', { count: 'exact', head: true })
-        .eq('owner_user_id', userId)
-        .eq('inventory_status', 'activo');
-
-      if (limit !== null && (count ?? 0) >= limit) {
-        setWillBePaused(true);
-      } else {
-        setWillBePaused(false);
-      }
-
-      setStep(4);
-      smartScroll(finalRef);
-    } catch (e) {
-      setStep(4);
-      smartScroll(finalRef);
-    }
+  const handleNextFromPhotos = () => {
+    setStep(4);
+    smartScroll(finalRef);
   };
 
   const finalizarPublicacion = async () => {
@@ -369,10 +376,21 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     setIsPublishing(true);
     setPublishStatus("loading");
     try {
-      // Cálculo de fecha de expiración (hoy + 30 días)
+      const uploadResults = await Promise.all(
+        vehiclePhotos.map(async (base64) => {
+          const formData = new FormData();
+          formData.append("file", base64);
+          formData.append("upload_preset", "hotcars_inventario");
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          return data.secure_url;
+        })
+      );
+
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-      
-      // Usamos el estado willBePaused calculado previamente para mayor seguridad
       const inventory_status = willBePaused ? 'pausado' : 'activo';
 
       const { error } = await supabase
@@ -396,22 +414,19 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
             descripcion: description,
             inventory_status: inventory_status,
             commercial_status: 'disponible',
-            compartido_con: userPlan === "FREE" ? "PUBLICO" : shareUser,
-            fotos: vehiclePhotos,
+            compartido_con: isFlipActive ? (shareUser || "PUBLICO") : "",
+            fotos: uploadResults,
             puntos_clave: selectedHighlights,
             acepta_permuta: selectedHighlights.includes("Acepta permuta"),
             financiacion: selectedHighlights.includes("Financiación"),
+            is_flip: isFlipActive,
             expires_at: expiresAt
           }
         ]);
 
       if (error) throw error;
-
-      if (willBePaused) {
-        setPublishStatus("paused");
-      } else {
-        setPublishStatus("success");
-      }
+      if (willBePaused) setPublishStatus("paused");
+      else setPublishStatus("success");
 
       setTimeout(() => {
         router.push("/inventario");
@@ -419,7 +434,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
       }, willBePaused ? 4000 : 2000);
 
     } catch (error: any) {
-      alert("Error al conectar con Supabase: " + error.message);
+      alert("Error al conectar con Supabase o Cloudinary: " + error.message);
       setIsPublishing(false);
     }
   };
@@ -480,7 +495,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
           <div className="p-4 md:p-6 -mt-24 md:-mt-28">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-5 max-w-5xl mx-auto">
               {categories.map((cat) => (
-                <div key={cat.name} className="cursor-pointer bg-white rounded-xl flex flex-col items-center justify-between p-4 aspect-square shadow-lg active:scale-95 transition-transform" onClick={() => { setSelectedCategory(cat.name); setStep(2); }}>
+                <div key={cat.name} className="cursor-pointer bg-white rounded-xl flex flex-col items-center justify-between p-4 aspect-square shadow-lg active:scale-95 transition-transform" onClick={() => handleSelectCategory(cat.name)}>
                   <div className="flex-1 flex items-center justify-center w-full">
                     <div className="relative w-[130px] h-[95px] md:w-[145px] md:h-[105px]">
                         <Image src={cat.icon} alt={cat.name} fill className="object-contain" />
@@ -650,25 +665,24 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                           type="button" 
                           onClick={() => {
                             if (userPlan !== "FREE") {
-                              shareUser ? setShareUser("") : setShareUser("PUBLICO");
+                              setIsFlipActive(!isFlipActive);
                             }
                           }} 
-                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border ${userPlan === "FREE" || shareUser ? "bg-[#2563eb] border-[#2563eb] text-white shadow-md" : "bg-gray-200 border-gray-300 text-gray-500"} ${userPlan === "FREE" ? "opacity-100 cursor-not-allowed" : ""}`}
-                          disabled={userPlan === "FREE"}
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border shadow-md ${isFlipActive ? "bg-[#2563eb] border-[#2563eb] text-white" : "bg-gray-300 border-gray-400 text-gray-600"} ${userPlan === "FREE" ? "cursor-not-allowed" : "cursor-pointer active:scale-95"}`}
                         >
-                          {userPlan === "FREE" || shareUser ? "Flip activado" : "Activar Flip"}
+                          {isFlipActive ? "Flip activado" : "Activar Flip"}
                         </button>
                     </div>
-                    <div className={`relative transition-all duration-300 ${userPlan === "FREE" || shareUser ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                    <div className={`relative transition-all duration-300 ${isFlipActive ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10"><span className="text-[7px] font-black text-[#2563eb] uppercase">compartir primero con</span></div>
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1f2937] font-black text-sm">@</div>
                         <input 
                           type="text" 
                           placeholder="tipear usuario..." 
-                          value={userPlan === "FREE" ? "PUBLICO" : (shareUser === "PUBLICO" ? "" : shareUser)} 
+                          value={shareUser === "PUBLICO" ? "" : shareUser} 
                           onChange={(e) => setShareUser(e.target.value)} 
                           className="w-full h-12 bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#1f2937] text-gray-800 font-bold uppercase shadow-sm transition-all" 
-                          disabled={userPlan === "FREE"}
+                          disabled={!isFlipActive}
                         />
                     </div>
                 </div>
@@ -748,30 +762,28 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                       <div className="absolute top-3 left-3 text-[#00984a] text-[9px] font-black uppercase tracking-wider">Foto Portada</div>
                     </div>
                     <div className="col-span-2 flex flex-col gap-3">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black text-gray-400 uppercase">Brillo</span>
-                          <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden h-8 shadow-inner">
-                            <button onClick={() => setBrightness(prev => Math.max(0, prev - 10))} className="flex-1 text-gray-500 font-bold text-lg">-</button>
-                            <button onClick={() => setBrightness(prev => Math.min(200, prev + 10))} className="flex-1 text-gray-500 font-bold text-lg border-l border-gray-200">+</button>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black text-gray-400 uppercase">Contraste</span>
-                          <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden h-8 shadow-inner">
-                            <button onClick={() => setContrast(prev => Math.max(0, prev - 10))} className="flex-1 text-gray-500 font-bold text-lg">-</button>
-                            <button onClick={() => setContrast(prev => Math.min(200, prev + 10))} className="flex-1 text-gray-500 font-bold text-lg border-l border-gray-200">+</button>
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] font-black text-gray-400 uppercase">Sombras</span>
-                          <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden h-8 shadow-inner">
-                            <button onClick={() => setShadows(prev => Math.max(0, prev - 10))} className="flex-1 text-gray-500 font-bold text-lg">-</button>
-                            <button onClick={() => setShadows(prev => Math.min(200, prev + 10))} className="flex-1 text-gray-500 font-bold text-lg border-l border-gray-200">+</button>
-                          </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[8px] font-black text-gray-400 uppercase">Brillo</span>
+                        <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden h-8 shadow-inner">
+                          <button onClick={() => setBrightness(prev => Math.max(0, prev - 10))} className="flex-1 text-gray-500 font-bold text-lg">-</button>
+                          <button onClick={() => setBrightness(prev => Math.min(200, prev + 10))} className="flex-1 text-gray-500 font-bold text-lg border-l border-gray-200">+</button>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[8px] font-black text-gray-400 uppercase">Contraste</span>
+                        <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden h-8 shadow-inner">
+                          <button onClick={() => setContrast(prev => Math.max(0, prev - 10))} className="flex-1 text-gray-500 font-bold text-lg">-</button>
+                          <button onClick={() => setContrast(prev => Math.min(200, prev + 10))} className="flex-1 text-gray-500 font-bold text-lg border-l border-gray-200">+</button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[8px] font-black text-gray-400 uppercase">Sombras</span>
+                        <div className="flex items-center bg-gray-100 rounded-lg overflow-hidden h-8 shadow-inner">
+                          <button onClick={() => setShadows(prev => Math.max(0, prev - 10))} className="flex-1 text-gray-500 font-bold text-lg">-</button>
+                          <button onClick={() => setShadows(prev => Math.min(200, prev + 10))} className="flex-1 text-gray-500 font-bold text-lg border-l border-gray-200">+</button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
                         {[1, 2].map((i) => (
                           <div key={i} className="aspect-square bg-gray-50 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors relative group overflow-hidden">
                             {vehiclePhotos[i] ? (

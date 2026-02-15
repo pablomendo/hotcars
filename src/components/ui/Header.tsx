@@ -2,21 +2,61 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Bell, User, Menu, X, Plus } from 'lucide-react';
+import { Bell, User, Menu, X, Plus, Settings, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
 
 export default function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [userData, setUserData] = useState({ 
+        name: "Cargando...", 
+        avatar: null,
+        plan: "Gratis"
+    });
     const pathname = usePathname();
+    const userMenuRef = useRef<HTMLDivElement>(null);
 
-    const userProfile = {
-        name: "Benito",
-        plan: "Pro", 
-        avatar: null
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                const { data: profile } = await supabase
+                    .from('usuarios')
+                    .select('full_name, profile_pic, plan_type')
+                    .eq('auth_id', session.user.id)
+                    .single();
+                
+                if (profile) {
+                    setUserData({
+                        name: profile.full_name || "Usuario",
+                        avatar: profile.profile_pic || null,
+                        plan: profile.plan_type ? profile.plan_type.charAt(0).toUpperCase() + profile.plan_type.slice(1) : "Gratis"
+                    });
+                } else {
+                    setUserData({ name: "Usuario", avatar: null, plan: "Gratis" });
+                }
+            }
+        };
+        fetchUserData();
+    }, [pathname]);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/login';
     };
 
-    // 1. TODOS los Hooks se ejecutan siempre al principio
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     useEffect(() => {
         if (isMobileMenuOpen) {
             document.body.style.overflow = 'hidden';
@@ -31,42 +71,43 @@ export default function Header() {
 
     useEffect(() => {
         setIsMobileMenuOpen(false);
+        setIsUserMenuOpen(false);
     }, [pathname]);
 
-    // 2. Lógica de ocultamiento DESPUÉS de los hooks
     const authRoutes = ['/register', '/login', '/register/confirm'];
     if (authRoutes.includes(pathname)) {
         return null;
     }
 
-    // 3. Renderizado normal
     return (
         <>
             <header className="fixed top-0 left-0 right-0 z-[100] w-full h-20 bg-[#12242e] border-b border-white/5 text-white px-6">
-                <div className="h-full flex items-center max-w-[1600px] mx-auto">
+                <div className="h-full flex items-center max-w-[1600px] mx-auto justify-between">
                     
-                    <button 
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="lg:hidden mr-4 text-slate-400 hover:text-white transition-colors"
-                    >
-                        {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                    </button>
+                    <div className="flex items-center">
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="lg:hidden mr-4 text-slate-400 hover:text-white transition-colors"
+                        >
+                            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                        </button>
 
-                    <div className="flex-shrink-0">
-                        <Link href="/" className="flex items-center">
-                            <Image 
-                                src="/logo_hotcars_blanco.png" 
-                                alt="HotCars Logo" 
-                                width={200} 
-                                height={60} 
-                                unoptimized 
-                                className="h-10 w-auto object-contain"
-                                priority
-                            />
-                        </Link>
+                        <div className="flex-shrink-0">
+                            <Link href="/" className="flex items-center">
+                                <Image 
+                                    src="/logo_hotcars_blanco.png" 
+                                    alt="HotCars Logo" 
+                                    width={200} 
+                                    height={60} 
+                                    unoptimized 
+                                    className="h-10 w-auto object-contain"
+                                    priority
+                                />
+                            </Link>
+                        </div>
                     </div>
 
-                    <nav className="hidden lg:flex items-center ml-auto mr-12 space-x-1.5 bg-black/20 rounded-xl px-2 py-1.5 border border-white/5">
+                    <nav className="hidden lg:flex items-center space-x-1.5 bg-black/20 rounded-xl px-2 py-1.5 border border-white/5">
                         <NavLink href="/dashboard">Dashboard</NavLink>
                         <NavLink href="/inventario">Inventario</NavLink>
                         <NavLink href="/dashboard/web">
@@ -77,7 +118,7 @@ export default function Header() {
                         <NavLink href="/searched">Vehículos Buscados</NavLink>
                     </nav>
 
-                    <div className="flex items-center space-x-4 ml-auto lg:ml-0 flex-shrink-0">
+                    <div className="flex items-center space-x-6 flex-shrink-0">
                         <Link
                             href="/publicar"
                             className="inline-flex items-center h-8 rounded-lg bg-[#134e4d] px-4 text-[12px] font-bold text-white cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm border border-white/10"
@@ -86,22 +127,45 @@ export default function Header() {
                             <Plus className="sm:hidden w-5 h-5 text-white/40" />
                         </Link>
 
-                        <div className="hidden sm:flex items-center h-9 gap-2 rounded-lg bg-black/30 px-3 border border-white/5">
-                            <Search className="w-4 h-4 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Buscar…"
-                                className="bg-transparent text-xs text-white focus:outline-none w-24 xl:w-32 font-medium"
-                            />
-                        </div>
-
-                        <button className="text-slate-400 hover:text-white transition-colors p-1">
+                        <button className="text-slate-400 hover:text-white transition-colors p-1 relative">
                             <Bell className="w-5 h-5" />
                         </button>
 
-                        <button className="hidden sm:flex w-10 h-10 rounded-full bg-[#134e4d] items-center justify-center text-white font-bold text-sm cursor-pointer hover:opacity-80 transition-opacity border border-white/10">
-                            <User className="w-5 h-5" />
-                        </button>
+                        <div className="relative" ref={userMenuRef}>
+                            <button 
+                                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                className="w-10 h-10 rounded-full bg-[#134e4d] overflow-hidden items-center justify-center text-white font-bold text-sm cursor-pointer hover:opacity-80 transition-opacity border border-white/10 flex"
+                            >
+                                {userData.avatar ? (
+                                    <img src={userData.avatar} alt="User" className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="w-5 h-5" />
+                                )}
+                            </button>
+
+                            {isUserMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-[#1a2e38] border border-white/10 rounded-xl shadow-xl py-2 z-[110] animate-in fade-in zoom-in duration-200">
+                                    <div className="px-4 py-2 border-b border-white/5 mb-1">
+                                        <p className="text-xs font-bold text-white truncate">{userData.name}</p>
+                                        <p className="text-[10px] text-[#00984a]">Plan {userData.plan}</p>
+                                    </div>
+                                    <Link 
+                                        href="/perfil"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
+                                    >
+                                        <Settings size={16} />
+                                        Setup
+                                    </Link>
+                                    <button 
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                                    >
+                                        <LogOut size={16} />
+                                        Cerrar sesión
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

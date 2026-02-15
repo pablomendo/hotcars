@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -35,49 +35,15 @@ export default function InventoryPage() {
                 if (user) {
                     setUserId(user.id);
                     
-                    // EJECUCIÓN EN PARALELO PARA MÁXIMA VELOCIDAD
-                    const [profileRes, inventoryRes] = await Promise.all([
-                        supabase
-                            .from('usuarios')
-                            .select('plan_type')
-                            .eq('id', user.id)
-                            .maybeSingle(),
-                        // SELECT OPTIMIZADO: Solo traemos campos necesarios para la vista
-                        supabase
-                            .from('inventario')
-                            .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id')
-                            .eq('owner_user_id', user.id)
-                            .order('created_at', { ascending: false })
-                    ]);
+                    const { data: profile } = await supabase
+                        .from('usuarios')
+                        .select('plan_type')
+                        .eq('auth_id', user.id)
+                        .maybeSingle();
 
-                    if (profileRes.data) setUserPlan(profileRes.data.plan_type);
+                    if (profile) setUserPlan(profile.plan_type || 'Free');
                     
-                    if (inventoryRes.data) {
-                        const mappedData = inventoryRes.data.map(v => {
-                            const pvValue = Number(v.pv) || 0;
-                            const pcValue = Number(v.pc) || 0;
-                            return {
-                                ...v,
-                                brand: v.marca,
-                                model: v.modelo,
-                                year: v.anio,
-                                km: v.km,
-                                images: v.fotos || [],
-                                location: v.provincia || '',
-                                city: v.localidad || '',
-                                inventory_status: (v.inventory_status || 'activo').toLowerCase(),
-                                commercial_status: (v.commercial_status || 'disponible').toLowerCase(),
-                                isProprio: true,
-                                prices: {
-                                    purchasePrice: pcValue,
-                                    salePrice: pvValue,
-                                    myProfit: pvValue - pcValue,      
-                                    currency: v.moneda === 'USD' ? 'USD ' : '$ ARS '
-                                }
-                            };
-                        });
-                        setInv(mappedData);
-                    }
+                    await fetchInventory(user.id);
                 }
             } catch (err: any) {
                 console.error("Error en inicialización:", err.message);
@@ -91,7 +57,6 @@ export default function InventoryPage() {
         const channel = supabase
             .channel('inventory-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {
-                // Se mantiene la función original de refresco
                 if (userId) fetchInventory(userId);
             })
             .subscribe();
@@ -104,17 +69,30 @@ export default function InventoryPage() {
     const fetchInventory = async (currentUserId?: string) => {
         if (!currentUserId) return;
         try {
-            const { data, error } = await supabase
-                .from('inventario')
-                .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id')
-                .eq('owner_user_id', currentUserId)
-                .order('created_at', { ascending: false });
+            // CIRUGÍA: Consultar mis autos y los flips aprobados simultáneamente
+            const [misAutos, misFlips] = await Promise.all([
+                supabase
+                    .from('inventario')
+                    .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id, is_flip')
+                    .eq('owner_user_id', currentUserId),
+                supabase
+                    .from('flip_compartido')
+                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id, is_flip)')
+                    .eq('vendedor_user_id', currentUserId)
+                    .eq('status', 'approved')
+            ]);
 
-            if (error) throw error;
+            const propios = misAutos.data || [];
+            const terceros = (misFlips.data || [])
+                .map((f: any) => f.inventario)
+                .filter((i: any) => i !== null);
 
-            const mappedData = (data || []).map(v => {
+            const allData = [...propios, ...terceros];
+
+            const mappedData = allData.map(v => {
                 const pvValue = Number(v.pv) || 0;
                 const pcValue = Number(v.pc) || 0;
+                const isProprio = v.owner_user_id === currentUserId;
 
                 return {
                     ...v,
@@ -127,7 +105,7 @@ export default function InventoryPage() {
                     city: v.localidad || '',
                     inventory_status: (v.inventory_status || 'activo').toLowerCase(),
                     commercial_status: (v.commercial_status || 'disponible').toLowerCase(),
-                    isProprio: true,
+                    isProprio: isProprio,
                     prices: {
                         purchasePrice: pcValue,
                         salePrice: pvValue,
@@ -144,22 +122,38 @@ export default function InventoryPage() {
         }
     };
 
-    const handleAction = async (id: string, action: string) => {
+    const handleAction = async (item: any, action: string) => {
+        const id = item.id;
+
+        if (action === 'DELETE') {
+            if (item.isProprio) {
+                if (!confirm('¿Eliminar unidad permanentemente?')) return;
+                setProcessingId(id);
+                try {
+                    const { error } = await supabase.from('inventario').delete().eq('id', id);
+                    if (error) throw error;
+                    setInv(prev => prev.filter(i => i.id !== id));
+                    if (selectedAuto?.id === id) setSelectedAuto(null);
+                } catch (err: any) {
+                    alert(err.message);
+                } finally {
+                    setProcessingId(null);
+                }
+            } else {
+                if (!confirm('Esta unidad es un FLIP compartido. ¿Deseas quitarla de tu inventario?')) return;
+                setInv(prev => prev.filter(i => i.id !== id));
+                if (selectedAuto?.id === id) setSelectedAuto(null);
+            }
+            return;
+        }
+
+        if (!item.isProprio) {
+            alert("Acceso denegado: Solo el dueño de la unidad puede modificar su estado comercial o de inventario.");
+            return;
+        }
+
         setProcessingId(id); // Marcamos el ID en proceso
         try {
-            if (action === 'DELETE') {
-                if (!confirm('¿Eliminar unidad permanentemente?')) {
-                    setProcessingId(null);
-                    return;
-                }
-                const { error } = await supabase.from('inventario').delete().eq('id', id);
-                if (error) throw error;
-                setInv(prev => prev.filter(item => item.id !== id));
-                if (selectedAuto?.id === id) setSelectedAuto(null);
-                setProcessingId(null);
-                return;
-            }
-
             let updateData: any = {};
             
             if (action === 'ACTIVATE' || action === 'RENEW') {
@@ -170,7 +164,7 @@ export default function InventoryPage() {
                     .maybeSingle();
 
                 const limit = planData?.max_inventory_vehicles ?? (userPlan.toUpperCase() === 'FREE' ? 12 : userPlan.toUpperCase() === 'PRO' ? 25 : 9999);
-                const activeUnits = inv.filter(v => (v.inventory_status === 'activo')).length;
+                const activeUnits = inv.filter(v => (v.inventory_status === 'activo' && v.isProprio)).length;
 
                 if (userPlan.toUpperCase() !== 'VIP' && activeUnits >= limit) {
                     alert(`Has alcanzado el límite de unidades activas para tu Plan ${userPlan} (${activeUnits}/${limit}). Pasate al plan Pro para gestionar más vehículos.`);
@@ -192,7 +186,7 @@ export default function InventoryPage() {
             }
 
             // ACTUALIZACIÓN OPTIMISTA: Reflejamos el cambio en UI antes de la DB
-            setInv(prev => prev.map(item => item.id === id ? { ...item, ...updateData } : item));
+            setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
 
             const { error } = await supabase.from('inventario').update(updateData).eq('id', id);
             if (error) throw error;
@@ -221,9 +215,9 @@ export default function InventoryPage() {
                 case 'VENDIDOS':
                     return v.commercial_status === 'vendido';
                 case 'PROPIOS':
-                    return true;
+                    return v.isProprio;
                 case 'TERCEROS':
-                    return false;
+                    return !v.isProprio;
                 default:
                     return false;
             }
@@ -236,8 +230,8 @@ export default function InventoryPage() {
             RESERVADOS: inv.filter(v => v.commercial_status === 'reservado').length,
             PAUSADOS:   inv.filter(v => v.inventory_status === 'pausado').length,
             VENDIDOS:   inv.filter(v => v.commercial_status === 'vendido').length,
-            PROPIOS:    inv.length,
-            TERCEROS:   0,
+            PROPIOS:    inv.filter(v => v.isProprio).length,
+            TERCEROS:   inv.filter(v => !v.isProprio).length,
         };
     }, [inv, userPlan]);
 
@@ -290,7 +284,7 @@ export default function InventoryPage() {
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userPlan}</span>
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                {counts.ACTIVOS} / {userPlan.toUpperCase() === 'VIP' ? '∞' : (userPlan.toUpperCase() === 'PRO' ? 25 : 12)} Unidades
+                                {counts.PROPIOS} / {userPlan.toUpperCase() === 'VIP' ? '∞' : (userPlan.toUpperCase() === 'PRO' ? 25 : 12)} Unidades
                             </span>
                         </div>
                     </div>
@@ -386,38 +380,66 @@ export default function InventoryPage() {
                                     </div>
 
                                     <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5" onClick={(e) => e.stopPropagation()}>
-                                        <button onClick={() => handleAction(v.id, 'EDIT')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-blue-400">
+                                        <button 
+                                            disabled={!v.isProprio}
+                                            onClick={() => handleAction(v, 'EDIT')} 
+                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-blue-400'}`}
+                                        >
                                             <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
                                         </button>
                                         
                                         {isExpired ? (
-                                            <button onClick={() => handleAction(v.id, 'RENEW')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-blue-500 bg-blue-500/5">
+                                            <button 
+                                                disabled={!v.isProprio}
+                                                onClick={() => handleAction(v, 'RENEW')} 
+                                                className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-blue-500 bg-blue-500/5'}`}
+                                            >
                                                 <RefreshCcw size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Renovar</span>
                                             </button>
                                         ) : (
                                             <>
                                                 {v.inventory_status === 'pausado' ? (
-                                                    <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-green-500 bg-green-500/5">
+                                                    <button 
+                                                        disabled={!v.isProprio}
+                                                        onClick={() => handleAction(v, 'ACTIVATE')} 
+                                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-green-500 bg-green-500/5'}`}
+                                                    >
                                                         <Play size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Activar</span>
                                                     </button>
                                                 ) : (
-                                                    <button onClick={() => handleAction(v.id, 'PAUSE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-500 hover:text-yellow-500">
+                                                    <button 
+                                                        disabled={!v.isProprio}
+                                                        onClick={() => handleAction(v, 'PAUSE')} 
+                                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-yellow-500'}`}
+                                                    >
                                                         <PauseCircle size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
                                                     </button>
                                                 )}
                                             </>
                                         )}
 
-                                        <button onClick={() => handleAction(v.id, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.commercial_status === 'reservado' ? 'text-orange-500 bg-orange-500/5' : 'text-slate-500 hover:text-orange-500'}`}>
+                                        <button 
+                                            disabled={!v.isProprio}
+                                            onClick={() => handleAction(v, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} 
+                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : (v.commercial_status === 'reservado' ? 'text-orange-500 bg-orange-500/5' : 'text-slate-500 hover:text-orange-500')}`}
+                                        >
                                             <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">{v.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</span>
                                         </button>
 
-                                        <button onClick={() => handleAction(v.id, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.commercial_status === 'vendido' ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>
+                                        <button 
+                                            disabled={!v.isProprio}
+                                            onClick={() => handleAction(v, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} 
+                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : (v.commercial_status === 'vendido' ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]')}`}
+                                        >
                                             <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
                                         </button>
                                         
-                                        <button onClick={() => handleAction(v.id, 'DELETE')} className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-600 hover:text-red-500">
-                                            <Trash2 size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Borrar</span>
+                                        <button 
+                                            onClick={() => handleAction(v, 'DELETE')} 
+                                            className="flex-1 py-2 flex flex-col items-center gap-0.5 transition-all text-slate-600 hover:text-red-500"
+                                        >
+                                            {v.isProprio ? <Trash2 size={13}/> : <LogOut size={13}/>}
+                                            <span className="text-[7px] font-black uppercase tracking-tighter">{v.isProprio ? 'Borrar' : 'Quitar'}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -455,19 +477,54 @@ export default function InventoryPage() {
                                             <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-end gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
                                                     {isExpired ? (
-                                                        <button onClick={() => handleAction(v.id, 'RENEW')} className="text-blue-500"><RefreshCcw size={14}/></button>
+                                                        <button 
+                                                            disabled={!v.isProprio}
+                                                            onClick={() => handleAction(v, 'RENEW')} 
+                                                            className={`text-blue-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                        >
+                                                            <RefreshCcw size={14}/>
+                                                        </button>
                                                     ) : (
                                                         <>
                                                             {v.inventory_status === 'pausado' ? (
-                                                                <button onClick={() => handleAction(v.id, 'ACTIVATE')} className="text-green-500"><Play size={14}/></button>
+                                                                <button 
+                                                                    disabled={!v.isProprio}
+                                                                    onClick={() => handleAction(v, 'ACTIVATE')} 
+                                                                    className={`text-green-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                                >
+                                                                    <Play size={14}/>
+                                                                </button>
                                                             ) : (
-                                                                <button onClick={() => handleAction(v.id, 'PAUSE')} className="text-yellow-500"><PauseCircle size={14}/></button>
+                                                                <button 
+                                                                    disabled={!v.isProprio}
+                                                                    onClick={() => handleAction(v, 'PAUSE')} 
+                                                                    className={`text-yellow-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                                >
+                                                                    <PauseCircle size={14}/>
+                                                                </button>
                                                             )}
                                                         </>
                                                     )}
-                                                    <button onClick={() => handleAction(v.id, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={v.commercial_status === 'reservado' ? 'text-orange-500' : 'hover:text-orange-400'}><DollarSign size={14}/></button>
-                                                    <button onClick={() => handleAction(v.id, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} className={v.commercial_status === 'vendido' ? 'text-green-500' : 'hover:text-[#22c55e]'}><Check size={14}/></button>
-                                                    <button onClick={() => handleAction(v.id, 'DELETE')} className="hover:text-red-500"><Trash2 size={14}/></button>
+                                                    <button 
+                                                        disabled={!v.isProprio}
+                                                        onClick={() => handleAction(v, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} 
+                                                        className={`${v.commercial_status === 'reservado' ? 'text-orange-500' : 'hover:text-orange-400'} ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                    >
+                                                        <DollarSign size={14}/>
+                                                    </button>
+                                                    <button 
+                                                        disabled={!v.isProprio}
+                                                        onClick={() => handleAction(v, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} 
+                                                        className={`${v.commercial_status === 'vendido' ? 'text-green-500' : 'hover:text-[#22c55e]'} ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                    >
+                                                        <Check size={14}/>
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleAction(v, 'DELETE')} 
+                                                        className="hover:text-red-500"
+                                                    >
+                                                        {v.isProprio ? <Trash2 size={14}/> : <LogOut size={14}/>}
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -501,33 +558,56 @@ export default function InventoryPage() {
                                             <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Marca</span><span className="text-xs font-black uppercase">{selectedAuto.brand}</span></div>
                                             <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Modelo</span><span className="text-xs font-black uppercase">{selectedAuto.model}</span></div>
                                             <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Estado Inv.</span><span className="text-xs font-black uppercase text-[#00984a]">{isExpired ? 'VENCIDA' : selectedAuto.inventory_status}</span></div>
-                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Relación</span><span className="text-xs font-black uppercase text-orange-600">PROPIO (MÍO)</span></div>
+                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Relación</span><span className="text-xs font-black uppercase text-orange-600">{selectedAuto.isProprio ? 'PROPIO (MÍO)' : 'TERCERO (FLIP)'}</span></div>
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-2 pt-4">
-                                    <button className="bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2"><Pencil size={14}/> Editar</button>
+                                    <button 
+                                        disabled={!selectedAuto.isProprio}
+                                        className={`bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
+                                    >
+                                        <Pencil size={14}/> Editar
+                                    </button>
                                     
                                     {isExpired ? (
-                                        <button onClick={() => handleAction(selectedAuto.id, 'RENEW')} className="bg-blue-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg">
+                                        <button 
+                                            disabled={!selectedAuto.isProprio}
+                                            onClick={() => handleAction(selectedAuto, 'RENEW')} 
+                                            className={`bg-blue-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
+                                        >
                                             {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <RefreshCcw size={14}/>} Renovar
                                         </button>
                                     ) : (
                                         <>
                                             {selectedAuto.inventory_status === 'pausado' ? (
-                                                <button onClick={() => handleAction(selectedAuto.id, 'ACTIVATE')} className="bg-green-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg">
+                                                <button 
+                                                    disabled={!selectedAuto.isProprio}
+                                                    onClick={() => handleAction(selectedAuto, 'ACTIVATE')} 
+                                                    className={`bg-green-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
+                                                >
                                                     {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <Play size={14}/>} Activar
                                                 </button>
                                             ) : (
-                                                <button onClick={() => handleAction(selectedAuto.id, 'PAUSE')} className="bg-yellow-500 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg">
+                                                <button 
+                                                    disabled={!selectedAuto.isProprio}
+                                                    onClick={() => handleAction(selectedAuto, 'PAUSE')} 
+                                                    className={`bg-yellow-500 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
+                                                >
                                                     {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <PauseCircle size={14}/>} Pausar
                                                 </button>
                                             )}
                                         </>
                                     )}
 
-                                    <button onClick={() => handleAction(selectedAuto.id, selectedAuto.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} className={`py-3.5 rounded-xl text-[10px] font-black uppercase border flex items-center justify-center gap-2 transition-all ${selectedAuto.commercial_status === 'reservado' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}><DollarSign size={14}/> {selectedAuto.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</button>
+                                    <button 
+                                        disabled={!selectedAuto.isProprio}
+                                        onClick={() => handleAction(selectedAuto, selectedAuto.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} 
+                                        className={`py-3.5 rounded-xl text-[10px] font-black uppercase border flex items-center justify-center gap-2 transition-all ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : (selectedAuto.commercial_status === 'reservado' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50')}`}
+                                    >
+                                        <DollarSign size={14}/> {selectedAuto.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
