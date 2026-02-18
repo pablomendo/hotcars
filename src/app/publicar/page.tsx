@@ -109,23 +109,23 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
       const { data: profile } = await supabase
         .from('usuarios')
         .select('plan_type')
-        .eq('id', uId)
+        .eq('auth_id', uId)
         .maybeSingle();
       
-      const currentPlan = profile?.plan_type ? profile.plan_type.trim().toUpperCase() : "FREE";
+      if (!profile?.plan_type) return;
+
+      const dbPlan = profile.plan_type.trim().toLowerCase();
+      const currentPlan = dbPlan.toUpperCase();
       setUserPlan(currentPlan);
 
-      // Si el plan es FREE, forzamos isFlipActive a true
-      if (currentPlan === "FREE") {
-        setIsFlipActive(true);
-      } else {
-        setIsFlipActive(false);
-      }
+      // REGLA SOLICITADA: Tanto FREE como PRO/VIP inician con el Flip ACTIVADO
+      // Pero solo los NO-FREE podrán apagarlo más tarde.
+      setIsFlipActive(true);
 
       const { data: planData } = await supabase
         .from('plan_limits')
         .select('max_inventory_vehicles')
-        .ilike('plan_type', currentPlan)
+        .ilike('plan_type', dbPlan)
         .maybeSingle();
 
       const limit = planData?.max_inventory_vehicles ?? (currentPlan === 'FREE' ? 12 : 25);
@@ -156,12 +156,15 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     fetchUser();
   }, []);
 
-  const handleSelectCategory = (catName: string) => {
-    setSelectedCategory(catName);
-    setStep(2);
+  useEffect(() => {
     if (userId) {
       fetchLimitsAndPlan(userId);
     }
+  }, [userId]);
+
+  const handleSelectCategory = (catName: string) => {
+    setSelectedCategory(catName);
+    setStep(2);
   };
 
   useEffect(() => {
@@ -323,7 +326,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     setSelectedYear(""); setSelectedVersion(""); setKm(""); setMainPhoto(null);
     setVehiclePhotos([]);
     setSelectedHighlights([]); setPvStr(""); setPcStr(""); setDescription(""); setIsManual(false);
-    setProvincia(""); setLocalidad(""); setShareUser(""); setIsFlipActive(false);
+    setProvincia(""); setLocalidad(""); setShareUser(""); 
+    setIsFlipActive(true); // Reinicia siempre activo
     setOpenSection(null); 
     setPublishStatus("loading");
     setWillBePaused(false);
@@ -660,15 +664,21 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 </div>
                 <div className="mt-2 p-5 bg-gray-50 border border-gray-200 rounded-2xl space-y-4 shadow-inner">
                     <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2"><Share2 size={12} className="text-gray-400"/> Flip Compartido</label>
+                        <div className="flex flex-col gap-0.5">
+                            <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
+                                <Share2 size={12} className="text-gray-400"/> Flip Compartido
+                            </label>
+                            {userPlan === "FREE" && <span className="text-[7px] font-bold text-orange-500 uppercase ml-5">Obligatorio en Plan Free</span>}
+                        </div>
                         <button 
                           type="button" 
                           onClick={() => {
+                            // REGLA: Activado por defecto, pero solo los PRO/VIP pueden apagarlo
                             if (userPlan !== "FREE") {
-                              setIsFlipActive(!isFlipActive);
+                              setIsFlipActive(prev => !prev);
                             }
                           }} 
-                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border shadow-md ${isFlipActive ? "bg-[#2563eb] border-[#2563eb] text-white" : "bg-gray-300 border-gray-400 text-gray-600"} ${userPlan === "FREE" ? "cursor-not-allowed" : "cursor-pointer active:scale-95"}`}
+                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border shadow-md ${isFlipActive ? "bg-[#2563eb] border-[#2563eb] text-white" : "bg-gray-200 border-gray-300 text-gray-500"} ${userPlan === "FREE" ? "pointer-events-none opacity-80" : "cursor-pointer active:scale-95"}`}
                         >
                           {isFlipActive ? "Flip activado" : "Activar Flip"}
                         </button>

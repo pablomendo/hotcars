@@ -2,12 +2,14 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle
 } from 'lucide-react';
 
 export default function InventoryPage() {
+    const router = useRouter();
     const [inv, setInv] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     // NUEVO: Estado para gestionar la carga individual por unidad
@@ -21,10 +23,17 @@ export default function InventoryPage() {
 
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
     const [openSection, setOpenSection] = useState<string | null>('unidad');
+    const [showLimitModal, setShowLimitModal] = useState(false);
 
     const extraInfo = useMemo(() => {
         if (!selectedAuto) return null;
-        return (hiddenData as any[]).find((item: any) => item.id === selectedAuto.id);
+        // Blindaje contra error "find is not a function" validando que sea un array
+        const dataArray = Array.isArray(hiddenData) 
+            ? hiddenData 
+            : (hiddenData as any)?.default || [];
+            
+        if (!Array.isArray(dataArray)) return null;
+        return dataArray.find((item: any) => item.id === selectedAuto.id);
     }, [selectedAuto]);
 
     useEffect(() => {
@@ -57,7 +66,7 @@ export default function InventoryPage() {
         const channel = supabase
             .channel('inventory-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {
-                if (userId) fetchInventory(userId);
+                // Se deshabilita el fetch automático aquí para evitar el "rebote" visual durante updates manuales
             })
             .subscribe();
 
@@ -69,12 +78,13 @@ export default function InventoryPage() {
     const fetchInventory = async (currentUserId?: string) => {
         if (!currentUserId) return;
         try {
-            // CIRUGÍA: Consultar mis autos y los flips aprobados simultáneamente
+            // CIRUGÍA: Se añade .order para asegurar que el contenido nuevo aparezca primero
             const [misAutos, misFlips] = await Promise.all([
                 supabase
                     .from('inventario')
                     .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id, is_flip')
-                    .eq('owner_user_id', currentUserId),
+                    .eq('owner_user_id', currentUserId)
+                    .order('created_at', { ascending: false }),
                 supabase
                     .from('flip_compartido')
                     .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id, is_flip)')
@@ -87,7 +97,10 @@ export default function InventoryPage() {
                 .map((f: any) => f.inventario)
                 .filter((i: any) => i !== null);
 
-            const allData = [...propios, ...terceros];
+            // Se ordena el array combinado por fecha de creación descendente
+            const allData = [...propios, ...terceros].sort((a, b) => 
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
 
             const mappedData = allData.map(v => {
                 const pvValue = Number(v.pv) || 0;
@@ -140,9 +153,28 @@ export default function InventoryPage() {
                     setProcessingId(null);
                 }
             } else {
+                // BLINDAJE PARA TERCEROS (FLIP): Eliminación real en DB para evitar rebote
                 if (!confirm('Esta unidad es un FLIP compartido. ¿Deseas quitarla de tu inventario?')) return;
-                setInv(prev => prev.filter(i => i.id !== id));
-                if (selectedAuto?.id === id) setSelectedAuto(null);
+                setProcessingId(id);
+                try {
+                    const { error } = await supabase
+                        .from('flip_compartido')
+                        .delete()
+                        .eq('auto_id', id)
+                        .eq('vendedor_user_id', userId);
+
+                    if (error) throw error;
+
+                    setInv(prev => prev.filter(i => i.id !== id));
+                    if (selectedAuto?.id === id) setSelectedAuto(null);
+                    
+                    // Actualizar conteos y lista
+                    await fetchInventory(userId || undefined);
+                } catch (err: any) {
+                    alert("Error al quitar flip: " + err.message);
+                } finally {
+                    setProcessingId(null);
+                }
             }
             return;
         }
@@ -152,29 +184,37 @@ export default function InventoryPage() {
             return;
         }
 
-        setProcessingId(id); // Marcamos el ID en proceso
+        setProcessingId(id);
         try {
             let updateData: any = {};
-            
+
+            // ✅ CORREGIDO: ACTIVATE y RENEW usan RPC del servidor, sin setTimeout ni lógica de límites en cliente
             if (action === 'ACTIVATE' || action === 'RENEW') {
-                const { data: planData } = await supabase
-                    .from('plan_limits')
-                    .select('max_inventory_vehicles')
-                    .ilike('plan_type', userPlan)
-                    .maybeSingle();
+                const { data, error } = await supabase.rpc('activar_vehiculo_inventario', {
+                    p_auto_id: id,
+                    p_user_id: userId,
+                    p_accion: action
+                });
 
-                const limit = planData?.max_inventory_vehicles ?? (userPlan.toUpperCase() === 'FREE' ? 12 : userPlan.toUpperCase() === 'PRO' ? 25 : 9999);
-                const activeUnits = inv.filter(v => (v.inventory_status === 'activo' && v.isProprio)).length;
+                if (error) throw error;
 
-                if (userPlan.toUpperCase() !== 'VIP' && activeUnits >= limit) {
-                    alert(`Has alcanzado el límite de unidades activas para tu Plan ${userPlan} (${activeUnits}/${limit}). Pasate al plan Pro para gestionar más vehículos.`);
-                    setProcessingId(null);
-                    return; 
+                if (!data.ok) {
+                    if (data.error === 'limite_alcanzado') {
+                        setShowLimitModal(true);
+                    }
+                    return;
                 }
-                updateData = { 
-                    inventory_status: 'activo',
-                    expires_at: action === 'RENEW' ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : undefined 
-                };
+
+                updateData = action === 'RENEW'
+                    ? { inventory_status: 'activo', expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() }
+                    : { inventory_status: 'activo' };
+
+                // Actualización optimista en UI
+                setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
+                if (selectedAuto?.id === id) setSelectedAuto((prev: any) => ({ ...prev, ...updateData }));
+
+                setTimeout(() => fetchInventory(userId || undefined), 500);
+                return;
             } else if (action === 'PAUSE') {
                 updateData = { inventory_status: 'pausado', show_on_web: false };
             } else if (action === 'RESERVE') {
@@ -185,12 +225,15 @@ export default function InventoryPage() {
                 updateData = { commercial_status: 'disponible' };
             }
 
-            // ACTUALIZACIÓN OPTIMISTA: Reflejamos el cambio en UI antes de la DB
+            // ACTUALIZACIÓN OPTIMISTA: Reflejamos el cambio en UI antes de la DB para evitar rebotes
             setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
+            if (selectedAuto?.id === id) setSelectedAuto((prev: any) => ({ ...prev, ...updateData }));
 
             const { error } = await supabase.from('inventario').update(updateData).eq('id', id);
             if (error) throw error;
-            fetchInventory(userId || undefined);
+            
+            // Refresco suave después de la persistencia
+            setTimeout(() => fetchInventory(userId || undefined), 500);
         } catch (err: any) { 
             alert(err.message);
             fetchInventory(userId || undefined); // Revertir si falla
@@ -238,7 +281,7 @@ export default function InventoryPage() {
     if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]"><Loader2 className="h-10 w-10 animate-spin text-[#22c55e]" /></div>;
 
     return (
-        <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans">
+        <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans text-left">
             <style jsx global>{`
                 @font-face {
                     font-family: 'Genos';
@@ -246,6 +289,27 @@ export default function InventoryPage() {
                 }
                 button { cursor: pointer; }
             `}</style>
+
+            {showLimitModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
+                    <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                        <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-8 text-orange-600 border border-orange-100">
+                            <AlertCircle size={48} strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-2xl font-black uppercase text-[#1e293b] mb-4">Límite alcanzado</h3>
+                        <p className="text-gray-500 text-[15px] leading-relaxed mb-10 font-medium text-center">
+                            Tu plan actual no permite sumar más unidades activas. <br/> Liberá cupo o actualizá tu suscripción ahora.
+                        </p>
+                        <button 
+                            onClick={() => router.push('/planes')} 
+                            className="w-full py-5 bg-[#ff4d00] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-200 hover:bg-[#e64500] transition-all active:scale-95 mb-6"
+                        >
+                            Mejorar plan ahora
+                        </button>
+                        <button onClick={() => setShowLimitModal(false)} className="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] hover:text-gray-600">Cerrar</button>
+                    </div>
+                </div>
+            )}
 
             <div className="fixed top-20 left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-6 pt-[14px] pb-3 lg:h-20">
                 <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center">
@@ -284,7 +348,7 @@ export default function InventoryPage() {
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userPlan}</span>
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                {counts.PROPIOS} / {userPlan.toUpperCase() === 'VIP' ? '∞' : (userPlan.toUpperCase() === 'PRO' ? 25 : 12)} Unidades
+                                {counts.ACTIVOS} / {userPlan.toUpperCase() === 'VIP' ? '∞' : (userPlan.toUpperCase() === 'PRO' ? 25 : 12)} Unidades
                             </span>
                         </div>
                     </div>
@@ -332,7 +396,13 @@ export default function InventoryPage() {
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
                                         )}
-                                        {isExpired && (
+                                        {/* BADGE FLIP COMPARTIDO */}
+                                        {!v.isProprio && (
+                                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#2596be] rounded flex items-center gap-1 text-[8px] font-black text-white z-10 shadow-lg border border-white/20 uppercase tracking-tighter animate-pulse">
+                                                <Zap size={8} fill="currentColor" /> Flip Compartido
+                                            </div>
+                                        )}
+                                        {v.isProprio && isExpired && (
                                             <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 rounded text-[9px] font-bold text-white z-10">VENCIDA</div>
                                         )}
                                         {v.commercial_status === 'reservado' && (
@@ -463,10 +533,16 @@ export default function InventoryPage() {
                                     const isProcessing = processingId === v.id;
                                     return (
                                         <tr key={v.id} onClick={() => !isProcessing && setSelectedAuto(v)} className={`hover:bg-white/[0.02] transition-colors group cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
-                                            <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2">
+                                            <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2 text-left">
                                                 {isProcessing ? <Loader2 size={12} className="animate-spin text-[#22c55e]" /> : null}
-                                                {isExpired && <span className="text-[8px] bg-red-600 px-1 rounded text-white">VENCIDA</span>}
                                                 {v.brand} {v.model}
+                                                {/* BADGE FLIP LISTA */}
+                                                {!v.isProprio && (
+                                                    <span className="text-[7px] bg-[#2596be]/20 text-[#2596be] px-1.5 py-0.5 rounded border border-[#2596be]/30 flex items-center gap-1">
+                                                        <Zap size={7} fill="currentColor"/> FLIP
+                                                    </span>
+                                                )}
+                                                {v.isProprio && isExpired && <span className="text-[8px] bg-red-600 px-1 rounded text-white">VENCIDA</span>}
                                             </td>
                                             <td className="p-4 text-right font-mono opacity-50 text-[10px] uppercase">
                                                 {v.isProprio ? 'MÍO' : 'TERCERO'}

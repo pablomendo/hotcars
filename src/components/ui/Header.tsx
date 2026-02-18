@@ -113,7 +113,8 @@ export default function Header() {
                         <NavLink href="/dashboard/web">
                             Mi Web <span className="text-[#00984a] text-[10px] ml-1">●</span>
                         </NavLink>
-                        <NavLink href="/flips">Flips Compartidos</NavLink>
+                        {/* CIRUGÍA: Actualizado de /flips a /flips-compartidos */}
+                        <NavLink href="/flips-compartidos">Flips Compartidos</NavLink>
                         <NavLink href="/messages">Mensajes</NavLink>
                         <NavLink href="/searched">Vehículos Buscados</NavLink>
                     </nav>
@@ -175,7 +176,8 @@ export default function Header() {
                             <MobileNavLink href="/dashboard">Dashboard</MobileNavLink>
                             <MobileNavLink href="/inventario">Inventario</MobileNavLink>
                             <MobileNavLink href="/dashboard/web">Mi Web</MobileNavLink>
-                            <MobileNavLink href="/flips">Flips Compartidos</MobileNavLink>
+                            {/* CIRUGÍA: Actualizado de /flips a /flips-compartidos */}
+                            <MobileNavLink href="/flips-compartidos">Flips Compartidos</MobileNavLink>
                             <MobileNavLink href="/messages">Mensajes</MobileNavLink>
                             <MobileNavLink href="/searched">Vehículos Buscados</MobileNavLink>
                         </div>

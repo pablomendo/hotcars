@@ -17,10 +17,18 @@ export default function MiWebPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     
     const [openConfig, setOpenConfig] = useState(false);
-    const [userData, setUserData] = useState({ plan_type: 'FREE' }); 
+    const [userData, setUserData] = useState<{ plan_type: string; id: string | null }>({ plan_type: 'FREE', id: null }); 
+    const [planFeatures, setPlanFeatures] = useState({
+        custom_domain: false,
+        banners: false,
+        footer: false,
+        cover_image: false
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [previewImage, setPreviewImage] = useState('/portada_mi_web.jpg');
     const [showSocialsInFooter, setShowSocialsInFooter] = useState(false);
+    const [showLimitModal, setShowLimitModal] = useState(false);
+    const [maxWebVehicles, setMaxWebVehicles] = useState(10);
 
     const [config, setConfig] = useState({
         subdomain: 'miagencia',
@@ -36,18 +44,12 @@ export default function MiWebPage() {
         telefono: ''
     });
 
-    const limits = {
-        FREE: 10,
-        PRO: 20,
-        VIP: Infinity
-    };
-
     const handleSaveConfig = () => {
         console.log("Configuración guardada localmente:", config);
     };
 
     const handleTriggerFile = (e: React.MouseEvent) => {
-        if (userData.plan_type === 'FREE') return;
+        if (!planFeatures.cover_image) return;
         e.stopPropagation();
         fileInputRef.current?.click();
     };
@@ -67,13 +69,35 @@ export default function MiWebPage() {
                 const { data: profile } = await supabase
                     .from('usuarios')
                     .select('plan_type')
-                    .eq('id', user.id)
+                    .eq('auth_id', user.id)
                     .single();
-                if (profile) setUserData({ plan_type: profile.plan_type.toUpperCase() });
+
+                if (profile) {
+                    const planType = profile.plan_type.toUpperCase();
+                    setUserData({ plan_type: planType, id: user.id });
+
+                    const [featuresRes, limitsRes] = await Promise.all([
+                        supabase
+                            .from('plan_features')
+                            .select('custom_domain, banners, footer, cover_image')
+                            .eq('plan_type', profile.plan_type.toLowerCase())
+                            .single(),
+                        supabase
+                            .from('plan_limits')
+                            .select('max_web_vehicles')
+                            .ilike('plan_type', profile.plan_type)
+                            .single()
+                    ]);
+
+                    if (featuresRes.data) setPlanFeatures(featuresRes.data);
+                    if (limitsRes.data) setMaxWebVehicles(limitsRes.data.max_web_vehicles || 10);
+
+                    await fetchInventory(user.id);
+                }
             }
         };
         fetchUserData();
-        fetchInventory();
+
         const channel = supabase
             .channel('hotcars-sync-real')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {
@@ -83,77 +107,99 @@ export default function MiWebPage() {
         return () => { supabase.removeChannel(channel); };
     }, []);
 
-    const fetchInventory = async () => {
+    const fetchInventory = async (currentUserId?: string) => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            const uid = currentUserId || user?.id;
 
-            // CONSULTA SINCRONIZADA: Solo lo real del usuario, excluyendo borradores
-            const { data, error } = await supabase
-                .from('inventario')
-                .select('*')
-                .eq('created_by_user_id', user.id)
-                .neq('publish_status', 'borrador')
-                .order('created_at', { ascending: false });
+            console.log('UID:', uid);
 
-            if (!error && data) {
-                const limitWeb = limits[userData.plan_type as keyof typeof limits] || 10;
-                let visibleCount = 0;
+            if (!uid) return;
 
-                const mappedData = data.map((v) => {
-                    const status = (v.inventory_status || 'activo').toLowerCase();
-                    let shouldShow = !!v.show_on_web;
+            const [propiosRes, flipsRes] = await Promise.all([
+                supabase
+                    .from('inventario')
+                    .select('*')
+                    .eq('created_by_user_id', uid)
+                    .neq('publish_status', 'borrador')
+                    .order('created_at', { ascending: false }),
+                supabase
+                    .from('flip_compartido')
+                    .select('auto_id, inventario:auto_id(*)')
+                    .eq('vendedor_user_id', uid)
+                    .eq('status', 'approved')
+            ]);
 
-                    // Bloqueo estricto: Pausados nunca van a la web
-                    if (status === 'pausado') shouldShow = false;
+            console.log('Propios data:', propiosRes.data);
+            console.log('Propios error:', propiosRes.error);
+            console.log('Flips data:', flipsRes.data);
 
-                    // Validación de cupo por plan
-                    if (shouldShow) {
-                        if (visibleCount < limitWeb) {
-                            visibleCount++;
-                        } else {
-                            shouldShow = false; 
-                        }
-                    }
+            const propios = propiosRes.data || [];
+            const terceros = (flipsRes.data || [])
+                .map((f: any) => f.inventario)
+                .filter((i: any) => i !== null);
 
-                    return {
-                        ...v,
-                        brand: v.marca, 
-                        model: v.modelo, 
-                        year: v.anio, 
-                        km: v.km,
-                        image: v.fotos?.[0] || null,
-                        inventory_status: status,
-                        show: shouldShow, 
-                        featured: !!v.is_featured,
-                        isNew: !!v.is_new,
-                        priceDisplay: `${v.moneda === 'USD' ? 'U$S ' : '$ '}${Number(v.pv || 0).toLocaleString('es-AR')}`
-                    };
-                });
-                setInv(mappedData);
-            }
+            const allData = [...propios, ...terceros].sort((a, b) =>
+                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+
+            const mappedData = allData.map((v) => {
+                const status = (v.inventory_status || 'activo').toLowerCase();
+                let shouldShow = !!v.show_on_web;
+                if (status === 'pausado') shouldShow = false;
+
+                return {
+                    ...v,
+                    brand: v.marca,
+                    model: v.modelo,
+                    year: v.anio,
+                    km: v.km,
+                    image: v.fotos?.[0] || null,
+                    inventory_status: status,
+                    show: shouldShow,
+                    featured: !!v.is_featured,
+                    isNew: !!v.is_new,
+                    isProprio: v.created_by_user_id === uid,
+                    priceDisplay: `${v.moneda === 'USD' ? 'U$S ' : '$ '}${Number(v.pv || 0).toLocaleString('es-AR')}`
+                };
+            });
+
+            setInv(mappedData);
         } catch (err) { console.error(err); } finally { setLoading(false); }
     };
 
     const handleAction = async (id: string, updates: any) => {
         const item = inv.find(v => v.id === id);
-        
-        if (updates.show_on_web === true) {
-            if (item?.inventory_status === 'pausado') {
+
+        if ('show_on_web' in updates) {
+            const mostrar = updates.show_on_web;
+
+            if (mostrar && item?.inventory_status === 'pausado') {
                 alert("No podés mostrar en la web una unidad que está pausada en el inventario.");
                 return;
             }
 
-            const limit = limits[userData.plan_type as keyof typeof limits] || 10;
-            const currentShowing = inv.filter(v => v.show).length;
-            
-            if (userData.plan_type !== 'VIP' && currentShowing >= limit) {
-                alert(
-                    `¡Límite alcanzado! Tu plan ${userData.plan_type} permite hasta ${limit} unidades visibles.\n\n` +
-                    `Subí a un plan superior para mostrar más unidades simultáneamente.`
-                );
+            const { data, error } = await supabase.rpc('toggle_visibilidad_web', {
+                p_auto_id: id,
+                p_user_id: userData.id,
+                p_mostrar: mostrar
+            });
+
+            if (error) {
+                console.error(error);
                 return;
             }
+
+            if (!data.ok) {
+                if (data.error === 'limite_alcanzado') {
+                    setShowLimitModal(true);
+                }
+                return;
+            }
+
+            setInv(prev => prev.map(v => v.id === id ? { ...v, show: mostrar, show_on_web: mostrar } : v));
+            setTimeout(() => fetchInventory(), 500);
+            return;
         }
 
         await supabase.from('inventario').update(updates).eq('id', id);
@@ -194,13 +240,40 @@ export default function MiWebPage() {
                 button { cursor: pointer; }
             `}</style>
 
+            {showLimitModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
+                    <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                        <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-8 text-orange-600 border border-orange-100">
+                            <EyeOff size={48} strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-2xl font-black uppercase text-[#1e293b] mb-4">Límite de visibles</h3>
+                        <p className="text-gray-500 text-[15px] leading-relaxed mb-10 font-medium text-center">
+                            Tu plan permite hasta <strong>{maxWebVehicles}</strong> unidades visibles en tu web. <br/> Ocultá alguna o mejorá tu plan.
+                        </p>
+                        <button 
+                            onClick={() => setShowLimitModal(false)} 
+                            className="w-full py-5 bg-[#ff4d00] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-200 hover:bg-[#e64500] transition-all active:scale-95 mb-6"
+                        >
+                            Mejorar plan ahora
+                        </button>
+                        <button onClick={() => setShowLimitModal(false)} className="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] hover:text-gray-600">Cerrar</button>
+                    </div>
+                </div>
+            )}
+
             <div className="fixed top-0 left-0 right-0 z-[50] bg-[#0b1114] border-b border-white/5 px-6 py-4">
                 <div className="max-w-[1600px] mx-auto flex justify-between items-center h-12">
                     <div className="flex flex-col text-left">
                         <h1 style={{ fontFamily: 'Genos' }} className="text-white text-2xl font-light tracking-[6px] uppercase leading-none">Mi Web</h1>
                         <span className="text-[9px] text-[#22c55e] font-mono tracking-tight uppercase opacity-70 mt-1">agenciamendo.hotcars.com</span>
                     </div>
-                    <button className="bg-[#134e4d] text-white px-6 py-2 rounded-xl text-[11px] font-black uppercase shadow-lg border border-[#22c55e]/20 transition-all">Publicar</button>
+                    <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userData.plan_type}</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            {counts.VISIBLE} / {userData.plan_type === 'VIP' ? '∞' : maxWebVehicles} visibles
+                        </span>
+                        <button className="bg-[#134e4d] text-white px-6 py-2 rounded-xl text-[11px] font-black uppercase shadow-lg border border-[#22c55e]/20 transition-all">Publicar</button>
+                    </div>
                 </div>
             </div>
 
@@ -246,8 +319,8 @@ export default function MiWebPage() {
                                     </div>
                                 </ConfigCard>
 
-                                <ConfigCard title="Dominio Propio" description="Solo VIP">
-                                    <div className={`flex flex-col gap-3 ${userData.plan_type !== 'VIP' ? 'opacity-20 pointer-events-none' : ''}`}>
+                                <ConfigCard title="Dominio Propio" description={planFeatures.custom_domain ? 'Disponible en tu plan' : 'Solo VIP'}>
+                                    <div className={`flex flex-col gap-3 ${!planFeatures.custom_domain ? 'opacity-20 pointer-events-none' : ''}`}>
                                         <div className="flex items-center justify-end gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
                                             <input className="bg-transparent text-xs text-white outline-none w-full font-bold uppercase text-right" placeholder="miagencia.com.ar" value={config.customDomain} onChange={(e) => setConfig({...config, customDomain: e.target.value.toLowerCase()})} />
                                             <Globe size={14} className="text-slate-500" />
@@ -269,14 +342,14 @@ export default function MiWebPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <ConfigCard title="Editar Portada" description="Imagen 16:9">
+                                <ConfigCard title="Editar Portada" description={planFeatures.cover_image ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
                                     <div className="relative aspect-video rounded-xl border border-white/10 overflow-hidden bg-slate-900 group">
-                                        <img src={previewImage} className={`w-full h-full object-cover opacity-60 ${userData.plan_type === 'FREE' ? 'grayscale' : ''}`} alt="Preview" />
+                                        <img src={previewImage} className={`w-full h-full object-cover opacity-60 ${!planFeatures.cover_image ? 'grayscale' : ''}`} alt="Preview" />
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
                                             <input className="bg-transparent text-white text-lg font-black uppercase tracking-[4px] text-center outline-none w-full mb-1" value={config.title} onChange={(e) => setConfig({...config, title: e.target.value})} />
                                             <input className="bg-transparent text-slate-300 text-[10px] uppercase tracking-widest text-center outline-none w-full" value={config.subtitle} onChange={(e) => setConfig({...config, subtitle: e.target.value})} />
                                             <div className="flex flex-col items-center gap-4 mt-6">
-                                                <button onClick={handleTriggerFile} className={`bg-white/10 text-white text-[10px] font-black px-5 py-2 rounded uppercase border border-white/10 transition-all flex items-center gap-2 ${userData.plan_type === 'FREE' ? 'opacity-20 pointer-events-none' : ''}`}><Upload size={14} /> Agregar Foto</button>
+                                                <button onClick={handleTriggerFile} className={`bg-white/10 text-white text-[10px] font-black px-5 py-2 rounded uppercase border border-white/10 transition-all flex items-center gap-2 ${!planFeatures.cover_image ? 'opacity-20 pointer-events-none' : ''}`}><Upload size={14} /> Agregar Foto</button>
                                                 <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-10 py-2 rounded uppercase shadow-xl">Confirmar</button>
                                             </div>
                                         </div>
@@ -284,16 +357,16 @@ export default function MiWebPage() {
                                     </div>
                                 </ConfigCard>
 
-                                <ConfigCard title="Banners Promocionales" description="Solo VIP">
-                                    <div className={`grid grid-cols-1 gap-3 aspect-video flex flex-col ${userData.plan_type !== 'VIP' ? 'opacity-20 pointer-events-none' : ''}`}>
+                                <ConfigCard title="Banners Promocionales" description={planFeatures.banners ? 'Disponible en tu plan' : 'Solo VIP'}>
+                                    <div className={`grid grid-cols-1 gap-3 aspect-video flex flex-col ${!planFeatures.banners ? 'opacity-20 pointer-events-none' : ''}`}>
                                         <div className="flex-1 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:border-[#134e4d]/30 transition-all cursor-pointer relative"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 1</span></div>
                                         <div className="flex-1 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:border-[#134e4d]/30 transition-all cursor-pointer relative"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 2</span></div>
                                     </div>
                                 </ConfigCard>
                             </div>
 
-                            <ConfigCard title="Pie de Página" description="Solo VIP">
-                                <div className={`flex flex-col gap-4 ${userData.plan_type !== 'VIP' ? 'opacity-20 pointer-events-none' : ''}`}>
+                            <ConfigCard title="Pie de Página" description={planFeatures.footer ? 'Disponible en tu plan' : 'Solo VIP'}>
+                                <div className={`flex flex-col gap-4 ${!planFeatures.footer ? 'opacity-20 pointer-events-none' : ''}`}>
                                     <div className="flex flex-row items-center gap-2 mt-2">
                                         <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><MapPin size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Direccion" value={config.direccion} onChange={(e) => setConfig({...config, direccion: e.target.value})} /></div>
                                         <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><Clock size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Horarios" value={config.horarios} onChange={(e) => setConfig({...config, horarios: e.target.value})} /></div>
@@ -335,6 +408,7 @@ export default function MiWebPage() {
                                             {v.featured && <span className="bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Destacado</span>}
                                             {v.isNew && <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Nuevo</span>}
                                             {!v.show && <span className="bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Oculto</span>}
+                                            {!v.isProprio && <span className="bg-[#2596be] text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Flip</span>}
                                         </div>
                                     </div>
                                     <div className="text-left font-sans">
