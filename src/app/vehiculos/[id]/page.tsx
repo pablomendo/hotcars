@@ -4,10 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
-  Loader2, MapPin, MessageCircle, Share2, 
+  Star, Eye, EyeOff, Check, Settings, Zap, Plus, DollarSign, 
+  Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle,
+  Instagram, Facebook, MessageCircle, Share2, 
   RefreshCw, Heart, Handshake, CheckCircle2, User, ChevronLeft, ChevronRight, 
-  Image as ImageIcon, Car, Calendar, Gauge, Settings, Tag, TrendingUp, X, Zap, ShieldAlert, AlertCircle, ChevronRight as ChevronIcon
+  ImageIcon, Car, Calendar, Gauge, Tag, TrendingUp, X, ShieldAlert, AlertCircle, 
+  Loader2, MapPin
 } from 'lucide-react';
+
+const ChevronRightIcon = ChevronRight;
 
 export default function VehicleDetailPage() {
   const params = useParams();
@@ -28,8 +33,15 @@ export default function VehicleDetailPage() {
   const fetchVehicleData = useCallback(async () => {
     try {
       setLoading(true);
+      
+      const paramId = params.id as string;
+      if (!paramId) return;
+
+      // Extraemos el ID real (los últimos 36 caracteres)
+      const realId = paramId.length > 36 ? paramId.slice(-36) : paramId;
+
       const [vRes, sessionRes] = await Promise.all([
-        supabase.from('inventario').select('*').eq('id', params.id).single(),
+        supabase.from('inventario').select('*').eq('id', realId).single(),
         supabase.auth.getSession()
       ]);
 
@@ -40,6 +52,22 @@ export default function VehicleDetailPage() {
       
       setVehicle(currentVehicle);
       setUser(currentUser);
+
+      // --- LÓGICA DE AUTO-REDIRECCIÓN A URL BONITA ---
+      if (currentVehicle) {
+        const slug = `${currentVehicle.marca}-${currentVehicle.modelo}-${currentVehicle.anio}`
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)+/g, '');
+        
+        const expectedPath = `${slug}-${currentVehicle.id}`;
+        
+        // Si la URL actual no coincide con la URL "bonita", la actualizamos
+        if (paramId !== expectedPath) {
+          window.history.replaceState(null, '', `/vehiculos/${expectedPath}`);
+        }
+      }
+      // ----------------------------------------------
 
       if (currentUser && currentVehicle) {
         const { data: flipData } = await supabase
@@ -71,24 +99,15 @@ export default function VehicleDetailPage() {
 
   const handleFlipAction = async () => {
     if (!user || !vehicle || flipStatus || isProcessing) return; 
-    
-    // 1. FRENO DE MANO INMEDIATO: MODAL DE CARGA
     setShowLoadingModal(true);
     setIsProcessing(true);
-
-    // 2. ESPERA OBLIGATORIA DE 4.5 SEGUNDOS (PARA ASEGURAR VISIBILIDAD)
     await new Promise(resolve => setTimeout(resolve, 4500));
-
     try {
-      // 3. LLAMAMOS AL RPC QUE YA GESTIONA LÍMITES Y NOMBRES DE COLUMNAS CORRECTOS
       const { data: rpcData, error: rpcError } = await supabase.rpc('activar_flip_compartido', {
         p_auto_id: vehicle.id,
         p_vendedor_user_id: user.id
       });
-
       if (rpcError) throw rpcError;
-
-      // 4. PROCESAMIENTO DE RESPUESTA ATÓMICA
       if (rpcData?.ok) {
         setFlipStatus(rpcData.status);
       } else if (rpcData?.error === 'limite_alcanzado') {
@@ -96,10 +115,8 @@ export default function VehicleDetailPage() {
         setShowLimitModal(true);
         return;
       } else {
-        // Alerta en caso de error de base de datos (columnas, tipos, etc)
         alert("Error de validación: " + (rpcData?.error || "Desconocido"));
       }
-      
     } catch (err: any) { 
       console.error("Error RPC Flip:", err);
       alert("Error de conexión: " + (err.message || "Verificá la consola"));
@@ -112,25 +129,16 @@ export default function VehicleDetailPage() {
   const handleRemoveFlip = async () => {
     const msg = flipStatus === 'pending' ? "¿Cancelar solicitud enviada?" : "¿Quitar este vehículo de tu inventario?";
     if (!confirm(msg)) return;
-    
     setIsProcessing(true);
-    // Optimistic Update para evitar el "rebote" (que se borre y vuelva al segundo)
     const previousStatus = flipStatus;
     setFlipStatus(null);
-
     try {
-      const { error } = await supabase.from('flip_compartido')
-        .delete()
-        .eq('auto_id', vehicle.id)
-        .eq('vendedor_user_id', user.id);
-      
+      const { error } = await supabase.from('flip_compartido').delete().eq('auto_id', vehicle.id).eq('vendedor_user_id', user.id);
       if (error) {
         setFlipStatus(previousStatus);
         throw error;
       }
-      
       router.refresh(); 
-
     } catch (err) {
       console.error("Error al borrar flip:", err);
     } finally {
@@ -158,10 +166,10 @@ export default function VehicleDetailPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f5f5] text-[#333] pb-12 font-sans overflow-x-hidden relative text-left">
-      
+      {/* Modales de Carga y Límite */}
       {showLoadingModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
-          <div className="bg-white rounded-3xl p-10 max-w-sm w-full shadow-2xl flex flex-col items-center">
+          <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center">
              <div className="relative w-20 h-20 mb-6">
                 <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
                 <div className="absolute inset-0 border-4 border-[#288b55] rounded-full border-t-transparent animate-spin"></div>
@@ -182,12 +190,7 @@ export default function VehicleDetailPage() {
             <p className="text-gray-500 text-[15px] leading-relaxed mb-10 font-medium text-center">
               Tu plan actual no permite sumar más unidades activas. <br/> Liberá cupo o actualizá tu suscripción ahora.
             </p>
-            <button 
-              onClick={() => router.push('/planes')} 
-              className="w-full py-5 bg-[#ff4d00] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-200 hover:bg-[#e64500] transition-all active:scale-95 mb-6"
-            >
-              Mejorar plan ahora
-            </button>
+            <button onClick={() => router.push('/planes')} className="w-full py-5 bg-[#ff4d00] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-200 hover:bg-[#e64500] transition-all active:scale-95 mb-6">Mejorar plan ahora</button>
             <button onClick={() => setShowLimitModal(false)} className="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] hover:text-gray-600">Cerrar</button>
           </div>
         </div>
@@ -200,13 +203,13 @@ export default function VehicleDetailPage() {
 
       <div className="max-w-[1200px] mx-auto mt-[75px] px-4 text-left">
         <div className="flex items-center gap-2 py-4 text-[13px] text-[#3483fa] overflow-x-auto whitespace-nowrap scrollbar-hide text-left">
-          <button onClick={() => router.push('/marketplace')} className="hover:underline cursor-pointer">Volver al listado</button>
+          <button onClick={() => router.push('/')} className="hover:underline cursor-pointer">Volver al listado</button>
           <span className="text-gray-300">|</span>
-          <button onClick={() => router.push(`/marketplace?categoria=${vehicle.categoria}`)} className="hover:underline capitalize cursor-pointer">{vehicle.categoria || 'Vehículos'}</button>
-          <ChevronIcon size={12} className="text-gray-400 flex-shrink-0" />
-          <button onClick={() => router.push(`/marketplace?marca=${vehicle.marca}`)} className="hover:underline capitalize cursor-pointer">{vehicle.marca}</button>
-          <ChevronIcon size={12} className="text-gray-400 flex-shrink-0" />
-          <button onClick={() => router.push(`/marketplace?marca=${vehicle.marca}&modelo=${vehicle.modelo}`)} className="hover:underline capitalize cursor-pointer">{vehicle.modelo}</button>
+          <button onClick={() => router.push(`/?categoria=${vehicle.categoria?.toLowerCase()}`)} className="hover:underline capitalize cursor-pointer">{vehicle.categoria || 'Vehículos'}</button>
+          <ChevronRightIcon size={12} className="text-gray-400 flex-shrink-0" />
+          <button onClick={() => router.push(`/?marca=${encodeURIComponent(vehicle.marca)}`)} className="hover:underline capitalize cursor-pointer">{vehicle.marca}</button>
+          <ChevronRightIcon size={12} className="text-gray-400 flex-shrink-0" />
+          <button onClick={() => router.push(`/?marca=${encodeURIComponent(vehicle.marca)}&modelo=${encodeURIComponent(vehicle.modelo)}`)} className="hover:underline capitalize cursor-pointer">{vehicle.modelo}</button>
         </div>
 
         <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden text-left">
@@ -233,7 +236,6 @@ export default function VehicleDetailPage() {
                 <h1 className="text-2xl font-bold text-[#333] leading-tight mb-1">{vehicle.marca} {vehicle.modelo}</h1>
                 <p className="text-[#3483fa] font-bold text-[14px] uppercase tracking-wide mb-1">{vehicle.version}</p>
                 <div className="flex items-center gap-1.5 text-gray-400 text-[12px] font-bold uppercase mb-4"><MapPin size={13}/> {vehicle.localidad}, {vehicle.provincia}</div>
-
                 <div className="mb-6">
                   <span className="text-4xl font-black text-[#333] tracking-tighter">{vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}</span>
                   {profitValue && (
@@ -242,38 +244,29 @@ export default function VehicleDetailPage() {
                     </div>
                   )}
                 </div>
-
                 {!isOwner && (
-                  <button 
-                    onClick={(flipStatus === 'approved' || flipStatus === 'pending') ? handleRemoveFlip : handleFlipAction} 
-                    disabled={isProcessing}
-                    className={`w-full mb-4 py-4 border-2 border-dashed rounded-xl font-black uppercase text-[12px] flex items-center justify-center gap-2 transition-all cursor-pointer ${flipStatus === 'approved' || flipStatus === 'pending' ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100' : 'border-[#2596be] text-[#2596be] hover:bg-[#2596be]/5 active:scale-95'}`}
-                  >
+                  <button onClick={(flipStatus === 'approved' || flipStatus === 'pending') ? handleRemoveFlip : handleFlipAction} disabled={isProcessing} className={`w-full mb-4 py-4 border-2 border-dashed rounded-xl font-black uppercase text-[12px] flex items-center justify-center gap-2 transition-all cursor-pointer ${flipStatus === 'approved' || flipStatus === 'pending' ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100' : 'border-[#2596be] text-[#2596be] hover:bg-[#2596be]/5 active:scale-95'}`}>
                     {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} fill={flipStatus ? "none" : "currentColor"} />} 
                     {getButtonLabel()}
                   </button>
                 )}
-
                 <div className="flex flex-col gap-3">
-                  <button className="w-full py-4 bg-[#3483fa] text-white rounded-xl font-bold text-[16px] hover:bg-[#2968c8] transition-colors cursor-pointer text-center font-bold">Contactar por WhatsApp</button>
+                  <button className="w-full py-4 bg-[#3483fa] text-white rounded-xl font-bold text-[16px] hover:bg-[#2968c8] transition-colors cursor-pointer text-center">Contactar por WhatsApp</button>
                   <div className="grid grid-cols-2 gap-2 mb-4 text-left">
                     <div className={`py-4 rounded-lg border flex items-center justify-center gap-2 ${vehicle.acepta_permuta ? 'bg-white border-gray-300 cursor-pointer text-[#1a1a1a]' : 'opacity-30 border-gray-100'}`}><RefreshCw size={16}/><span className="text-[12.5px] font-black uppercase tracking-tighter">Permuta</span></div>
                     <div className={`py-4 rounded-lg border flex items-center justify-center gap-2 ${vehicle.financiacion ? 'bg-white border-gray-300 cursor-pointer text-[#1a1a1a]' : 'opacity-30 border-gray-100'}`}><Handshake size={16}/><span className="text-[12.5px] font-black uppercase tracking-tighter">Financiamiento</span></div>
                   </div>
                 </div>
-
                 <div className="mt-2 pt-6 border-t border-gray-100">
                   <p className="text-[12px] text-gray-500 mb-4 font-bold uppercase tracking-widest text-left">Publicado el {publishDate}</p>
                   <div className="flex items-center gap-4 mb-4">
                     <div className="bg-[#f5f5f5] p-3 rounded-full text-[#3483fa]"><User size={24} /></div>
                     <div className="flex flex-col">
-                      <span className="text-md font-bold text-[#333]">
-                        {ownerData ? `@${ownerData.full_name?.toLowerCase().replace(/\s+/g, '')}` : '@cargando...'}
-                      </span>
+                      <span className="text-md font-bold text-[#333]">{ownerData ? `@${ownerData.full_name?.toLowerCase().replace(/\s+/g, '')}` : '@cargando...'}</span>
                       <span className="text-[12px] text-[#2596be] font-semibold">{ownerVehicleCount} unidades publicadas</span>
                     </div>
                   </div>
-                  <button onClick={() => router.push(`/perfil/${vehicle.owner_user_id}`)} className="w-full py-2.5 text-[#3483fa] font-bold text-[13px] border border-[#3483fa] rounded-lg hover:bg-blue-50 transition-colors cursor-pointer text-center font-bold">Ver perfil del vendedor</button>
+                  <button onClick={() => router.push(`/perfil/${vehicle.owner_user_id}`)} className="w-full py-2.5 text-[#3483fa] font-bold text-[13px] border border-[#3483fa] rounded-lg hover:bg-blue-50 transition-colors cursor-pointer text-center">Ver perfil del vendedor</button>
                 </div>
             </section>
           </div>
@@ -297,17 +290,16 @@ export default function VehicleDetailPage() {
               </div>
             </div>
           </div>
-
           <div className="md:col-span-4">
             <div className="bg-white p-6 rounded-md shadow-sm border border-gray-200 w-full text-left">
               <h4 className="font-bold text-lg mb-4 flex items-center gap-2 uppercase tracking-tighter"><ShieldAlert size={20} className="text-amber-500" /> Consejos de seguridad</h4>
               <ul className="flex flex-col gap-4 text-[13px] text-gray-600 font-medium">
                 <li className="flex gap-2 font-bold font-sans"><div className="w-1 h-1 bg-gray-400 rounded-full mt-2 flex-shrink-0" /> Desde Hotcars, nunca te pediremos contraseñas o PIN.</li>
                 <li className="flex gap-2 font-bold font-sans"><div className="w-1 h-1 bg-gray-400 rounded-full mt-2 flex-shrink-0" /> No hagas pagos anticipados sin ver el vehículo personalmente.</li>
-                <li className="flex gap-2 font-bold font-sans"><div className="w-1 h-1 bg-gray-400 rounded-full mt-2 flex-shrink-0" /> HotCars no custodia vehículos.</li>
+                <li className="flex gap-2 font-bold font-sans"><div className="w-1 h-1 bg-gray-400 rounded-full mt-2 flex-shrink-0" /> HotCars no custodia o acopia vehículos.</li>
                 <li className="flex gap-2 bg-amber-50 p-4 rounded-lg border border-amber-100 text-[#856404] leading-relaxed font-medium">
                   <AlertCircle size={24} className="flex-shrink-0 mt-0.5" /> 
-                  <span><strong>Regla Flipper:</strong> Solo difusión en web personal de HotCars. Prohibido republicar en marketplaces externos.</span>
+                  <span><strong>Regla Flipper:</strong> Solo se permite la difusión en la web personal de HotCars o en redes personales y/o estados de whatsapp. Prohibido republicar vehiculos en marketplaces externos sin prebia aprobacion o cambiar cualquier condicion de venta.</span>
                 </li>
               </ul>
             </div>

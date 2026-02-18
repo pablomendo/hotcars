@@ -13,6 +13,7 @@ export default function FlipsCompartidosPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState<string | null>(null);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [userNames, setUserNames] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const initialize = async () => {
@@ -28,15 +29,12 @@ export default function FlipsCompartidosPage() {
     const fetchFlips = async (uId: string) => {
         setIsLoading(true);
         try {
-            // Traemos los datos cruzando con inventario y perfil del vendedor/dueño
             const { data: allFlips, error } = await supabase
                 .from('flip_compartido')
                 .select(`
                     *,
-                    vendedor:vendedor_user_id (full_name),
                     inventario:auto_id (
-                        id, marca, modelo, anio, owner_user_id, fotos,
-                        dueno:owner_user_id (full_name)
+                        id, marca, modelo, anio, owner_user_id, fotos
                     )
                 `);
 
@@ -45,6 +43,29 @@ export default function FlipsCompartidosPage() {
             if (allFlips) {
                 const received = allFlips.filter(f => f.inventario?.owner_user_id === uId);
                 const sent = allFlips.filter(f => f.vendedor_user_id === uId);
+
+                // ✅ Recolectamos todos los auth_ids únicos para buscar sus nombres
+                const allIds = new Set<string>();
+                allFlips.forEach(f => {
+                    if (f.vendedor_user_id) allIds.add(f.vendedor_user_id);
+                    if (f.inventario?.owner_user_id) allIds.add(f.inventario.owner_user_id);
+                });
+
+                const idsArray = Array.from(allIds);
+                if (idsArray.length > 0) {
+                    const { data: usuarios } = await supabase
+                        .from('usuarios')
+                        .select('auth_id, nombre')
+                        .in('auth_id', idsArray);
+
+                    if (usuarios) {
+                        const namesMap: Record<string, string> = {};
+                        usuarios.forEach((u: any) => {
+                            namesMap[u.auth_id] = u.nombre || u.auth_id.slice(0, 8) + '...';
+                        });
+                        setUserNames(namesMap);
+                    }
+                }
 
                 setReceivedFlips(received);
                 setSentFlips(sent);
@@ -105,7 +126,6 @@ export default function FlipsCompartidosPage() {
         <div className="min-h-screen bg-[#f8fafc] pb-20 pt-24 font-sans text-slate-800 text-left">
             <div className="max-w-6xl mx-auto px-6 space-y-12">
                 
-                {/* SOLICITUDES RECIBIDAS */}
                 <section>
                     <h2 className="text-xl font-bold text-[#334155] mb-1">Solicitudes Recibidas</h2>
                     <p className="text-sm text-slate-400 italic mb-4">Solicitudes de otros usuarios para vender tus vehículos</p>
@@ -140,7 +160,9 @@ export default function FlipsCompartidosPage() {
                                                 </span>
                                             </Link>
                                         </td>
-                                        <td className="px-6 py-2 text-slate-600 font-medium">{flip.vendedor?.full_name || 'Usuario'}</td>
+                                        <td className="px-6 py-2 text-slate-600 font-medium text-[13px]">
+                                            {userNames[flip.vendedor_user_id] || flip.vendedor_user_id?.slice(0, 8) + '...'}
+                                        </td>
                                         <td className="px-6 py-2 text-slate-500 font-medium">{new Date(flip.created_at).toLocaleDateString('es-AR')}</td>
                                         <td className="px-6 py-2 text-center">{getStatusLabel(flip.status)}</td>
                                         <td className="px-6 py-2 text-right">
@@ -158,7 +180,6 @@ export default function FlipsCompartidosPage() {
                     </div>
                 </section>
 
-                {/* SOLICITUDES ENVIADAS */}
                 <section>
                     <h2 className="text-xl font-bold text-[#334155] mb-1">Solicitudes Enviadas</h2>
                     <p className="text-sm text-slate-400 italic mb-4">Solicitudes que has enviado para vender vehículos ajenos</p>
@@ -193,7 +214,9 @@ export default function FlipsCompartidosPage() {
                                                 </span>
                                             </Link>
                                         </td>
-                                        <td className="px-6 py-2 text-slate-600 font-medium">{flip.inventario?.dueno?.full_name || 'Dueño'}</td>
+                                        <td className="px-6 py-2 text-slate-600 font-medium text-[13px]">
+                                            {userNames[flip.inventario?.owner_user_id] || flip.inventario?.owner_user_id?.slice(0, 8) + '...'}
+                                        </td>
                                         <td className="px-6 py-2 text-slate-500 font-medium">{new Date(flip.created_at).toLocaleDateString('es-AR')}</td>
                                         <td className="px-6 py-2 text-center">{getStatusLabel(flip.status)}</td>
                                         <td className="px-6 py-2 text-right">

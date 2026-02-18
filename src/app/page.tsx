@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react'; // Agregado Suspense
+import { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter, useSearchParams } from 'next/navigation'; // Importado useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Loader2, Instagram, Facebook, MessageCircle, Send, Eye, MapPin, X, Bell, ChevronDown, ChevronUp } from 'lucide-react';
 
-// 1. Envolvemos el componente principal para cumplir con la regla de Next.js
 export default function MarketplaceDashboard() {
   return (
     <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>}>
@@ -14,16 +13,18 @@ export default function MarketplaceDashboard() {
   );
 }
 
-// 2. Renombramos la función original a MarketplaceContent (contiene toda tu lógica intacta)
 function MarketplaceContent() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // Hook para leer parámetros de la URL
+  const searchParams = useSearchParams();
   const [inv, setInv] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [user, setUser] = useState(null);
   
+  const [displayLimit, setDisplayLimit] = useState(15);
+  const [totalResults, setTotalResults] = useState(0);
+
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [ticketData, setTicketData] = useState({
     marca: '',
@@ -33,7 +34,6 @@ function MarketplaceContent() {
     moneda: 'USD'
   });
 
-  // Estado para las marcas de la DB
   const [opcionesMarca, setOpcionesMarca] = useState([]);
 
   const categories = [
@@ -45,25 +45,39 @@ function MarketplaceContent() {
     { name: "MOTO", label: "Motos", img: "/slider_front/moto.jpg" },
   ];
 
-  // LÓGICA PARA CAPTURAR FILTROS DESDE EL BREADCRUMB
-  useEffect(() => {
-    const cat = searchParams.get('categoria');
-    const marc = searchParams.get('marca');
-    const mod = searchParams.get('modelo');
+  const fetchInventory = useCallback(async (filters = {}, currentLimit = 15) => {
+    try {
+      setIsLoading(true);
+      let query = supabase
+        .from('inventario')
+        .select('id, marca, modelo, version, anio, km, pv, moneda, fotos, localidad, categoria, created_at', { count: 'exact' })
+        .eq('inventory_status', 'activo')
+        .gt('expires_at', new Date().toISOString());
 
-    if (cat) {
-      setSelectedCategory(cat.toUpperCase());
-    }
-    if (marc) {
-      // Si hay marca y modelo, los concatenamos en el buscador
-      const searchString = mod ? `${marc} ${mod}` : marc;
-      setSearch(searchString);
-    }
-  }, [searchParams]);
+      if (filters.categoria) {
+        query = query.ilike('categoria', filters.categoria);
+      }
+      
+      if (filters.marca) {
+        query = query.ilike('marca', filters.marca);
+      }
 
-  useEffect(() => {
-    // Ejecución paralela y carga de marcas desde DB
-    Promise.all([fetchInventory(), checkUser(), fetchMarcasBase()]);
+      if (filters.modelo) {
+        query = query.ilike('modelo', filters.modelo);
+      }
+
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(0, currentLimit - 1);
+
+      if (error) throw error;
+      setInv(data || []);
+      setTotalResults(count || 0);
+    } catch (err) {
+      console.error("Error HotCars:", err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const checkUser = async () => {
@@ -71,27 +85,6 @@ function MarketplaceContent() {
     setUser(user);
   };
 
-  const fetchInventory = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('inventario')
-        .select('id, marca, modelo, version, anio, km, pv, moneda, fotos, localidad, categoria, created_at')
-        .eq('inventory_status', 'activo')
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(15);
-
-      if (error) throw error;
-      setInv(data || []);
-    } catch (err) {
-      console.error("Error HotCars:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // NUEVA FUNCIÓN: Obtiene marcas directamente de la tabla de referencia en Supabase
   const fetchMarcasBase = async () => {
     try {
       const { data } = await supabase
@@ -108,13 +101,30 @@ function MarketplaceContent() {
     }
   };
 
+  useEffect(() => {
+    const cat = searchParams.get('categoria');
+    const marc = searchParams.get('marca');
+    const mod = searchParams.get('modelo');
+
+    if (cat) setSelectedCategory(cat.toUpperCase());
+    if (marc) setSearch(mod ? `${marc} ${mod}` : marc);
+    
+    fetchInventory({ categoria: cat, marca: marc, modelo: mod }, displayLimit);
+    checkUser();
+    fetchMarcasBase();
+  }, [searchParams, fetchInventory, displayLimit]);
+
   const resetAllFilters = () => {
     setSelectedCategory(null);
     setSearch('');
-    router.push('/'); // Limpiamos la URL de parámetros
+    setDisplayLimit(15);
+    window.history.pushState(null, '', '/');
   };
 
-  // Estos useMemo ya no dependen del JSON, sino del estado de la DB o quedan vacíos hasta implementar fetch de modelos
+  const handleLoadMore = () => {
+    setDisplayLimit(prev => prev + 15);
+  };
+
   const opcionesModelo = useMemo(() => [], [ticketData.marca]);
   const opcionesVersion = useMemo(() => [], [ticketData.modelo]);
 
@@ -134,7 +144,7 @@ function MarketplaceContent() {
     router.push(path);
   };
 
-  if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
+  if (isLoading && inv.length === 0) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
 
   return (
     <main className="min-h-screen bg-[#e2e8f0] text-[#0f172a] font-sans tracking-tight overflow-x-hidden cursor-default">
@@ -144,59 +154,68 @@ function MarketplaceContent() {
         img { display: block; max-width: 100%; }
       `}</style>
 
-      {/* --- NAVBAR --- */}
       <nav className="flex justify-between items-center p-4 md:p-6 bg-white sticky top-0 z-50 shadow-sm">
         <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase text-[#0f172a]">HOTCARS <span className="text-[#2596be]">PRO</span></h1>
         <div className="px-3 py-1.5 bg-gray-200 border border-gray-300 rounded-xl text-[10px] md:text-xs font-bold text-gray-600 uppercase">PABLO MENDO</div>
       </nav>
 
-      {/* --- HERO SECTION --- */}
-      <section className="w-full relative flex flex-col bg-[#288b55] overflow-hidden -mt-[1px] z-10">
-        <div className="md:hidden w-full aspect-[9/16] relative">
-          <img src="/hero-mobile-hotcars.jpg" alt="Hero Mobile" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 flex flex-col justify-end pb-12 px-6 pointer-events-none">
-            <div className="flex flex-col gap-3 pointer-events-auto">
-              <p className="text-white text-center font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-tight mb-4 px-2">
-                Profesionalizate, publicá, compartí y gestioná tu inventario con tu propia web de <span className="text-white italic uppercase">HOT</span><span className="text-[#288b55] italic uppercase">CARS</span>
-              </p>
-              <button onClick={() => handleAuthRedirect('/register')} className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
-              <button onClick={() => handleAuthRedirect('/login')} className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm">Ingresar</button>
+      {!search && !selectedCategory && (
+        <section className="w-full relative flex flex-col bg-[#288b55] overflow-hidden -mt-[1px] z-10">
+          <div className="md:hidden w-full aspect-[9/16] relative">
+            <img src="/hero-mobile-hotcars.jpg" alt="Hero Mobile" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 flex flex-col justify-end pb-12 px-6 pointer-events-none">
+              <div className="flex flex-col gap-3 pointer-events-auto">
+                <p className="text-white text-center font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-tight mb-4 px-2">
+                  Profesionalizate, publicá, compartí y gestioná tu inventario con tu propia web de <span className="text-white italic uppercase">HOT</span><span className="text-[#288b55] italic uppercase">CARS</span>
+                </p>
+                {!user && (
+                  <>
+                    <button onClick={() => handleAuthRedirect('/register')} className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
+                    <button onClick={() => handleAuthRedirect('/login')} className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm">Ingresar</button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="hidden md:block w-full overflow-hidden relative">
-          <img src="/hero-desktop-hotcars.jpg" alt="Hero Desktop" className="w-full h-auto object-cover align-top" />
-          <div className="absolute inset-0 flex flex-col justify-center px-12 lg:px-24 pointer-events-none">
-            <h1 className="font-black tracking-tighter uppercase text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] mb-4 leading-tight text-[42px]">
-              BIENVENIDO AL <span className="text-[#288b55]">MARKETPLACE</span> <br />
-              <span className="text-white">DE </span><span className="text-[#288b55]">HOT</span><span className="text-white">CARS</span>
-            </h1>
-            <div className="space-y-1 text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-normal max-w-2xl mb-8">
-              <p>• Obten mejores ofertas</p>
-              <p>• Comparte publicaciones con reglas claras</p>
-              <p>• Profesionalizate con tu propia pagina web</p>
-              <p className="mt-4 text-xl">¿Lead caliente por un color o versión que no tenés?</p>
-              <p className="font-medium opacity-90 leading-relaxed">Usá el inventario de HotCars, compartí las publicaciones en tu web <br />y transformá consultas en ventas seguras.</p>
-            </div>
-            <div className="flex gap-4 pointer-events-auto">
-              <button onClick={() => handleAuthRedirect('/register')} className="px-12 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
-              <button onClick={() => handleAuthRedirect('/login')} className="px-12 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all">Ingresar</button>
+          <div className="hidden md:block w-full overflow-hidden relative">
+            <img src="/hero-desktop-hotcars.jpg" alt="Hero Desktop" className="w-full h-auto object-cover align-top" />
+            <div className="absolute inset-0 flex flex-col justify-center px-12 lg:px-24 pointer-events-none">
+              <h1 className="font-black tracking-tighter uppercase text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] mb-4 leading-tight text-[42px]">
+                BIENVENIDO AL <span className="text-[#288b55]">MARKETPLACE</span> <br />
+                <span className="text-white">DE </span><span className="text-[#288b55]">HOT</span><span className="text-white">CARS</span>
+              </h1>
+              <div className="space-y-1 text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-normal max-w-2xl mb-8">
+                <p>• Obten mejores ofertas</p>
+                <p>• Comparte publicaciones con reglas claras</p>
+                <p>• Profesionalizate con tu propia pagina web</p>
+                <p className="mt-4 text-xl">¿Perdes ventas por un color o versión que no tenés?</p>
+                <p className="font-medium opacity-90 leading-relaxed">Usá el inventario de HotCars, compartí las publicaciones en tu web <br />y transformá consultas en ventas seguras.</p>
+              </div>
+              {!user && (
+                <div className="flex gap-4 pointer-events-auto">
+                  <button onClick={() => handleAuthRedirect('/register')} className="px-12 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
+                  <button onClick={() => handleAuthRedirect('/login')} className="px-12 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all">Ingresar</button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* --- CATEGORÍAS (FRANJA VERDE) --- */}
-      <section className="w-full bg-[#288b55] py-12 md:py-20 relative"> 
+      <section className="w-full bg-[#288b55] py-8 md:py-6 relative"> 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8">
-          <h2 className="text-center text-white uppercase italic mb-8 md:mb-12 tracking-tighter text-2xl md:text-[36px]" style={{ fontFamily: "'Genos', sans-serif" }}>
+          <h2 className="text-center text-white uppercase italic mb-8 md:mb-6 tracking-tighter text-2xl md:text-[36px]" style={{ fontFamily: "'Genos', sans-serif" }}>
             ¿Qué categoría estás buscando?
           </h2>
           <div className="grid grid-cols-2 md:flex md:justify-center items-center gap-6 md:gap-12">
             {categories.map((cat, idx) => (
-              <div key={idx} onClick={() => setSelectedCategory(cat.name)} className="flex flex-col items-center cursor-pointer text-center group">
-                <div className="w-full flex justify-center items-center h-32 md:h-48">
+              <div key={idx} onClick={() => {
+                setSelectedCategory(cat.name);
+                setDisplayLimit(15);
+                fetchInventory({ categoria: cat.name }, 15);
+              }} className="flex flex-col items-center cursor-pointer text-center group">
+                <div className="w-full flex justify-center items-center h-24 md:h-24">
                   <img src={cat.img} alt={cat.label} className={`max-h-full w-auto object-contain transition-transform duration-300 ${selectedCategory === cat.name ? 'scale-110 brightness-110 drop-shadow-2xl' : 'opacity-90 group-hover:opacity-100 group-hover:scale-105'}`} />
                 </div>
                 <p className="text-white text-[11px] md:text-[14px] font-bold uppercase tracking-widest italic mt-4" style={{ fontFamily: "'Genos', sans-serif" }}>{cat.label}</p>
@@ -206,7 +225,6 @@ function MarketplaceContent() {
         </div>
       </section>
 
-      {/* --- INVENTARIO --- */}
       <div className="w-full mt-8 md:mt-12 pb-24 text-left">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex items-center justify-center relative mb-8 gap-4">
           <h2 className="italic uppercase font-medium text-[#0f172a] text-center text-2xl md:text-[36px]" style={{ fontFamily: "'Genos', sans-serif" }}>
@@ -239,11 +257,10 @@ function MarketplaceContent() {
                 </select>
                 <select className="w-full bg-gray-100 rounded-lg px-2 py-1 text-[9px] md:text-[10px] font-bold uppercase outline-none" value={ticketData.modelo} disabled={!ticketData.marca} onChange={(e) => setTicketData({...ticketData, modelo: e.target.value, version: ''})}>
                   <option value="">Modelo</option>
-                  {opcionesModelo.map(m => <option key={m} value={m}>{m}</option>)}
+                  {opcionesMarca.length > 0 && <option value="">Cargando modelos...</option>}
                 </select>
                 <select className="w-full bg-gray-100 rounded-lg px-2 py-1 text-[9px] md:text-[10px] font-bold uppercase outline-none" value={ticketData.version} disabled={!ticketData.modelo} onChange={(e) => setTicketData({...ticketData, version: e.target.value})}>
                   <option value="">Versión</option>
-                  {opcionesVersion.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
                 <div className="flex bg-gray-100 rounded-lg p-0.5">
                   <button onClick={() => setTicketData({...ticketData, moneda: 'USD'})} className={`flex-1 py-1 rounded-md text-[8px] md:text-[9px] font-black ${ticketData.moneda === 'USD' ? 'bg-[#288b55] text-white' : 'text-gray-400'}`}>USD</button>
@@ -297,6 +314,23 @@ function MarketplaceContent() {
             </div>
           ))}
         </div>
+
+        {totalResults > 0 && (
+          <div className="mt-12 flex flex-col items-center gap-4">
+            <p className="text-sm font-bold text-gray-500 uppercase italic" style={{ fontFamily: "'Genos', sans-serif" }}>
+              Mostrando {filteredVehicles.length} de {totalResults} resultados
+            </p>
+            {totalResults > filteredVehicles.length && (
+              <button 
+                onClick={handleLoadMore}
+                disabled={isLoading}
+                className="px-12 py-3 bg-white border-2 border-[#288b55] text-[#288b55] font-black uppercase tracking-widest rounded-xl hover:bg-[#288b55] hover:text-white transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {isLoading ? <Loader2 className="animate-spin w-4 h-4" /> : 'Ver más unidades'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );

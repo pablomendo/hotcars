@@ -112,8 +112,6 @@ export default function MiWebPage() {
             const { data: { user } } = await supabase.auth.getUser();
             const uid = currentUserId || user?.id;
 
-            console.log('UID:', uid);
-
             if (!uid) return;
 
             const [propiosRes, flipsRes] = await Promise.all([
@@ -121,7 +119,6 @@ export default function MiWebPage() {
                     .from('inventario')
                     .select('*')
                     .eq('created_by_user_id', uid)
-                    .neq('publish_status', 'borrador')
                     .order('created_at', { ascending: false }),
                 supabase
                     .from('flip_compartido')
@@ -129,10 +126,6 @@ export default function MiWebPage() {
                     .eq('vendedor_user_id', uid)
                     .eq('status', 'approved')
             ]);
-
-            console.log('Propios data:', propiosRes.data);
-            console.log('Propios error:', propiosRes.error);
-            console.log('Flips data:', flipsRes.data);
 
             const propios = propiosRes.data || [];
             const terceros = (flipsRes.data || [])
@@ -207,19 +200,22 @@ export default function MiWebPage() {
     };
 
     const counts = useMemo(() => ({
-        VISIBLE: inv.filter(v => v.show).length, 
-        OCULTO: inv.filter(v => !v.show).length,
-        DESTACADOS: inv.filter(v => v.show && v.featured).length,
-        NUEVOS: inv.filter(v => v.show && v.isNew).length,
+        VISIBLE: inv.filter(v => v.show && v.inventory_status !== 'pausado').length, 
+        OCULTO: inv.filter(v => !v.show && v.inventory_status !== 'pausado').length,
+        DESTACADOS: inv.filter(v => v.show && v.featured && v.inventory_status !== 'pausado').length,
+        NUEVOS: inv.filter(v => v.show && v.isNew && v.inventory_status !== 'pausado').length,
         RESERVADOS: inv.filter(v => v.inventory_status === 'reservado').length,
         VENDIDOS: inv.filter(v => v.inventory_status === 'vendido').length,
     }), [inv]);
 
     const filtered = useMemo(() => {
         return inv.filter(v => {
+            if (v.inventory_status === 'pausado') return false;
+
             const searchMatch = (v.brand?.toLowerCase() || "").includes(search.toLowerCase()) || 
                                (v.model?.toLowerCase() || "").includes(search.toLowerCase());
             if (!searchMatch) return false;
+            
             switch(tab) {
                 case 'OCULTO': return !v.show;
                 case 'DESTACADOS': return v.show && v.featured;
@@ -400,11 +396,10 @@ export default function MiWebPage() {
                             <div key={v.id} className={`bg-[#141b1f] border rounded-xl overflow-hidden transition-all ${v.show ? 'border-white/5' : 'border-red-900/40 opacity-50'}`}>
                                 <div className="p-4 flex flex-col gap-3">
                                     <div className="w-full aspect-video rounded-lg bg-slate-900 overflow-hidden border border-white/10 relative">
-                                        <img src={v.image} className={`w-full h-full object-cover ${!v.show || v.inventory_status === 'pausado' ? 'grayscale opacity-40' : ''}`} alt="" />
+                                        <img src={v.image} className="w-full h-full object-cover" alt="" />
                                         <div className="absolute top-2 left-2 flex flex-col gap-1.5 items-start">
                                             {v.inventory_status === 'vendido' && <span className="bg-[#22c55e] text-black text-[9px] font-black px-2 py-1 rounded uppercase shadow-xl">Vendido</span>}
                                             {v.inventory_status === 'reservado' && <span className="bg-yellow-600 text-white text-[9px] font-black px-2 py-1 rounded shadow-xl border border-yellow-400/50 uppercase">Reservado</span>}
-                                            {v.inventory_status === 'pausado' && <span className="bg-gray-600 text-white text-[9px] font-black px-2 py-1 rounded shadow-xl uppercase">Pausado</span>}
                                             {v.featured && <span className="bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Destacado</span>}
                                             {v.isNew && <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Nuevo</span>}
                                             {!v.show && <span className="bg-red-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Oculto</span>}
