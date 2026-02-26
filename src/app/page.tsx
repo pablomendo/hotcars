@@ -36,6 +36,34 @@ function MarketplaceContent() {
 
   const [opcionesMarca, setOpcionesMarca] = useState([]);
 
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const heroSlides = [
+    {
+      img: '/hero1-desktop-hotcars.jpg',
+      ctaPosition: 'left',
+      primaryLabel: 'Comenzar Ahora',
+      primaryPath: '/register',
+      secondaryLabel: 'Ingresar',
+      secondaryPath: '/login',
+    },
+    {
+      img: '/hero2-desktop-hotcars.jpg',
+      ctaPosition: 'right',
+      primaryLabel: 'Comenzar a vender',
+      primaryPath: '/register',
+      secondaryLabel: 'Ingresar',
+      secondaryPath: '/login',
+    },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const categories = [
     { name: "AUTO", label: "Autos", img: "/slider_front/vw_gol.jpeg" },
     { name: "PICKUP", label: "Pickups", img: "/slider_front/hilux1.jpg" },
@@ -114,10 +142,21 @@ function MarketplaceContent() {
     fetchMarcasBase();
   }, [searchParams, fetchInventory, displayLimit]);
 
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem('marketplace_scroll');
+    if (savedScroll) {
+      setTimeout(() => {
+        window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' });
+        sessionStorage.removeItem('marketplace_scroll');
+      }, 100);
+    }
+  }, [inv]);
+
   const resetAllFilters = () => {
     setSelectedCategory(null);
     setSearch('');
     setDisplayLimit(15);
+    sessionStorage.removeItem('marketplace_scroll');
     window.history.pushState(null, '', '/');
   };
 
@@ -137,6 +176,7 @@ function MarketplaceContent() {
   }, [search, selectedCategory, inv]);
 
   const handleViewDetail = (id) => {
+    sessionStorage.setItem('marketplace_scroll', window.scrollY.toString());
     router.push(`/vehiculos/${id}`);
   };
 
@@ -161,6 +201,7 @@ function MarketplaceContent() {
 
       {!search && !selectedCategory && (
         <section className="w-full relative flex flex-col bg-[#288b55] overflow-hidden -mt-[1px] z-10">
+          {/* MOBILE */}
           <div className="md:hidden w-full aspect-[9/16] relative">
             <img src="/hero-mobile-hotcars.jpg" alt="Hero Mobile" className="w-full h-full object-cover" />
             <div className="absolute inset-0 flex flex-col justify-end pb-12 px-6 pointer-events-none">
@@ -178,29 +219,80 @@ function MarketplaceContent() {
             </div>
           </div>
 
+          {/* DESKTOP: slider */}
           <div className="hidden md:block w-full overflow-hidden relative">
-            <img src="/hero-desktop-hotcars.jpg" alt="Hero Desktop" className="w-full h-auto object-cover align-top" />
-            <div className="absolute inset-0 flex flex-col justify-center px-12 lg:px-24 pointer-events-none">
-              <h1 className="font-black tracking-tighter uppercase text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] mb-4 leading-tight text-[42px]">
-                BIENVENIDO AL <span className="text-[#288b55]">MARKETPLACE</span> <br />
-                <span className="text-white">DE </span><span className="text-[#288b55]">HOT</span><span className="text-white">CARS</span>
-              </h1>
-              <div className="space-y-1 text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-normal max-w-2xl mb-8">
-                <p>• Obten mejores ofertas</p>
-                <p>• Comparte publicaciones con reglas claras</p>
-                <p>• Profesionalizate con tu propia pagina web</p>
-                <p className="mt-4 text-xl">¿Perdes ventas por un color o versión que no tenés?</p>
-                <p className="font-medium opacity-90 leading-relaxed">Usá el inventario de HotCars, compartí las publicaciones en tu web <br />y transformá consultas en ventas seguras.</p>
+            {heroSlides.map((slide, idx) => (
+              <div
+                key={idx}
+                className={`w-full transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+              >
+                <img src={slide.img} alt={`Hero ${idx + 1}`} className="w-full h-auto object-cover align-top" />
+                {!user && (
+                  <div className={`absolute bottom-[18%] flex gap-4 pointer-events-auto ${slide.ctaPosition === 'right' ? 'right-[8%]' : 'left-[9.5%]'}`}>
+                    <button
+                      onClick={() => handleAuthRedirect(slide.primaryPath)}
+                      className="px-10 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform"
+                    >
+                      {slide.primaryLabel}
+                    </button>
+                    <button
+                      onClick={() => handleAuthRedirect(slide.secondaryPath)}
+                      className="px-10 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all"
+                    >
+                      {slide.secondaryLabel}
+                    </button>
+                  </div>
+                )}
               </div>
-              {!user && (
-                <div className="flex gap-4 pointer-events-auto">
-                  <button onClick={() => handleAuthRedirect('/register')} className="px-12 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
-                  <button onClick={() => handleAuthRedirect('/login')} className="px-12 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all">Ingresar</button>
-                </div>
-              )}
+            ))}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {heroSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-white w-6' : 'bg-white/40'}`}
+                />
+              ))}
             </div>
           </div>
         </section>
+      )}
+
+      {/* ✅ Banners sobre fondo verde — orden: banner1_largo arriba, dos 700px, banner2_largo abajo */}
+      {!search && !selectedCategory && (
+        <div className="w-full bg-[#288b55] py-8">
+
+          {/* banner1_largo al 70% — solo desktop */}
+          <div className="hidden md:block w-[70%] mx-auto mb-12">
+            <img src="/banner1_largo.png" alt="Banner Largo 1" className="w-full h-auto object-cover" />
+          </div>
+
+          {/* banner_phones_1 — solo mobile, debajo del hero */}
+          <div className="md:hidden w-full mb-8 px-4">
+            <img src="/banner_phones_1.png" alt="Banner Mobile 1" className="w-full h-auto object-cover rounded-xl" />
+          </div>
+
+          {/* Dos banners 700px lado a lado */}
+          <div className="w-full flex flex-col md:flex-row gap-10 justify-center items-center mb-8 px-4 md:px-8 py-8 bg-[#12242E]">
+            <div className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 w-full md:w-auto">
+              <img src="/banner_red_privada_vendedores.png" alt="Red Privada de Vendedores" className="w-full md:w-[700px] h-auto object-cover" />
+            </div>
+            <div className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 w-full md:w-auto">
+              <img src="/banner_tu_propia_agencia.png" alt="Tu Propia Agencia" className="w-full md:w-[700px] h-auto object-cover" />
+            </div>
+          </div>
+
+          {/* banner2_largo al 70% — solo desktop */}
+          <div className="hidden md:block w-[70%] mx-auto mt-12">
+            <img src="/banner2_largo.png" alt="Banner Largo 2" className="w-full h-auto object-cover" />
+          </div>
+
+          {/* banner_phones_2 — solo mobile, debajo de los banners de 700px */}
+          <div className="md:hidden w-full mt-8 px-4">
+            <img src="/banner_phones_2.png" alt="Banner Mobile 2" className="w-full h-auto object-cover rounded-xl" />
+          </div>
+
+        </div>
       )}
 
       <section className="w-full bg-[#288b55] py-8 md:py-6 relative"> 
@@ -243,7 +335,7 @@ function MarketplaceContent() {
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-6 items-start">
           
           {selectedCategory && (
-            <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col shadow-sm h-[393px] w-full">
+            <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col shadow-sm h-[300px] md:h-[393px] w-full">
               <div className="flex flex-col items-center w-full cursor-pointer mb-2 flex-shrink-0" onClick={() => setIsOpenMobile(!isOpenMobile)}>
                 <Bell className="text-[#288b55] mb-1 w-8 h-8 md:w-10 md:h-10" />
                 <h3 className="font-black uppercase text-[10px] md:text-xs text-[#0f172a] text-center leading-tight">¿No encontrás lo que buscás?</h3>
@@ -276,9 +368,9 @@ function MarketplaceContent() {
             <div 
               key={v.id} 
               onClick={() => handleViewDetail(v.id)}
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[393px] w-full transition-all hover:shadow-xl cursor-pointer"
+              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[300px] md:h-[393px] w-full transition-all hover:shadow-xl cursor-pointer"
             >
-              <div className="relative h-[180px] w-full bg-gray-100 flex-shrink-0">
+              <div className="relative h-[130px] md:h-[180px] w-full bg-gray-100 flex-shrink-0">
                 {v.fotos?.[0] ? (
                   <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} className="w-full h-full object-cover" />
                 ) : (

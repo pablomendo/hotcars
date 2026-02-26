@@ -15,7 +15,7 @@ export default function DashboardPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [inventory, setInventory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [userPlan, setUserPlan] = useState('FREE'); // Estado para el plan
+    const [userPlan, setUserPlan] = useState('FREE');
     const [userName, setUserName] = useState('');
     
     const DOLAR_BLUE = 1500;
@@ -23,7 +23,6 @@ export default function DashboardPage() {
     const normalizeStatus = (invStatus: string, commStatus: string) => {
         const s = invStatus?.toLowerCase().trim();
         const c = commStatus?.toLowerCase().trim();
-        // Prioridad: Si está reservado o señado en comercial, manda sobre el inventario
         if (c === 'reservado' || c === 'señado') return 'reservado';
         if (s === 'activo' || s === 'publicado') return 'activo';
         if (s === 'reservado' || s === 'señado') return 'reservado';
@@ -36,13 +35,10 @@ export default function DashboardPage() {
         const fetchUserDataAndInventory = async () => {
             setIsLoading(true);
             try {
-                // 1. Obtener sesión actual
                 const { data: { user } } = await supabase.auth.getUser();
                 
                 if (user) {
-                    // 2. Obtener perfil e inventario
-                    // Agregamos commercial_status a la selección
-                    const [profileRes, inventoryRes] = await Promise.all([
+                    const [profileRes, inventoryRes, flipsRes] = await Promise.all([
                         supabase
                             .from('usuarios')
                             .select('plan_type, nombre')
@@ -50,9 +46,14 @@ export default function DashboardPage() {
                             .single(),
                         supabase
                             .from('inventario')
-                            .select('id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda, owner_user_id, is_flip')
+                            .select('id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda, owner_user_id, is_flip, ganancia_flipper, ganancia_dueno')
                             .eq('owner_user_id', user.id)
-                            .order('created_at', { ascending: false })
+                            .order('created_at', { ascending: false }),
+                        supabase
+                            .from('flip_compartido')
+                            .select('auto_id, inventario:auto_id(id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda, owner_user_id, is_flip, ganancia_flipper, ganancia_dueno)')
+                            .eq('vendedor_user_id', user.id)
+                            .eq('status', 'approved')
                     ]);
                     
                     if (profileRes.data) {
@@ -61,14 +62,21 @@ export default function DashboardPage() {
                     }
 
                     if (inventoryRes.error) throw inventoryRes.error;
+
+                    const propios = inventoryRes.data || [];
+                    const terceros = (flipsRes.data || [])
+                        .map((f: any) => f.inventario)
+                        .filter((i: any) => i !== null);
+
+                    const allData = [...propios, ...terceros];
                     
-                    const mappedData = (inventoryRes.data || []).map(v => ({
+                    const mappedData = allData.map((v: any) => ({
                         ...v,
                         brand: v.marca,
                         model: v.modelo,
                         price: v.pv,
                         cost: v.pc,
-                        // Enviamos ambos estados para la normalización
+                        isProprio: v.owner_user_id === user.id,
                         rawStatus: normalizeStatus(v.inventory_status, v.commercial_status)
                     }));
 
@@ -85,13 +93,20 @@ export default function DashboardPage() {
         fetchUserDataAndInventory();
     }, []);
 
-    const availableVehicles = useMemo(() => inventory.filter((v: any) => v.rawStatus === 'activo'), [inventory]);
+    // ✅ Igual que tab ACTIVOS en inventario: solo inventory_status === 'activo'
+    const availableVehicles = useMemo(() => inventory.filter((v: any) => v.inventory_status?.toLowerCase() === 'activo'), [inventory]);
     const reservedVehicles = useMemo(() => inventory.filter((v: any) => v.rawStatus === 'reservado'), [inventory]);
+    const activeFlips = useMemo(() => inventory.filter((v: any) => !v.isProprio && v.inventory_status?.toLowerCase() === 'activo'), [inventory]);
 
     const potentialValue = useMemo(() => {
         const relevantVehicles = inventory.filter((v: any) => ['activo', 'reservado'].includes(v.rawStatus));
-        return relevantVehicles.reduce((total, v: any) => {
-            const margen = Number(v.price) - Number(v.cost);
+        return relevantVehicles.reduce((total: number, v: any) => {
+            let margen = 0;
+            if (!v.isProprio) {
+                margen = Number(v.ganancia_flipper || 0);
+            } else {
+                margen = Number(v.price) - Number(v.cost);
+            }
             const margenDolar = v.moneda === 'ARS' ? (margen / DOLAR_BLUE) : margen;
             return total + (margenDolar > 0 ? margenDolar : 0);
         }, 0);
@@ -114,7 +129,7 @@ export default function DashboardPage() {
         const now = new Date().getTime();
         const clavoCount = inventory.filter((v: any) => {
             const diff = Math.floor((now - new Date(v.created_at).getTime()) / 86400000);
-            return v.rawStatus === 'activo' && diff >= 45;
+            return v.inventory_status?.toLowerCase() === 'activo' && diff >= 45;
         }).length;
 
         return [
@@ -123,9 +138,9 @@ export default function DashboardPage() {
             { id: 'mensajes', title: 'Mensajes', value: 15, subtext: 'Leads acumulados' },
             { id: 'buscados', title: 'Modelos Buscados', value: mockSearchTickets.length, subtext: 'Pedidos comunidad' },
             { id: 'clavos', title: 'Unidad Clavo', value: clavoCount, isCurrency: false, subtext: 'Revisar precio' },
-            { id: 'flips', title: 'Flips Compartidos', value: 1, subtext: 'Solicitudes' }
+            { id: 'flips', title: 'Flips Compartidos', value: activeFlips.length, subtext: 'Solicitudes' }
         ];
-    }, [inventory, availableVehicles.length, reservedVehicles.length]);
+    }, [inventory, availableVehicles.length, reservedVehicles.length, activeFlips.length]);
 
     const [items, setItems] = useState<any[]>([]);
     useEffect(() => { if (isMounted) setItems(kpiData); }, [kpiData, isMounted]);
@@ -140,7 +155,6 @@ export default function DashboardPage() {
         <div className="bg-[#0b1114] min-h-screen w-full pt-32 pb-10 px-4 md:px-8 overflow-y-auto font-sans">
             <div className="max-w-[1600px] mx-auto space-y-6">
                 
-                {/* HEADER CON INFO DE PLAN */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h2 className="text-white text-2xl font-black uppercase tracking-tighter">Panel de Control</h2>
@@ -174,7 +188,6 @@ export default function DashboardPage() {
                 </DndContext>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* POTENCIAL DE GANANCIA */}
                     <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl flex flex-col justify-between">
                         <div className="flex justify-between items-start">
                             <h3 className="text-white text-xl font-bold">Potencial de Ganancia</h3>
@@ -191,7 +204,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* DIAS PROMEDIO DE VENTAS */}
                     <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl flex flex-col justify-between">
                         <div className="flex justify-between items-start">
                             <h3 className="text-white text-xl font-bold tracking-tight">Días Promedio de Ventas</h3>
@@ -206,7 +218,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* ESTADO DE INVENTARIO */}
                     <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl flex flex-col justify-between">
                         <div className="flex justify-between items-start">
                             <h3 className="text-white text-xl font-bold">Estado de Inventario</h3>

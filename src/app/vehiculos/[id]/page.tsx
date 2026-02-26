@@ -37,7 +37,6 @@ export default function VehicleDetailPage() {
       const paramId = params.id as string;
       if (!paramId) return;
 
-      // Extraemos el ID real (los últimos 36 caracteres)
       const realId = paramId.length > 36 ? paramId.slice(-36) : paramId;
 
       const [vRes, sessionRes] = await Promise.all([
@@ -53,7 +52,6 @@ export default function VehicleDetailPage() {
       setVehicle(currentVehicle);
       setUser(currentUser);
 
-      // --- LÓGICA DE AUTO-REDIRECCIÓN A URL BONITA ---
       if (currentVehicle) {
         const slug = `${currentVehicle.marca}-${currentVehicle.modelo}-${currentVehicle.anio}`
           .toLowerCase()
@@ -62,12 +60,10 @@ export default function VehicleDetailPage() {
         
         const expectedPath = `${slug}-${currentVehicle.id}`;
         
-        // Si la URL actual no coincide con la URL "bonita", la actualizamos
         if (paramId !== expectedPath) {
           window.history.replaceState(null, '', `/vehiculos/${expectedPath}`);
         }
       }
-      // ----------------------------------------------
 
       if (currentUser && currentVehicle) {
         const { data: flipData } = await supabase
@@ -166,7 +162,6 @@ export default function VehicleDetailPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f5f5] text-[#333] pb-12 font-sans overflow-x-hidden relative text-left">
-      {/* Modales de Carga y Límite */}
       {showLoadingModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
           <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center">
@@ -196,14 +191,16 @@ export default function VehicleDetailPage() {
         </div>
       )}
 
+      {/* ✅ Botón X ahora usa router.push con scroll: false */}
       <nav className="bg-white p-3 shadow-sm fixed top-0 left-0 right-0 z-[60] flex justify-between items-center px-6 border-b border-gray-100">
         <h1 className="font-black uppercase text-sm tracking-tighter italic text-left">HOTCARS <span className="text-[#2596be] not-italic">PRO</span></h1>
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"><X size={20}/></button>
+        <button onClick={() => router.push('/', { scroll: false })} className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"><X size={20}/></button>
       </nav>
 
       <div className="max-w-[1200px] mx-auto mt-[75px] px-4 text-left">
         <div className="flex items-center gap-2 py-4 text-[13px] text-[#3483fa] overflow-x-auto whitespace-nowrap scrollbar-hide text-left">
-          <button onClick={() => router.push('/')} className="hover:underline cursor-pointer">Volver al listado</button>
+          {/* ✅ Botón "Volver al listado" ahora usa scroll: false */}
+          <button onClick={() => router.push('/', { scroll: false })} className="hover:underline cursor-pointer">Volver al listado</button>
           <span className="text-gray-300">|</span>
           <button onClick={() => router.push(`/?categoria=${vehicle.categoria?.toLowerCase()}`)} className="hover:underline capitalize cursor-pointer">{vehicle.categoria || 'Vehículos'}</button>
           <ChevronRightIcon size={12} className="text-gray-400 flex-shrink-0" />
