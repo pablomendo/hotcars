@@ -409,38 +409,40 @@ export default function Header() {
             )}
 
             {/* ✅ Barra inferior mobile — solo visible en mobile (lg:hidden) */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#12242e] border-t border-white/10 flex items-center justify-around px-2 py-2">
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#12242e] border-t border-white/10 grid grid-cols-5 px-2 py-2">
 
                 {isLoggedIn ? (
                     <>
                         {/* Inicio */}
-                        <Link href="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <Link href="/" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                             <Home size={22} />
                             <span className="text-[10px] font-bold uppercase tracking-wide">Inicio</span>
                         </Link>
 
                         {/* Favoritos */}
-                        <Link href="/favoritos" className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <Link href="/favoritos" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                             <Heart size={22} />
                             <span className="text-[10px] font-bold uppercase tracking-wide">Favoritos</span>
                         </Link>
 
                         {/* Botón + central */}
-                        <button
-                            onClick={() => router.push('/publicar')}
-                            className="flex flex-col items-center justify-center w-14 h-14 rounded-full bg-[#134e4d] border-4 border-[#12242e] -mt-6 shadow-lg hover:opacity-90 active:scale-95 transition-all"
-                        >
-                            <Plus size={26} className="text-white" />
-                        </button>
+                        <div className="flex items-center justify-center">
+                            <button
+                                onClick={() => router.push('/publicar')}
+                                className="flex flex-col items-center justify-center w-14 h-14 rounded-full bg-[#134e4d] border-4 border-[#12242e] -mt-6 shadow-lg hover:opacity-90 active:scale-95 transition-all"
+                            >
+                                <Plus size={26} className="text-white" />
+                            </button>
+                        </div>
 
                         {/* Dashboard */}
-                        <Link href="/dashboard" className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <Link href="/dashboard" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                             <Settings size={22} />
                             <span className="text-[10px] font-bold uppercase tracking-wide">Panel</span>
                         </Link>
 
                         {/* Más / Cerrar */}
-                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                             {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
                             <span className="text-[10px] font-bold uppercase tracking-wide">{isMobileMenuOpen ? 'Cerrar' : 'Más'}</span>
                         </button>
@@ -448,27 +450,29 @@ export default function Header() {
                 ) : (
                     <>
                         {/* Inicio */}
-                        <Link href="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <Link href="/" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                             <Home size={22} />
                             <span className="text-[10px] font-bold uppercase tracking-wide">Inicio</span>
                         </Link>
 
                         {/* Registrarse */}
-                        <Link href="/register" className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <Link href="/register" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                             <User size={22} />
                             <span className="text-[10px] font-bold uppercase tracking-wide">Registrar</span>
                         </Link>
 
                         {/* Botón + central → login */}
-                        <button
-                            onClick={() => router.push('/login')}
-                            className="flex flex-col items-center justify-center w-14 h-14 rounded-full bg-[#134e4d] border-4 border-[#12242e] -mt-6 shadow-lg hover:opacity-90 active:scale-95 transition-all"
-                        >
-                            <Plus size={26} className="text-white" />
-                        </button>
+                        <div className="flex items-center justify-center">
+                            <button
+                                onClick={() => router.push('/login')}
+                                className="flex flex-col items-center justify-center w-14 h-14 rounded-full bg-[#134e4d] border-4 border-[#12242e] -mt-6 shadow-lg hover:opacity-90 active:scale-95 transition-all"
+                            >
+                                <Plus size={26} className="text-white" />
+                            </button>
+                        </div>
 
                         {/* Ingresar */}
-                        <Link href="/login" className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <Link href="/login" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                             <LogOut size={22} />
                             <span className="text-[10px] font-bold uppercase tracking-wide">Ingresar</span>
                         </Link>

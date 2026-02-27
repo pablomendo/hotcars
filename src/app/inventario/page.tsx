@@ -12,7 +12,6 @@ export default function InventoryPage() {
     const router = useRouter();
     const [inv, setInv] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    // NUEVO: Estado para gestionar la carga individual por unidad
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [tab, setTab] = useState('ACTIVOS');
     const [search, setSearch] = useState('');
@@ -27,7 +26,6 @@ export default function InventoryPage() {
 
     const extraInfo = useMemo(() => {
         if (!selectedAuto) return null;
-        // Blindaje contra error "find is not a function" validando que sea un array
         const dataArray = Array.isArray(hiddenData) 
             ? hiddenData 
             : (hiddenData as any)?.default || [];
@@ -66,7 +64,6 @@ export default function InventoryPage() {
         const channel = supabase
             .channel('inventory-db-changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {
-                // Se deshabilita el fetch automático aquí para evitar el "rebote" visual durante updates manuales
             })
             .subscribe();
 
@@ -78,16 +75,15 @@ export default function InventoryPage() {
     const fetchInventory = async (currentUserId?: string) => {
         if (!currentUserId) return;
         try {
-            // CIRUGÍA: Se añade .order para asegurar que el contenido nuevo aparezca primero
             const [misAutos, misFlips] = await Promise.all([
                 supabase
                     .from('inventario')
-                    .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id, is_flip')
+                    .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, expires_at, created_at, owner_user_id, is_flip')
                     .eq('owner_user_id', currentUserId)
                     .order('created_at', { ascending: false }),
                 supabase
                     .from('flip_compartido')
-                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, expires_at, created_at, owner_user_id, is_flip)')
+                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, ganancia_flipper, expires_at, created_at, owner_user_id, is_flip)')
                     .eq('vendedor_user_id', currentUserId)
                     .eq('status', 'approved')
             ]);
@@ -97,7 +93,6 @@ export default function InventoryPage() {
                 .map((f: any) => f.inventario)
                 .filter((i: any) => i !== null);
 
-            // Se ordena el array combinado por fecha de creación descendente
             const allData = [...propios, ...terceros].sort((a, b) => 
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
@@ -122,7 +117,7 @@ export default function InventoryPage() {
                     prices: {
                         purchasePrice: pcValue,
                         salePrice: pvValue,
-                        myProfit: pvValue - pcValue,      
+                        myProfit: isProprio ? (Number(v.ganancia_dueno) || 0) : (Number(v.ganancia_flipper) || 0),
                         currency: v.moneda === 'USD' ? 'USD ' : '$ ARS '
                     }
                 };
@@ -153,7 +148,6 @@ export default function InventoryPage() {
                     setProcessingId(null);
                 }
             } else {
-                // BLINDAJE PARA TERCEROS (FLIP): Eliminación real en DB para evitar rebote
                 if (!confirm('Esta unidad es un FLIP compartido. ¿Deseas quitarla de tu inventario?')) return;
                 setProcessingId(id);
                 try {
@@ -168,7 +162,6 @@ export default function InventoryPage() {
                     setInv(prev => prev.filter(i => i.id !== id));
                     if (selectedAuto?.id === id) setSelectedAuto(null);
                     
-                    // Actualizar conteos y lista
                     await fetchInventory(userId || undefined);
                 } catch (err: any) {
                     alert("Error al quitar flip: " + err.message);
@@ -188,7 +181,6 @@ export default function InventoryPage() {
         try {
             let updateData: any = {};
 
-            // ✅ CORREGIDO: ACTIVATE y RENEW usan RPC del servidor, sin setTimeout ni lógica de límites en cliente
             if (action === 'ACTIVATE' || action === 'RENEW') {
                 const { data, error } = await supabase.rpc('activar_vehiculo_inventario', {
                     p_auto_id: id,
@@ -209,7 +201,6 @@ export default function InventoryPage() {
                     ? { inventory_status: 'activo', expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() }
                     : { inventory_status: 'activo' };
 
-                // Actualización optimista en UI
                 setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
                 if (selectedAuto?.id === id) setSelectedAuto((prev: any) => ({ ...prev, ...updateData }));
 
@@ -225,18 +216,16 @@ export default function InventoryPage() {
                 updateData = { commercial_status: 'disponible' };
             }
 
-            // ACTUALIZACIÓN OPTIMISTA: Reflejamos el cambio en UI antes de la DB para evitar rebotes
             setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
             if (selectedAuto?.id === id) setSelectedAuto((prev: any) => ({ ...prev, ...updateData }));
 
             const { error } = await supabase.from('inventario').update(updateData).eq('id', id);
             if (error) throw error;
             
-            // Refresco suave después de la persistencia
             setTimeout(() => fetchInventory(userId || undefined), 500);
         } catch (err: any) { 
             alert(err.message);
-            fetchInventory(userId || undefined); // Revertir si falla
+            fetchInventory(userId || undefined);
         } finally {
             setProcessingId(null);
         }
@@ -396,7 +385,6 @@ export default function InventoryPage() {
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
                                         )}
-                                        {/* BADGE FLIP COMPARTIDO */}
                                         {!v.isProprio && (
                                             <div className="absolute top-2 left-2 px-2 py-0.5 bg-[#2596be] rounded flex items-center gap-1 text-[8px] font-black text-white z-10 shadow-lg border border-white/20 uppercase tracking-tighter animate-pulse">
                                                 <Zap size={8} fill="currentColor" /> Flip Compartido
@@ -536,7 +524,6 @@ export default function InventoryPage() {
                                             <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2 text-left">
                                                 {isProcessing ? <Loader2 size={12} className="animate-spin text-[#22c55e]" /> : null}
                                                 {v.brand} {v.model}
-                                                {/* BADGE FLIP LISTA */}
                                                 {!v.isProprio && (
                                                     <span className="text-[7px] bg-[#2596be]/20 text-[#2596be] px-1.5 py-0.5 rounded border border-[#2596be]/30 flex items-center gap-1">
                                                         <Zap size={7} fill="currentColor"/> FLIP

@@ -342,7 +342,7 @@ function MarketplaceContent() {
                 <p className="text-[7px] md:text-[8px] text-gray-400 uppercase font-bold mt-1">Activá un ticket para la red</p>
               </div>
 
-              <div className={`flex md:${isOpenMobile ? 'flex' : 'hidden md:flex'} flex-col w-full space-y-1 flex-grow overflow-y-auto no-scrollbar pb-2`}>
+              <div className={`flex flex-col w-full space-y-1 flex-grow overflow-y-auto no-scrollbar pb-2 ${isOpenMobile ? 'flex' : 'hidden md:flex'}`}>
                 <select className="w-full bg-gray-100 rounded-lg px-2 py-1 text-[9px] md:text-[10px] font-bold uppercase outline-none" value={ticketData.marca} onChange={(e) => setTicketData({...ticketData, marca: e.target.value, modelo: '', version: ''})}>
                   <option value="">Marca</option>
                   {opcionesMarca.map(m => <option key={m} value={m}>{m}</option>)}
@@ -382,7 +382,7 @@ function MarketplaceContent() {
                   <h3 className="text-[12px] md:text-[14px] font-bold tracking-tight uppercase truncate text-[#0f172a] mb-0.5">
                     {v.marca} {v.modelo} <span className="text-gray-400 ml-1">{v.anio}</span>
                   </h3>
-                  <div className="text-[#0f172a] text-[10px] md:text-[11px] font-black uppercase mb-0.5">
+                  <div className="text-[#0f172a] text-[10px] md:text-[11px] font-black uppercase mb-0.5" suppressHydrationWarning>
                     {v.km?.toLocaleString('de-DE')} KM
                   </div>
                   <div className="text-[#2596be] text-[9px] md:text-[10px] font-bold uppercase truncate mb-1.5">
@@ -394,7 +394,7 @@ function MarketplaceContent() {
                 </div>
                 <div className="mt-auto">
                   <div className="mb-2">
-                    <span className="text-[#288b55] font-black text-lg md:text-xl leading-none">
+                    <span className="text-[#288b55] font-black text-lg md:text-xl leading-none" suppressHydrationWarning>
                       {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}
                     </span>
                   </div>
