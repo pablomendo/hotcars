@@ -6,7 +6,7 @@ import {
   Star, Eye, EyeOff, Check, Settings, Zap, Plus, DollarSign, 
   Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle,
   Instagram, Facebook, MessageCircle, Share2, Image as ImageIcon,
-  Type, Globe, Trash2, Upload, MapPin, Clock, Phone
+  Type, Globe, Trash2, Upload, MapPin, Clock, Phone, ExternalLink
 } from 'lucide-react';
 
 export default function MiWebPage() {
@@ -44,8 +44,108 @@ export default function MiWebPage() {
         telefono: ''
     });
 
-    const handleSaveConfig = () => {
-        console.log("Configuración guardada localmente:", config);
+    const [dbConfig, setDbConfig] = useState<any>(null);
+
+    const fetchWebConfig = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data, error } = await supabase
+                .from('web_configs')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+            
+            if (data) {
+                setDbConfig(data);
+                setConfig({
+                    subdomain: data.subdomain || 'miagencia',
+                    customDomain: data.custom_domain || '',
+                    title: data.title || 'TITULAR DE MI WEB',
+                    subtitle: data.subtitle || 'SUBTITULO DE MI WEB',
+                    instagram: data.instagram || '',
+                    facebook: data.facebook || '',
+                    tiktok: data.tiktok || '',
+                    whatsapp: data.whatsapp || '',
+                    direccion: data.direccion || '',
+                    horarios: data.horarios || '',
+                    telefono: data.telefono || ''
+                });
+                setPreviewImage(data.cover_image_url || '/portada_mi_web.jpg');
+                setShowSocialsInFooter(!!data.show_socials_footer);
+            }
+        }
+    };
+
+    const handleSaveConfig = async () => {
+        if (!userData.id) return;
+
+        try {
+            const { data: current } = await supabase
+                .from('web_configs')
+                .select('subdomain, last_subdomain_change, change_count')
+                .eq('user_id', userData.id)
+                .maybeSingle();
+
+            const isSubdomainChanging = current && current.subdomain !== config.subdomain;
+            let newChangeCount = current?.change_count || 0;
+            const now = new Date();
+
+            if (isSubdomainChanging) {
+                if (current?.last_subdomain_change) {
+                    const lastChange = new Date(current.last_subdomain_change);
+                    const diffHours = (now.getTime() - lastChange.getTime()) / (1000 * 60 * 60);
+                    const diffDays = Math.floor(diffHours / 24);
+
+                    if (diffHours < 24) {
+                        if (newChangeCount >= 3) {
+                            alert("Ya agotaste tus 3 ediciones de cortesía en las primeras 24hs.");
+                            return;
+                        }
+                    } else if (diffDays < 30) {
+                        alert(`Subdominio bloqueado. Podrás cambiarlo en ${30 - diffDays} días.`);
+                        return;
+                    }
+                }
+                
+                const isNewCycle = current?.last_subdomain_change && 
+                    (now.getTime() - new Date(current.last_subdomain_change).getTime()) / (1000 * 60 * 60) >= 24;
+                
+                newChangeCount = isNewCycle ? 1 : newChangeCount + 1;
+            }
+
+            const dataToSave: any = {
+                user_id: userData.id,
+                custom_domain: config.customDomain,
+                title: config.title,
+                subtitle: config.subtitle,
+                instagram: config.instagram,
+                facebook: config.facebook,
+                tiktok: config.tiktok,
+                whatsapp: config.whatsapp,
+                direccion: config.direccion,
+                horarios: config.horarios,
+                telefono: config.telefono,
+                show_socials_footer: showSocialsInFooter,
+                cover_image_url: previewImage,
+                change_count: newChangeCount
+            };
+
+            if (isSubdomainChanging || !current) {
+                dataToSave.subdomain = config.subdomain;
+                dataToSave.last_subdomain_change = now.toISOString();
+            }
+
+            const { error } = await supabase
+                .from('web_configs')
+                .upsert(dataToSave, { onConflict: 'user_id' });
+
+            if (error) throw error;
+            alert("¡Configuración guardada!");
+            await fetchWebConfig();
+        } catch (err) {
+            console.error(err);
+            alert("Error al guardar la configuración");
+        }
     };
 
     const handleTriggerFile = (e: React.MouseEvent) => {
@@ -93,6 +193,7 @@ export default function MiWebPage() {
                     if (limitsRes.data) setMaxWebVehicles(limitsRes.data.max_web_vehicles || 10);
 
                     await fetchInventory(user.id);
+                    await fetchWebConfig();
                 }
             }
         };
@@ -243,7 +344,7 @@ export default function MiWebPage() {
                             <EyeOff size={48} strokeWidth={2.5} />
                         </div>
                         <h3 className="text-2xl font-black uppercase text-[#1e293b] mb-4">Límite de visibles</h3>
-                        <p className="text-gray-500 text-[15px] leading-relaxed mb-10 font-medium text-center">
+                        <p className="text-gray-500 text-[15px] font-medium text-center leading-relaxed mb-10">
                             Tu plan permite hasta <strong>{maxWebVehicles}</strong> unidades visibles en tu web. <br/> Ocultá alguna o mejorá tu plan.
                         </p>
                         <button 
@@ -261,7 +362,7 @@ export default function MiWebPage() {
                 <div className="max-w-[1600px] mx-auto flex justify-between items-center h-12">
                     <div className="flex flex-col text-left">
                         <h1 style={{ fontFamily: 'Genos' }} className="text-white text-2xl font-light tracking-[6px] uppercase leading-none">Mi Web</h1>
-                        <span className="text-[9px] text-[#22c55e] font-mono tracking-tight uppercase opacity-70 mt-1">agenciamendo.hotcars.com</span>
+                        <span className="text-[9px] text-[#22c55e] font-mono tracking-tight uppercase opacity-70 mt-1">{config.subdomain}.hotcars.com.ar</span>
                     </div>
                     <div className="flex items-center gap-3">
                         <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userData.plan_type}</span>
@@ -294,23 +395,36 @@ export default function MiWebPage() {
 
             <div className="max-w-[1600px] mx-auto px-6 pt-64 lg:pt-56">
                 <main className="w-full">
-                    <div className="flex justify-start mb-6">
+                    <div className="flex justify-start items-center gap-3 mb-6">
                         <button onClick={() => setOpenConfig(!openConfig)} className={`flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 transition-all ${openConfig ? 'bg-white/10 text-[#22c55e] border-[#22c55e]/30' : 'bg-white/5 text-slate-500 hover:text-white'}`}>
                             <SettingsIcon size={16}/><span className="text-[10px] font-bold uppercase tracking-wider font-sans">Configurar mi web</span>
                         </button>
+                        <a 
+                            href={`http://${config.subdomain}.hotcars.com.ar:3000`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 bg-white/5 text-slate-500 hover:text-[#22c55e] hover:border-[#22c55e]/30 transition-all"
+                        >
+                            <ExternalLink size={16}/><span className="text-[10px] font-bold uppercase tracking-wider font-sans">Preview de web</span>
+                        </a>
                     </div>
 
                     {openConfig && (
                         <div className="w-full space-y-4 mb-12 animate-in fade-in slide-in-from-top-2 duration-300 font-sans">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <ConfigCard title="Dominio HotCars" description="miagencia.hotcars.com.ar">
+                                <ConfigCard title="Dominio HotCars" description={`${config.subdomain}.hotcars.com.ar`}>
                                     <div className="flex flex-col gap-3">
                                         <div className="flex items-center justify-end gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
                                             <input className="bg-transparent text-xs text-white outline-none w-full font-bold uppercase text-right" value={config.subdomain} onChange={(e) => setConfig({...config, subdomain: e.target.value.toLowerCase()})} />
                                             <span className="text-slate-500 text-[13px] font-bold">.hotcars.com.ar</span>
                                         </div>
-                                        <div className="flex justify-center mt-2">
-                                            <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase shadow-md">Confirmar</button>
+                                        <div className="flex items-center justify-between mt-1">
+                                            {dbConfig?.last_subdomain_change && (
+                                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded ${dbConfig.change_count < 3 ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                    {dbConfig.change_count < 3 ? `${3 - dbConfig.change_count} ediciones libres` : 'Cambio mensual'}
+                                                </span>
+                                            )}
+                                            <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase shadow-md ml-auto">Confirmar</button>
                                         </div>
                                     </div>
                                 </ConfigCard>
