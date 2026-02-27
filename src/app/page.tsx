@@ -187,8 +187,7 @@ function MarketplaceContent() {
   if (isLoading && inv.length === 0) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
 
   return (
-    // ✅ FIX: pb-20 en mobile para que el bottomnav no tape contenido
-    <main className="min-h-screen bg-[#e2e8f0] text-[#0f172a] font-sans tracking-tight overflow-x-hidden cursor-default pb-20 md:pb-0">
+    <main className="min-h-screen bg-[#e2e8f0] text-[#0f172a] font-sans tracking-tight overflow-x-hidden cursor-default">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&display=swap');
         .no-scrollbar::-webkit-scrollbar { display: none; }

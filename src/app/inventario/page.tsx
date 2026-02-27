@@ -381,8 +381,7 @@ export default function InventoryPage() {
                                             </div>
                                         ) : null}
                                         {v.images[0] ? (
-                                            // ✅ FIX: loading="lazy" para no cargar todas las imágenes a la vez
-                                            <img src={v.images[0]} alt="" loading="lazy" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                                            <img src={v.images[0]} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
                                         )}

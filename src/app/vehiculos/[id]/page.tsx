@@ -191,13 +191,15 @@ export default function VehicleDetailPage() {
         </div>
       )}
 
+      {/* ✅ Botón X ahora usa router.push con scroll: false */}
       <nav className="bg-white p-3 shadow-sm fixed top-0 left-0 right-0 z-[60] flex justify-between items-center px-6 border-b border-gray-100">
         <h1 className="font-black uppercase text-sm tracking-tighter italic text-left">HOTCARS <span className="text-[#2596be] not-italic">PRO</span></h1>
         <button onClick={() => router.push('/', { scroll: false })} className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"><X size={20}/></button>
       </nav>
 
-      <div className="max-w-[1200px] mx-auto mt-[100px] px-4 text-left">
+      <div className="max-w-[1200px] mx-auto mt-[75px] px-4 text-left">
         <div className="flex items-center gap-2 py-4 text-[13px] text-[#3483fa] overflow-x-auto whitespace-nowrap scrollbar-hide text-left">
+          {/* ✅ Botón "Volver al listado" ahora usa scroll: false */}
           <button onClick={() => router.push('/', { scroll: false })} className="hover:underline cursor-pointer">Volver al listado</button>
           <span className="text-gray-300">|</span>
           <button onClick={() => router.push(`/?categoria=${vehicle.categoria?.toLowerCase()}`)} className="hover:underline capitalize cursor-pointer">{vehicle.categoria || 'Vehículos'}</button>
@@ -209,23 +211,21 @@ export default function VehicleDetailPage() {
 
         <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden text-left">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-0">
-
-            <section className="md:col-span-8 flex flex-col-reverse md:flex-row p-4 gap-4 md:h-[600px]">
-              <div className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto md:overflow-x-hidden md:pr-1 scrollbar-hide md:w-16">
+            <section className="md:col-span-8 flex flex-row p-4 gap-4 min-h-[500px] md:h-[600px]">
+              <div className="flex flex-col gap-2 overflow-y-auto pr-1 scrollbar-hide w-16">
                 {vehicle.fotos?.map((foto: string, idx: number) => (
                   <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`flex-shrink-0 w-12 h-12 rounded border-2 overflow-hidden transition-all cursor-pointer ${selectedImageIndex === idx ? 'border-[#3483fa]' : 'border-gray-200'}`}>
                     <img src={foto} className="w-full h-full object-cover" alt="Thumb" />
                   </button>
                 ))}
               </div>
-              <div className="flex-1 relative flex items-center justify-center group min-h-[240px] md:min-h-0">
-                {/* ✅ FIX galería: z-[5] para que el botón X de la galería no quede tapado */}
-                <div className="absolute inset-0 z-[5] cursor-pointer" onClick={() => setIsGalleryOpen(true)}></div>
+              <div className="flex-1 relative flex items-center justify-center group">
+                <div className="absolute inset-0 z-10 cursor-pointer" onClick={() => setIsGalleryOpen(true)}></div>
                 <img src={vehicle.fotos?.[selectedImageIndex]} className="max-w-full max-h-full object-contain" alt="Principal" />
               </div>
             </section>
 
-            <section className="md:col-span-4 md:border-l border-gray-100 p-6 flex flex-col justify-start">
+            <section className="md:col-span-4 border-l border-gray-100 p-6 flex flex-col justify-start">
                 <div className="flex justify-between items-start mb-1 text-left">
                   <span className="text-gray-500 text-[13px] font-bold">{vehicle.anio} | {Number(vehicle.km).toLocaleString('de-DE')} km</span>
                   <Heart size={20} className="text-gray-300 cursor-pointer hover:text-red-500 transition-colors" />
@@ -235,15 +235,13 @@ export default function VehicleDetailPage() {
                 <div className="flex items-center gap-1.5 text-gray-400 text-[12px] font-bold uppercase mb-4"><MapPin size={13}/> {vehicle.localidad}, {vehicle.provincia}</div>
                 <div className="mb-6">
                   <span className="text-4xl font-black text-[#333] tracking-tighter">{vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}</span>
-                  {/* ✅ FIX: ganancia solo visible para usuarios logueados */}
-                  {user !== null && profitValue && (
+                  {profitValue && (
                     <div className="flex items-center gap-1.5 text-[#00a650] mt-2 font-semibold">
                       <TrendingUp size={16} /> <span className="text-[14px] uppercase">{profitLabel}: ${Number(profitValue).toLocaleString('de-DE')}</span>
                     </div>
                   )}
                 </div>
-                {/* ✅ FIX: botón flip solo visible para usuarios logueados y no dueños */}
-                {user !== null && !isOwner && (
+                {!isOwner && (
                   <button onClick={(flipStatus === 'approved' || flipStatus === 'pending') ? handleRemoveFlip : handleFlipAction} disabled={isProcessing} className={`w-full mb-4 py-4 border-2 border-dashed rounded-xl font-black uppercase text-[12px] flex items-center justify-center gap-2 transition-all cursor-pointer ${flipStatus === 'approved' || flipStatus === 'pending' ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100' : 'border-[#2596be] text-[#2596be] hover:bg-[#2596be]/5 active:scale-95'}`}>
                     {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} fill={flipStatus ? "none" : "currentColor"} />} 
                     {getButtonLabel()}
@@ -281,7 +279,7 @@ export default function VehicleDetailPage() {
               <h3 className="text-xl font-bold mb-8 uppercase tracking-tighter">Características principales</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 uppercase font-bold text-gray-600">
                 {[{ l: "Marca", v: vehicle.marca }, { l: "Modelo", v: vehicle.modelo }, { l: "Año", v: vehicle.anio }, { l: "Kilómetros", v: vehicle.km?.toLocaleString('de-DE') + " km" }, { l: "Versión", v: vehicle.version }].map((item, idx) => (
-                  <div key={idx} className="flex flex-col border-b border-gray-100 pb-3 sm:mr-8">
+                  <div key={idx} className="flex flex-col border-b border-gray-100 pb-3 mr-8">
                     <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{item.l}</span>
                     <span className="text-[14px] mt-1 font-bold">{item.v}</span>
                   </div>
@@ -306,7 +304,6 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
-      {/* ✅ FIX galería: botón X con z-[110] siempre por encima del overlay */}
       {isGalleryOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm">
           <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors z-[110] cursor-pointer"><X size={32} /></button>
