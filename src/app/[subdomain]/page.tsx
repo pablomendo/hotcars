@@ -33,7 +33,7 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
   return (
     <div className="min-h-screen bg-[#0b1114] text-white font-sans text-left">
 
-      {/* HEADER: Se cambió el botón con onClick (window) por un tag <a> para evitar el Server-side error */}
+      {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-[100] bg-[#0b1114]/90 backdrop-blur-md border-b border-white/5 px-4 md:px-8 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
           <a 
@@ -44,7 +44,6 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
           </a>
         </div>
 
-        {/* Buscador en Header */}
         <div className="flex-1 max-w-md relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
           <input 
@@ -68,39 +67,64 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
         </div>
       </header>
 
-      {/* SECCIÓN HERO CON FRANJA VERDE SOBRE FOTO */}
+      {/* SECCIÓN HERO LIMPIA */}
       <section className="relative h-[65vh] flex items-center justify-center overflow-hidden pt-16">
         <img
           src={config?.cover_image_url || '/portada_mi_web.jpg'}
           className="absolute inset-0 w-full h-full object-cover"
           alt={config?.title || 'Portada'}
         />
-        <div className="absolute inset-0 bg-black/40" />
         
-        {/* Franja Verde Estilo HotCars sobre la foto */}
-        <div className="absolute bottom-10 left-0 right-0 h-12 bg-[#22c55e] z-20 flex items-center overflow-hidden -rotate-1 shadow-2xl">
-          <div className="flex whitespace-nowrap animate-pulse">
-            {[...Array(10)].map((_, i) => (
-              <span key={i} className="text-black font-black text-lg md:text-xl uppercase italic tracking-tighter mx-4">
-                {config?.title || 'HOTCARS'} • STOCK DISPONIBLE •
-              </span>
-            ))}
-          </div>
-        </div>
+        {/* El overlay oscuro solo aparece si hay texto para no ensuciar portadas ya diseñadas */}
+        {(config?.title || config?.subtitle) && (
+          <div className="absolute inset-0 bg-black/40" />
+        )}
 
         <div className="relative z-10 text-center px-6 mb-12">
-          <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-white">
-            {config?.title || 'MI AGENCIA'}
-          </h2>
-          <div className="inline-block bg-white/10 backdrop-blur-md px-6 py-2 border border-white/10">
-            <p className="text-sm md:text-lg font-bold tracking-[0.4em] text-white uppercase italic">
-              {config?.subtitle || 'CONCESIONARIO OFICIAL'}
-            </p>
+          {config?.title && (
+            <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-white">
+              {config.title}
+            </h2>
+          )}
+          {config?.subtitle && (
+            <div className="inline-block bg-white/10 backdrop-blur-md px-6 py-2 border border-white/10">
+              <p className="text-sm md:text-lg font-bold tracking-[0.4em] text-white uppercase italic">
+                {config.subtitle}
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* SECCIÓN DE CATEGORÍAS — FRANJA VERDE LIMPIA */}
+      <section className="bg-[#22c55e] py-12 relative z-30 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-6">
+          <h3 className="text-black text-center font-black text-xl md:text-3xl uppercase italic tracking-tighter mb-8">
+            ¿QUÉ CATEGORÍA ESTÁS BUSCANDO?
+          </h3>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-6 md:gap-10">
+            {[
+              { name: 'AUTOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/autos.png' },
+              { name: 'PICKUPS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/pickups.png' },
+              { name: 'SUVS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/suvs.png' },
+              { name: 'UTILITARIOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/utilitarios.png' },
+              { name: 'CAMIONES', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/camiones.png' },
+              { name: 'MOTOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/motos.png' },
+            ].map((cat) => (
+              <div key={cat.name} className="flex flex-col items-center group cursor-pointer">
+                <div className="relative w-full aspect-video mb-3 transition-transform duration-300 group-hover:scale-110">
+                  <img src={cat.img} alt={cat.name} className="w-full h-full object-contain" />
+                </div>
+                <span className="text-black font-black text-[10px] md:text-xs tracking-widest italic group-hover:underline">
+                  {cat.name}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* GRILLA CON FILTROS — Client Component */}
+      {/* GRILLA CON FILTROS */}
       <VehicleGrid vehicles={vehicles || []} whatsapp={config?.whatsapp} />
 
       {/* FOOTER */}
