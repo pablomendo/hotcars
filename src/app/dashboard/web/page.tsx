@@ -6,7 +6,8 @@ import {
   Star, Eye, EyeOff, Check, Settings, Zap, Plus, DollarSign, 
   Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle,
   Instagram, Facebook, MessageCircle, Share2, Image as ImageIcon,
-  Type, Globe, Trash2, Upload, MapPin, Clock, Phone, ExternalLink
+  Type, Globe, Trash2, Upload, MapPin, Clock, Phone, ExternalLink,
+  Loader2
 } from 'lucide-react';
 
 export default function MiWebPage() {
@@ -26,6 +27,7 @@ export default function MiWebPage() {
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [previewImage, setPreviewImage] = useState('/portada_mi_web.jpg');
+    const [isUploadingCover, setIsUploadingCover] = useState(false);
     const [showSocialsInFooter, setShowSocialsInFooter] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [maxWebVehicles, setMaxWebVehicles] = useState(10);
@@ -177,11 +179,35 @@ export default function MiWebPage() {
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // ✅ FIX: sube la imagen a Cloudinary con preset hotcars_web_configs
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const imageUrl = URL.createObjectURL(file);
-            setPreviewImage(imageUrl);
+        if (!file) return;
+
+        setIsUploadingCover(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = async (upload) => {
+                const base64 = upload.target?.result as string;
+                const formData = new FormData();
+                formData.append('file', base64);
+                formData.append('upload_preset', 'hotcars_web_configs');
+                const res = await fetch(
+                    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                    { method: 'POST', body: formData }
+                );
+                const data = await res.json();
+                if (data.secure_url) {
+                    setPreviewImage(data.secure_url);
+                } else {
+                    alert('Error al subir la imagen');
+                }
+                setIsUploadingCover(false);
+            };
+            reader.readAsDataURL(file);
+        } catch (err) {
+            alert('Error al subir la imagen');
+            setIsUploadingCover(false);
         }
     };
 
@@ -479,11 +505,19 @@ export default function MiWebPage() {
                                 <ConfigCard title="Editar Portada" description={planFeatures.cover_image ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
                                     <div className="relative aspect-video rounded-xl border border-white/10 overflow-hidden bg-slate-900 group">
                                         <img src={previewImage} className={`w-full h-full object-cover opacity-60 ${!planFeatures.cover_image ? 'grayscale' : ''}`} alt="Preview" />
+                                        {isUploadingCover && (
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                                                <Loader2 size={32} className="animate-spin text-white" />
+                                            </div>
+                                        )}
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
                                             <input className="bg-transparent text-white text-lg font-black uppercase tracking-[4px] text-center outline-none w-full mb-1" value={config.title} onChange={(e) => setConfig({...config, title: e.target.value})} />
                                             <input className="bg-transparent text-slate-300 text-[10px] uppercase tracking-widest text-center outline-none w-full" value={config.subtitle} onChange={(e) => setConfig({...config, subtitle: e.target.value})} />
                                             <div className="flex flex-col items-center gap-4 mt-6">
-                                                <button onClick={handleTriggerFile} className={`bg-white/10 text-white text-[10px] font-black px-5 py-2 rounded uppercase border border-white/10 transition-all flex items-center gap-2 ${!planFeatures.cover_image ? 'opacity-20 pointer-events-none' : ''}`}><Upload size={14} /> Agregar Foto</button>
+                                                <button onClick={handleTriggerFile} className={`bg-white/10 text-white text-[10px] font-black px-5 py-2 rounded uppercase border border-white/10 transition-all flex items-center gap-2 ${!planFeatures.cover_image || isUploadingCover ? 'opacity-20 pointer-events-none' : ''}`}>
+                                                    {isUploadingCover ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                                                    {isUploadingCover ? 'Subiendo...' : 'Agregar Foto'}
+                                                </button>
                                                 <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-10 py-2 rounded uppercase shadow-xl">Confirmar</button>
                                             </div>
                                         </div>
