@@ -48,21 +48,35 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
         )}
       </header>
 
-      {/* SECCIÓN HERO */}
-      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden pt-16">
+      {/* SECCIÓN HERO CON FRANJA VERDE */}
+      <section className="relative h-[65vh] flex items-center justify-center overflow-hidden pt-16">
         <img
           src={config.cover_image_url || '/portada_mi_web.jpg'}
           className="absolute inset-0 w-full h-full object-cover opacity-50"
           alt="Portada Agencia"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1114] via-transparent to-transparent" />
-        <div className="relative z-10 text-center px-6">
-          <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1114] via-[#0b1114]/20 to-transparent" />
+        
+        {/* Franja Verde Estilo HotCars */}
+        <div className="absolute bottom-0 left-0 right-0 h-14 bg-[#22c55e] z-20 flex items-center overflow-hidden rotate-0">
+          <div className="flex whitespace-nowrap animate-pulse">
+            {[...Array(8)].map((_, i) => (
+              <span key={i} className="text-black font-black text-xl md:text-2xl uppercase italic tracking-tighter mx-6 flex-shrink-0">
+                {config.title || 'HOTCARS'} • {config.title || 'HOTCARS'} •
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10 text-center px-6 mb-12">
+          <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-4 drop-shadow-2xl">
             {config.title || 'MI AGENCIA'}
           </h2>
-          <p className="text-lg md:text-2xl font-light tracking-[0.3em] text-slate-300 uppercase opacity-80">
-            {config.subtitle || 'CONCESIONARIO OFICIAL'}
-          </p>
+          <div className="inline-block bg-white/10 backdrop-blur-md px-6 py-2 border border-white/10">
+            <p className="text-sm md:text-lg font-bold tracking-[0.4em] text-white uppercase italic">
+              {config.subtitle || 'CONCESIONARIO OFICIAL'}
+            </p>
+          </div>
         </div>
       </section>
 

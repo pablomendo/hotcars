@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { Search, X, MapPin, RefreshCw, Handshake, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, X, MapPin, RefreshCw, Handshake, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const CATEGORIES = [
   { name: 'AUTO', label: 'Autos', img: '/slider_front/vw_gol.jpeg' },
@@ -67,11 +68,12 @@ function VehicleCard({ v, onClick }: { v: any; onClick: () => void }) {
 }
 
 export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [soloFinanciacion, setSoloFinanciacion] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [maxPrice, setMaxPrice] = useState<string>('');
+  const [currency, setCurrency] = useState<'ARS' | 'USD'>('ARS');
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const featured = useMemo(() => vehicles.filter(v => v.is_featured).slice(0, 3), [vehicles]);
@@ -83,18 +85,18 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
       const matchSearch = `${v.marca} ${v.modelo} ${v.version || ''}`.toLowerCase().includes(search.toLowerCase());
       const matchCat = selectedCategory ? v.categoria?.toUpperCase() === selectedCategory : true;
       const matchFin = soloFinanciacion ? !!v.financiacion : true;
-      return matchSearch && matchCat && matchFin;
+      
+      const priceValue = Number(v.pv);
+      const matchPrice = maxPrice 
+        ? (v.moneda === currency && priceValue <= Number(maxPrice))
+        : true;
+
+      return matchSearch && matchCat && matchFin && matchPrice;
     });
-  }, [vehicles, search, selectedCategory, soloFinanciacion]);
+  }, [vehicles, search, selectedCategory, soloFinanciacion, maxPrice, currency]);
 
   const handleOpenVehicle = (v: any) => {
-    setSelectedVehicle(v);
-    setSelectedImageIndex(0);
-  };
-
-  const handleClose = () => {
-    setSelectedVehicle(null);
-    setSelectedImageIndex(0);
+    router.push(`/vehiculos/${v.id}`);
   };
 
   const scrollSlider = (dir: 'left' | 'right') => {
@@ -108,7 +110,7 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
 
       {/* FILTROS ESTILO HOTCARS */}
       <section className="w-full bg-[#0b1114] py-6 mb-10">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-8">
 
           {/* Categorías con imágenes */}
           <div className="grid grid-cols-3 md:flex md:justify-center items-center gap-4 md:gap-10">
@@ -138,8 +140,41 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
             ))}
           </div>
 
+          {/* BUSCADOR DE PRESUPUESTO CENTRADO */}
+          <div className="flex flex-col items-center justify-center gap-4 py-6 border-y border-white/5">
+            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">¿Cuál es tu presupuesto?</p>
+            <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10 w-full max-w-md">
+              <div className="flex gap-1 pr-2 border-r border-white/10 mr-2">
+                <button 
+                  onClick={() => setCurrency('ARS')}
+                  className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all ${currency === 'ARS' ? 'bg-[#22c55e] text-black' : 'text-white/40'}`}
+                >
+                  $
+                </button>
+                <button 
+                  onClick={() => setCurrency('USD')}
+                  className={`px-3 py-2 rounded-xl text-[10px] font-black transition-all ${currency === 'USD' ? 'bg-[#22c55e] text-black' : 'text-white/40'}`}
+                >
+                  U$D
+                </button>
+              </div>
+              <input
+                type="number"
+                placeholder={`Hasta ${currency === 'ARS' ? '$' : 'U$D'} ...`}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="bg-transparent flex-1 outline-none text-white font-bold text-sm placeholder:text-white/20 px-2"
+              />
+              {maxPrice && (
+                <button onClick={() => setMaxPrice('')} className="p-2 text-white/40 hover:text-white">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Buscador + financiación + limpiar */}
-          <div className="flex flex-wrap items-center gap-3 mt-2">
+          <div className="flex flex-wrap items-center gap-3 mt-2 justify-center">
             <div className="relative flex-1 min-w-[200px] max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
@@ -160,9 +195,9 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
             >
               <Handshake size={13} /> Financiación
             </button>
-            {(selectedCategory || soloFinanciacion || search) && (
+            {(selectedCategory || soloFinanciacion || search || maxPrice) && (
               <button
-                onClick={() => { setSelectedCategory(null); setSoloFinanciacion(false); setSearch(''); }}
+                onClick={() => { setSelectedCategory(null); setSoloFinanciacion(false); setSearch(''); setMaxPrice(''); }}
                 className="px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 flex items-center gap-1.5"
               >
                 <X size={12} /> Limpiar
@@ -172,8 +207,8 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
         </div>
       </section>
 
-      {/* DESTACADOS — máx 3, grilla 3 desktop / 2 mobile */}
-      {featured.length > 0 && !selectedCategory && !search && !soloFinanciacion && (
+      {/* DESTACADOS */}
+      {featured.length > 0 && !selectedCategory && !search && !soloFinanciacion && !maxPrice && (
         <section className="mb-12">
           <h2 className="text-white text-xl font-black uppercase tracking-widest border-l-4 border-[#22c55e] pl-4 mb-6">
             Destacados
@@ -186,8 +221,8 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
         </section>
       )}
 
-      {/* NUEVOS INGRESOS — slider con flechas */}
-      {newArrivals.length > 0 && !selectedCategory && !search && !soloFinanciacion && (
+      {/* NUEVOS INGRESOS */}
+      {newArrivals.length > 0 && !selectedCategory && !search && !soloFinanciacion && !maxPrice && (
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-white text-xl font-black uppercase tracking-widest border-l-4 border-[#2596be] pl-4">
@@ -212,10 +247,10 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
         </section>
       )}
 
-      {/* INVENTARIO GENERAL — 4 columnas desktop / 2 mobile */}
+      {/* INVENTARIO GENERAL */}
       {filtered.length > 0 && (
         <section>
-          {(featured.length > 0 || newArrivals.length > 0) && !selectedCategory && !search && !soloFinanciacion && (
+          {(featured.length > 0 || newArrivals.length > 0) && !selectedCategory && !search && !soloFinanciacion && !maxPrice && (
             <h2 className="text-white text-xl font-black uppercase tracking-widest border-l-4 border-slate-500 pl-4 mb-6">
               Todo el stock
             </h2>
@@ -231,119 +266,6 @@ export default function VehicleGrid({ vehicles, whatsapp }: VehicleGridProps) {
       {filtered.length === 0 && featured.length === 0 && newArrivals.length === 0 && (
         <div className="text-center py-32 border-2 border-dashed border-white/5 rounded-2xl">
           <p className="text-slate-600 uppercase font-black tracking-[0.3em]">No hay unidades que coincidan</p>
-        </div>
-      )}
-
-      {/* POPUP DETALLE */}
-      {selectedVehicle && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={handleClose}>
-          <div
-            className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl text-[#0f172a]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h3 className="font-black uppercase text-sm tracking-tight">
-                {selectedVehicle.marca} {selectedVehicle.modelo} {selectedVehicle.anio}
-              </h3>
-              <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="relative w-full aspect-video bg-gray-100 overflow-hidden">
-              {selectedVehicle.fotos?.[selectedImageIndex] ? (
-                <img src={selectedVehicle.fotos[selectedImageIndex]} className="w-full h-full object-contain" alt="Foto vehículo" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase text-xs">Sin foto</div>
-              )}
-              {selectedVehicle.fotos?.length > 1 && (
-                <>
-                  <button onClick={() => setSelectedImageIndex(prev => Math.max(0, prev - 1))} className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors cursor-pointer">
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button onClick={() => setSelectedImageIndex(prev => Math.min(selectedVehicle.fotos.length - 1, prev + 1))} className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors cursor-pointer">
-                    <ChevronRight size={18} />
-                  </button>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {selectedVehicle.fotos.map((_: any, idx: number) => (
-                      <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`w-2 h-2 rounded-full transition-all cursor-pointer ${idx === selectedImageIndex ? 'bg-white w-5' : 'bg-white/50'}`} />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {selectedVehicle.fotos?.length > 1 && (
-              <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-gray-100">
-                {selectedVehicle.fotos.map((foto: string, idx: number) => (
-                  <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`flex-shrink-0 w-14 h-14 rounded border-2 overflow-hidden transition-all cursor-pointer ${selectedImageIndex === idx ? 'border-[#288b55]' : 'border-gray-200'}`}>
-                    <img src={foto} className="w-full h-full object-cover" alt="Thumb" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h2 className="text-xl font-black uppercase tracking-tight">{selectedVehicle.marca} {selectedVehicle.modelo}</h2>
-                  <p className="text-[#3483fa] font-bold text-[13px] uppercase">{selectedVehicle.version}</p>
-                </div>
-                <span className="text-3xl font-black text-[#288b55] tracking-tighter">
-                  {selectedVehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(selectedVehicle.pv).toLocaleString('de-DE')}
-                </span>
-              </div>
-
-              <div className="flex gap-4 text-[12px] font-bold text-gray-500 uppercase mb-4">
-                <span>{selectedVehicle.anio}</span>
-                <span>•</span>
-                <span>{Number(selectedVehicle.km).toLocaleString('de-DE')} KM</span>
-                {selectedVehicle.localidad && <><span>•</span><span className="flex items-center gap-1"><MapPin size={11}/>{selectedVehicle.localidad}</span></>}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className={`py-3 rounded-lg border flex items-center justify-center gap-2 ${selectedVehicle.acepta_permuta ? 'bg-white border-gray-300 text-[#1a1a1a]' : 'opacity-30 border-gray-100'}`}>
-                  <RefreshCw size={14}/><span className="text-[11px] font-black uppercase">Permuta</span>
-                </div>
-                <div className={`py-3 rounded-lg border flex items-center justify-center gap-2 ${selectedVehicle.financiacion ? 'bg-white border-gray-300 text-[#1a1a1a]' : 'opacity-30 border-gray-100'}`}>
-                  <Handshake size={14}/><span className="text-[11px] font-black uppercase">Financiamiento</span>
-                </div>
-              </div>
-
-              {selectedVehicle.descripcion && (
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-line">{selectedVehicle.descripcion}</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-y-3 mb-5">
-                {[
-                  { l: 'Marca', v: selectedVehicle.marca },
-                  { l: 'Modelo', v: selectedVehicle.modelo },
-                  { l: 'Año', v: selectedVehicle.anio },
-                  { l: 'Kilómetros', v: selectedVehicle.km?.toLocaleString('de-DE') + ' km' },
-                  { l: 'Versión', v: selectedVehicle.version },
-                  { l: 'Combustible', v: selectedVehicle.tipo_combustible || 'Nafta' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex flex-col border-b border-gray-100 pb-2">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.l}</span>
-                    <span className="text-[13px] font-bold uppercase">{item.v}</span>
-                  </div>
-                ))}
-              </div>
-
-              {whatsapp && (
-                <a
-                  href={`https://wa.me/${whatsapp}?text=Hola! Me interesa el ${selectedVehicle.marca} ${selectedVehicle.modelo} ${selectedVehicle.anio}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-4 bg-[#22c55e] text-black rounded-xl font-black text-[14px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#16a34a] transition-colors cursor-pointer"
-                >
-                  Consultar por WhatsApp
-                </a>
-              )}
-            </div>
-          </div>
         </div>
       )}
     </main>
