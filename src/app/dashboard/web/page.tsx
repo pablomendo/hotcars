@@ -103,6 +103,29 @@ export default function MiWebPage() {
                         }
                     } else if (diffDays < 30) {
                         alert(`Subdominio bloqueado. Podrás cambiarlo en ${30 - diffDays} días.`);
+                        // ✅ FIX: no retornamos, guardamos todo excepto el subdominio
+                        const dataToSaveWithoutSubdomain: any = {
+                            user_id: userData.id,
+                            custom_domain: config.customDomain,
+                            title: config.title,
+                            subtitle: config.subtitle,
+                            instagram: config.instagram,
+                            facebook: config.facebook,
+                            tiktok: config.tiktok,
+                            whatsapp: config.whatsapp,
+                            direccion: config.direccion,
+                            horarios: config.horarios,
+                            telefono: config.telefono,
+                            show_socials_footer: showSocialsInFooter,
+                            cover_image_url: previewImage,
+                            change_count: newChangeCount
+                        };
+                        const { error: errPartial } = await supabase
+                            .from('web_configs')
+                            .upsert(dataToSaveWithoutSubdomain, { onConflict: 'user_id' });
+                        if (errPartial) throw errPartial;
+                        alert("¡Configuración guardada! (El subdominio no fue modificado por estar bloqueado)");
+                        await fetchWebConfig();
                         return;
                     }
                 }
