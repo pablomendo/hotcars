@@ -91,6 +91,7 @@ export default function MiWebPage() {
             const isSubdomainChanging = current && current.subdomain !== config.subdomain;
             let newChangeCount = current?.change_count || 0;
             const now = new Date();
+            let subdomainToSave = config.subdomain;
 
             if (isSubdomainChanging) {
                 if (current?.last_subdomain_change) {
@@ -101,45 +102,24 @@ export default function MiWebPage() {
                     if (diffHours < 24) {
                         if (newChangeCount >= 3) {
                             alert("Ya agotaste tus 3 ediciones de cortesía en las primeras 24hs.");
-                            return;
+                            subdomainToSave = current.subdomain;
                         }
                     } else if (diffDays < 30) {
                         alert(`Subdominio bloqueado. Podrás cambiarlo en ${30 - diffDays} días.`);
-                        
-                        const dataToSaveWithoutSubdomain: any = {
-                            user_id: userData.id,
-                            custom_domain: config.customDomain,
-                            title: config.title,
-                            subtitle: config.subtitle,
-                            instagram: config.instagram,
-                            facebook: config.facebook,
-                            tiktok: config.tiktok,
-                            whatsapp: config.whatsapp,
-                            direccion: config.direccion,
-                            horarios: config.horarios,
-                            telefono: config.telefono,
-                            show_socials_footer: showSocialsInFooter,
-                            cover_image_url: previewImage,
-                            change_count: newChangeCount
-                        };
-                        const { error: errPartial } = await supabase
-                            .from('web_configs')
-                            .upsert(dataToSaveWithoutSubdomain, { onConflict: 'user_id' });
-                        if (errPartial) throw errPartial;
-                        alert("¡Configuración guardada! (El subdominio no fue modificado por estar bloqueado)");
-                        await fetchWebConfig();
-                        return;
+                        subdomainToSave = current.subdomain;
                     }
                 }
                 
-                const isNewCycle = current?.last_subdomain_change && 
-                    (now.getTime() - new Date(current.last_subdomain_change).getTime()) / (1000 * 60 * 60) >= 24;
-                
-                newChangeCount = isNewCycle ? 1 : newChangeCount + 1;
+                if (subdomainToSave === config.subdomain) {
+                    const isNewCycle = current?.last_subdomain_change && 
+                        (now.getTime() - new Date(current.last_subdomain_change).getTime()) / (1000 * 60 * 60) >= 24;
+                    newChangeCount = isNewCycle ? 1 : newChangeCount + 1;
+                }
             }
 
             const dataToSave: any = {
                 user_id: userData.id,
+                subdomain: subdomainToSave,
                 custom_domain: config.customDomain,
                 title: config.title,
                 subtitle: config.subtitle,
@@ -155,8 +135,7 @@ export default function MiWebPage() {
                 change_count: newChangeCount
             };
 
-            if (isSubdomainChanging || !current) {
-                dataToSave.subdomain = config.subdomain;
+            if (subdomainToSave !== current?.subdomain || !current) {
                 dataToSave.last_subdomain_change = now.toISOString();
             }
 
@@ -165,7 +144,7 @@ export default function MiWebPage() {
                 .upsert(dataToSave, { onConflict: 'user_id' });
 
             if (error) throw error;
-            alert("¡Configuración guardada!");
+            alert(subdomainToSave !== config.subdomain ? "Configuración guardada (Subdominio bloqueado/sin cambios)" : "¡Configuración guardada!");
             await fetchWebConfig();
         } catch (err) {
             console.error(err);
@@ -197,7 +176,6 @@ export default function MiWebPage() {
             
             if (data.secure_url) {
                 setPreviewImage(data.secure_url);
-                // Opcional: Auto-guardar la imagen al subirla
             } else {
                 alert('Error al subir la imagen');
             }
