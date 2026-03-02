@@ -273,9 +273,10 @@ export default function MiWebPage() {
                 return;
             }
 
+            // ✅ FIX: para flips, usar owner_user_id como p_user_id ya que el RPC valida el dueño
             const { data, error } = await supabase.rpc('toggle_visibilidad_web', {
                 p_auto_id: id,
-                p_user_id: userData.id,
+                p_user_id: item?.isProprio ? userData.id : item?.owner_user_id,
                 p_mostrar: mostrar
             });
 

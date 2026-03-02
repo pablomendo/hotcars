@@ -187,7 +187,6 @@ function MarketplaceContent() {
   if (isLoading && inv.length === 0) return <div className="flex h-screen w-full items-center justify-center bg-[#e2e8f0]"><Loader2 className="animate-spin text-[#288b55] w-10 h-10" /></div>;
 
   return (
-    // ✅ FIX: pb-20 en mobile para que el bottomnav no tape contenido
     <main className="min-h-screen bg-[#e2e8f0] text-[#0f172a] font-sans tracking-tight overflow-x-hidden cursor-default pb-20 md:pb-0">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&display=swap');
@@ -212,8 +211,9 @@ function MarketplaceContent() {
                 </p>
                 {!user && (
                   <>
-                    <button onClick={() => handleAuthRedirect('/register')} className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform">Registrate</button>
-                    <button onClick={() => handleAuthRedirect('/login')} className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm">Ingresar</button>
+                    {/* ✅ FIX: cursor-pointer agregado */}
+                    <button onClick={() => handleAuthRedirect('/register')} className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform cursor-pointer">Registrate</button>
+                    <button onClick={() => handleAuthRedirect('/login')} className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm cursor-pointer">Ingresar</button>
                   </>
                 )}
               </div>
@@ -229,16 +229,17 @@ function MarketplaceContent() {
               >
                 <img src={slide.img} alt={`Hero ${idx + 1}`} className="w-full h-auto object-cover align-top" />
                 {!user && (
-                  <div className={`absolute bottom-[18%] flex gap-4 pointer-events-auto ${slide.ctaPosition === 'right' ? 'right-[8%]' : 'left-[9.5%]'}`}>
+                  <div className={`absolute bottom-[18%] flex gap-4 pointer-events-auto z-10 ${slide.ctaPosition === 'right' ? 'right-[8%]' : 'left-[9.5%]'}`}>
+                    {/* ✅ FIX: cursor-pointer agregado */}
                     <button
                       onClick={() => handleAuthRedirect(slide.primaryPath)}
-                      className="px-10 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform"
+                      className="px-10 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform cursor-pointer"
                     >
                       {slide.primaryLabel}
                     </button>
                     <button
                       onClick={() => handleAuthRedirect(slide.secondaryPath)}
-                      className="px-10 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all"
+                      className="px-10 py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm hover:bg-white/30 transition-all cursor-pointer"
                     >
                       {slide.secondaryLabel}
                     </button>
@@ -259,21 +260,17 @@ function MarketplaceContent() {
         </section>
       )}
 
-      {/* ✅ Banners sobre fondo verde — orden: banner1_largo arriba, dos 700px, banner2_largo abajo */}
       {!search && !selectedCategory && (
         <div className="w-full bg-[#288b55] py-8">
 
-          {/* banner1_largo al 70% — solo desktop */}
           <div className="hidden md:block w-[70%] mx-auto mb-12">
             <img src="/banner1_largo.png" alt="Banner Largo 1" className="w-full h-auto object-cover" />
           </div>
 
-          {/* banner_phones_1 — solo mobile, debajo del hero */}
           <div className="md:hidden w-full mb-8 px-4">
             <img src="/banner_phones_1.png" alt="Banner Mobile 1" className="w-full h-auto object-cover rounded-xl" />
           </div>
 
-          {/* Dos banners 700px lado a lado */}
           <div className="w-full flex flex-col md:flex-row gap-10 justify-center items-center mb-8 px-4 md:px-8 py-8 bg-[#12242E]">
             <div className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 w-full md:w-auto">
               <img src="/banner_red_privada_vendedores.png" alt="Red Privada de Vendedores" className="w-full md:w-[700px] h-auto object-cover" />
@@ -283,12 +280,10 @@ function MarketplaceContent() {
             </div>
           </div>
 
-          {/* banner2_largo al 70% — solo desktop */}
           <div className="hidden md:block w-[70%] mx-auto mt-12">
             <img src="/banner2_largo.png" alt="Banner Largo 2" className="w-full h-auto object-cover" />
           </div>
 
-          {/* banner_phones_2 — solo mobile, debajo de los banners de 700px */}
           <div className="md:hidden w-full mt-8 px-4">
             <img src="/banner_phones_2.png" alt="Banner Mobile 2" className="w-full h-auto object-cover rounded-xl" />
           </div>
