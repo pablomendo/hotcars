@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
-import { MapPin, Clock, Phone, Instagram, Facebook, MessageCircle, Share2 } from 'lucide-react';
+import { MapPin, Clock, Phone, Instagram, Facebook, MessageCircle, Share2, Search } from 'lucide-react';
 import VehicleGrid from './VehicleGrid';
 
 interface SubdomainPageProps {
@@ -10,6 +10,7 @@ interface SubdomainPageProps {
 export default async function SubdomainPage({ params }: SubdomainPageProps) {
   const { subdomain } = await params;
 
+  // Traemos la configuración de la web del usuario
   const { data: config, error: configError } = await supabase
     .from('web_configs')
     .select('*')
@@ -20,6 +21,7 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
     return notFound();
   }
 
+  // Traemos los vehículos de ese usuario específico
   const { data: vehicles } = await supabase
     .from('inventario')
     .select('*')
@@ -31,45 +33,63 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
   return (
     <div className="min-h-screen bg-[#0b1114] text-white font-sans text-left">
 
-      {/* HEADER: solo nombre de la agencia */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0b1114]/95 backdrop-blur-sm border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <h1 className="font-black uppercase tracking-tighter text-xl text-white">
-          {config.title || 'MI AGENCIA'}
-        </h1>
-        {config.whatsapp && (
-          <a
-            href={`https://wa.me/${config.whatsapp}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-[#22c55e] text-black px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest hover:bg-[#16a34a] transition-colors"
+      {/* HEADER: Inicio, Buscador y Contacto */}
+      <header className="fixed top-0 left-0 right-0 z-[100] bg-[#0b1114]/90 backdrop-blur-md border-b border-white/5 px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-8">
+          <button 
+            onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} 
+            className="font-black uppercase tracking-tighter text-base md:text-lg text-white hover:text-[#22c55e] transition-colors flex-shrink-0"
           >
-            <MessageCircle size={14} /> Contactar
-          </a>
-        )}
+            INICIO
+          </button>
+        </div>
+
+        {/* Buscador en Header */}
+        <div className="flex-1 max-w-md relative hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          <input 
+            type="text" 
+            placeholder="Buscar vehículo..." 
+            className="w-full bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-xs font-bold uppercase tracking-widest outline-none focus:border-[#22c55e]/50 transition-all text-white placeholder:text-white/20"
+          />
+        </div>
+
+        <div className="flex items-center gap-4 flex-shrink-0">
+          {config.whatsapp && (
+            <a
+              href={`https://wa.me/${config.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-[#22c55e] text-black px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#16a34a] transition-all"
+            >
+              <MessageCircle size={14} /> CONTACTO
+            </a>
+          )}
+        </div>
       </header>
 
-      {/* SECCIÓN HERO CON FRANJA VERDE */}
+      {/* SECCIÓN HERO CON FRANJA VERDE SOBRE FOTO */}
       <section className="relative h-[65vh] flex items-center justify-center overflow-hidden pt-16">
         <img
           src={config.cover_image_url || '/portada_mi_web.jpg'}
-          className="absolute inset-0 w-full h-full object-cover opacity-50"
-          alt="Portada Agencia"
+          className="absolute inset-0 w-full h-full object-cover"
+          alt={config.title || 'Portada'}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1114] via-[#0b1114]/20 to-transparent" />
+        <div className="absolute inset-0 bg-black/40" />
         
-        {/* Franja Verde Estilo HotCars */}
-        <div className="absolute bottom-0 left-0 right-0 h-14 bg-[#22c55e] z-20 flex items-center overflow-hidden rotate-0">
+        {/* Franja Verde Estilo HotCars sobre la foto */}
+        <div className="absolute bottom-10 left-0 right-0 h-12 bg-[#22c55e] z-20 flex items-center overflow-hidden -rotate-1 shadow-2xl">
           <div className="flex whitespace-nowrap animate-pulse">
-            {[...Array(8)].map((_, i) => (
-              <span key={i} className="text-black font-black text-xl md:text-2xl uppercase italic tracking-tighter mx-6 flex-shrink-0">
-                {config.title || 'HOTCARS'} • {config.title || 'HOTCARS'} •
+            {[...Array(10)].map((_, i) => (
+              <span key={i} className="text-black font-black text-lg md:text-xl uppercase italic tracking-tighter mx-4">
+                {config.title || 'HOTCARS'} • STOCK DISPONIBLE •
               </span>
             ))}
           </div>
         </div>
 
         <div className="relative z-10 text-center px-6 mb-12">
-          <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-4 drop-shadow-2xl">
+          <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-white">
             {config.title || 'MI AGENCIA'}
           </h2>
           <div className="inline-block bg-white/10 backdrop-blur-md px-6 py-2 border border-white/10">
@@ -87,7 +107,7 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
       <footer className="bg-black py-24 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20">
           <div className="space-y-8">
-            <h3 className="text-4xl font-black uppercase tracking-tighter">{config.title}</h3>
+            <h3 className="text-4xl font-black uppercase tracking-tighter">{config.title || 'HOTCARS'}</h3>
             <div className="space-y-5">
               {config.direccion && (
                 <div className="flex items-start gap-4 text-slate-400">
@@ -109,15 +129,32 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
               )}
             </div>
           </div>
+          
           <div className="flex flex-col md:items-end justify-center gap-10">
             {config.show_socials_footer && (
               <>
                 <span className="text-[11px] font-black text-slate-600 uppercase tracking-[0.5em]">Nuestras Redes</span>
                 <div className="flex gap-8">
-                  {config.instagram && <a href={`https://instagram.com/${config.instagram}`} target="_blank" className="text-white hover:text-[#22c55e] transition-all transform hover:-translate-y-1"><Instagram size={28} /></a>}
-                  {config.facebook && <a href={`https://facebook.com/${config.facebook}`} target="_blank" className="text-white hover:text-[#22c55e] transition-all transform hover:-translate-y-1"><Facebook size={28} /></a>}
-                  {config.tiktok && <a href={`https://tiktok.com/@${config.tiktok}`} target="_blank" className="text-white hover:text-[#22c55e] transition-all transform hover:-translate-y-1"><Share2 size={28} /></a>}
-                  {config.whatsapp && <a href={`https://wa.me/${config.whatsapp}`} target="_blank" className="text-[#22c55e] hover:scale-110 transition-transform"><MessageCircle size={34} /></a>}
+                  {config.instagram && (
+                    <a href={`https://instagram.com/${config.instagram}`} target="_blank" className="text-white hover:text-[#22c55e] transition-all transform hover:-translate-y-1">
+                      <Instagram size={28} />
+                    </a>
+                  )}
+                  {config.facebook && (
+                    <a href={`https://facebook.com/${config.facebook}`} target="_blank" className="text-white hover:text-[#22c55e] transition-all transform hover:-translate-y-1">
+                      <Facebook size={28} />
+                    </a>
+                  )}
+                  {config.tiktok && (
+                    <a href={`https://tiktok.com/@${config.tiktok}`} target="_blank" className="text-white hover:text-[#22c55e] transition-all transform hover:-translate-y-1">
+                      <Share2 size={28} />
+                    </a>
+                  )}
+                  {config.whatsapp && (
+                    <a href={`https://wa.me/${config.whatsapp}`} target="_blank" className="text-[#22c55e] hover:scale-110 transition-transform">
+                      <MessageCircle size={34} />
+                    </a>
+                  )}
                 </div>
               </>
             )}

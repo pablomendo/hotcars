@@ -105,7 +105,7 @@ export default function MiWebPage() {
                         }
                     } else if (diffDays < 30) {
                         alert(`Subdominio bloqueado. Podrás cambiarlo en ${30 - diffDays} días.`);
-                        // ✅ FIX: no retornamos, guardamos todo excepto el subdominio
+                        
                         const dataToSaveWithoutSubdomain: any = {
                             user_id: userData.id,
                             custom_domain: config.customDomain,
@@ -179,34 +179,31 @@ export default function MiWebPage() {
         fileInputRef.current?.click();
     };
 
-    // ✅ FIX: sube la imagen a Cloudinary con preset hotcars_web_configs
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         setIsUploadingCover(true);
         try {
-            const reader = new FileReader();
-            reader.onload = async (upload) => {
-                const base64 = upload.target?.result as string;
-                const formData = new FormData();
-                formData.append('file', base64);
-                formData.append('upload_preset', 'hotcars_web_configs');
-                const res = await fetch(
-                    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-                    { method: 'POST', body: formData }
-                );
-                const data = await res.json();
-                if (data.secure_url) {
-                    setPreviewImage(data.secure_url);
-                } else {
-                    alert('Error al subir la imagen');
-                }
-                setIsUploadingCover(false);
-            };
-            reader.readAsDataURL(file);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'hotcars_web_configs');
+            
+            const res = await fetch(
+                `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                { method: 'POST', body: formData }
+            );
+            const data = await res.json();
+            
+            if (data.secure_url) {
+                setPreviewImage(data.secure_url);
+                // Opcional: Auto-guardar la imagen al subirla
+            } else {
+                alert('Error al subir la imagen');
+            }
         } catch (err) {
-            alert('Error al subir la imagen');
+            alert('Error al conectar con el servidor de imágenes');
+        } finally {
             setIsUploadingCover(false);
         }
     };
@@ -322,7 +319,6 @@ export default function MiWebPage() {
                 return;
             }
 
-            // ✅ FIX: para flips, usar owner_user_id como p_user_id ya que el RPC valida el dueño
             const { data, error } = await supabase.rpc('toggle_visibilidad_web', {
                 p_auto_id: id,
                 p_user_id: item?.isProprio ? userData.id : item?.owner_user_id,
