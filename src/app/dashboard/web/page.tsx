@@ -401,7 +401,7 @@ export default function MiWebPage() {
                             <SettingsIcon size={16}/><span className="text-[10px] font-bold uppercase tracking-wider font-sans">Configurar mi web</span>
                         </button>
                         <a 
-                            href={`http://${config.subdomain}.hotcars.com.ar:3000`} 
+                            href={`https://${config.subdomain}.hotcars.com.ar`} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 bg-white/5 text-slate-500 hover:text-[#22c55e] hover:border-[#22c55e]/30 transition-all"
