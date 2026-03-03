@@ -10,7 +10,6 @@ interface SubdomainPageProps {
 export default async function SubdomainPage({ params }: SubdomainPageProps) {
   const { subdomain } = await params;
 
-  // 1. DATA FETCHING
   const { data: config, error: configError } = await supabase
     .from('web_configs')
     .select('*')
@@ -30,11 +29,11 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
   return (
     <div className="min-h-screen bg-[#0b1114] text-white font-sans text-left">
       
-      {/* HEADER ÚNICO - Sin duplicados */}
+      {/* HEADER ÚNICO */}
       <header className="fixed top-0 left-0 right-0 z-[100] bg-[#0b1114]/90 backdrop-blur-md border-b border-white/5 px-4 md:px-8 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
-          <span className="font-black uppercase tracking-tighter text-base md:text-lg text-white italic">
-            {config.title || 'HOTCARS'}
+          <span className="font-black uppercase tracking-tighter text-base md:text-lg text-white">
+            {config.title || 'INICIO'}
           </span>
         </div>
         <div className="flex-1 max-w-md relative hidden md:block">
@@ -47,14 +46,14 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
         </div>
         <div className="flex items-center gap-4 flex-shrink-0">
           {config?.whatsapp && (
-            <a href={`https://wa.me/${config.whatsapp}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#22c55e] text-black px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-all">
+            <a href={`https://wa.me/${config.whatsapp}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-[#22c55e] text-black px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-[#16a34a] transition-all">
               <MessageCircle size={14} /> CONTACTO
             </a>
           )}
         </div>
       </header>
 
-      {/* HERO - Portada Real (h-screen para que no se estire) */}
+      {/* HERO - Portada Real */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <img
           src={config?.cover_image_url || '/portada_mi_web.jpg'}
@@ -78,41 +77,13 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
         </div>
       </section>
 
-      {/* FRANJA VERDE INSTITUCIONAL (#22c55e) - ÚNICA SECCIÓN DE CATEGORÍAS */}
-      <section className="bg-[#22c55e] py-12 relative z-30 shadow-2xl">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h3 className="text-black font-black text-xl md:text-3xl uppercase italic tracking-tighter mb-10">
-            ¿QUÉ CATEGORÍA ESTÁS BUSCANDO?
-          </h3>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-6 md:gap-10">
-            {[
-              { name: 'AUTOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/autos.png' },
-              { name: 'PICKUPS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/pickups.png' },
-              { name: 'SUVS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/suvs.png' },
-              { name: 'UTILITARIOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/utilitarios.png' },
-              { name: 'CAMIONES', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/camiones.png' },
-              { name: 'MOTOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/motos.png' },
-            ].map((cat) => (
-              <div key={cat.name} className="flex flex-col items-center group cursor-pointer">
-                <div className="relative w-full aspect-video mb-3 transition-transform duration-300 group-hover:scale-110">
-                  <img src={cat.img} alt={cat.name} className="w-full h-full object-contain filter brightness-0" />
-                </div>
-                <span className="text-black font-black text-[10px] md:text-xs tracking-widest italic uppercase">
-                  {cat.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* GRILLA DE VEHÍCULOS - Asegurate que VehicleGrid NO tenga otro header adentro */}
+      {/* GRILLA DE VEHÍCULOS (Aquí adentro está la franja verde única ahora) */}
       <VehicleGrid vehicles={vehicles || []} whatsapp={config?.whatsapp} />
 
       {/* FOOTER */}
       <footer className="bg-black py-24 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20">
-          <div className="space-y-8 text-left">
+          <div className="space-y-8">
             <h3 className="text-4xl font-black uppercase tracking-tighter text-[#22c55e] italic">{config?.title || 'HOTCARS'}</h3>
             <div className="space-y-5">
               {config?.direccion && (
@@ -134,9 +105,7 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
               {config?.instagram && <a href={`https://instagram.com/${config.instagram}`} target="_blank" className="text-white hover:text-[#22c55e] transition-all"><Instagram size={28} /></a>}
               {config?.whatsapp && <a href={`https://wa.me/${config.whatsapp}`} target="_blank" className="text-[#22c55e] hover:scale-110 transition-transform"><MessageCircle size={34} /></a>}
             </div>
-            <div className="opacity-20">
-              <span className="text-[9px] font-black uppercase tracking-widest text-white">Powered by HotCars</span>
-            </div>
+            <div className="opacity-20 text-[9px] font-black uppercase tracking-widest text-white">Powered by HotCars</div>
           </div>
         </div>
       </footer>
