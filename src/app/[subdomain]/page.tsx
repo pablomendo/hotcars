@@ -16,9 +16,7 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
     .eq('subdomain', subdomain)
     .single();
 
-  if (configError || !config) {
-    return notFound();
-  }
+  if (configError || !config) return notFound();
 
   const { data: vehicles } = await supabase
     .from('inventario')
@@ -30,13 +28,13 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
 
   return (
     <div className="min-h-screen bg-[#0b1114] text-white font-sans text-left">
-
-      {/* HEADER */}
+      
+      {/* 1. HEADER ÚNICO - FIXED */}
       <header className="fixed top-0 left-0 right-0 z-[100] bg-[#0b1114]/90 backdrop-blur-md border-b border-white/5 px-4 md:px-8 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
-          <a href="#" className="font-black uppercase tracking-tighter text-base md:text-lg text-white hover:text-[#22c55e] transition-colors flex-shrink-0">
+          <span className="font-black uppercase tracking-tighter text-base md:text-lg text-white">
             INICIO
-          </a>
+          </span>
         </div>
         <div className="flex-1 max-w-md relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -55,17 +53,17 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
         </div>
       </header>
 
-      {/* HERO */}
+      {/* 2. HERO - PORTADA FULL SCREEN SIN ESTIRAR */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <img
           src={config?.cover_image_url || '/portada_mi_web.jpg'}
           className="absolute inset-0 w-full h-full object-cover"
           alt="Portada"
         />
-        {(config?.title || config?.subtitle) && <div className="absolute inset-0 bg-black/40" />}
+        {(config?.title || config?.subtitle) && <div className="absolute inset-0 bg-black/50" />}
         <div className="relative z-10 text-center px-6">
           {config?.title && (
-            <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-white">
+            <h2 className="text-6xl md:text-9xl font-black uppercase tracking-tighter mb-2 drop-shadow-2xl text-white italic">
               {config.title}
             </h2>
           )}
@@ -79,13 +77,13 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
         </div>
       </section>
 
-      {/* FRANJA VERDE CON CATEGORÍAS */}
-      <section className="bg-[#22c55e] py-10 relative z-30 shadow-2xl">
+      {/* 3. FRANJA VERDE HOTCARS (#22c55e) CON CATEGORÍAS ADENTRO */}
+      <section className="bg-[#22c55e] py-12 relative z-30 shadow-2xl">
         <div className="max-w-7xl mx-auto px-6">
-          <h3 className="text-black text-center font-black text-xl md:text-2xl uppercase italic tracking-tighter mb-8">
+          <h3 className="text-black text-center font-black text-xl md:text-3xl uppercase italic tracking-tighter mb-10">
             ¿QUÉ CATEGORÍA ESTÁS BUSCANDO?
           </h3>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-8">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-6 md:gap-10">
             {[
               { name: 'AUTOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/autos.png' },
               { name: 'PICKUPS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/pickups.png' },
@@ -95,10 +93,10 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
               { name: 'MOTOS', img: 'https://rwvstleisodidpcdvbgp.supabase.co/storage/v1/object/public/hotcars_bucket/assets/categorias/motos.png' },
             ].map((cat) => (
               <div key={cat.name} className="flex flex-col items-center group cursor-pointer">
-                <div className="relative w-full aspect-video mb-2 transition-transform duration-300 group-hover:scale-110">
+                <div className="relative w-full aspect-video mb-3 transition-transform duration-300 group-hover:scale-110">
                   <img src={cat.img} alt={cat.name} className="w-full h-full object-contain filter brightness-0" />
                 </div>
-                <span className="text-black font-black text-[9px] md:text-[10px] tracking-widest italic uppercase">
+                <span className="text-black font-black text-[10px] md:text-xs tracking-widest italic uppercase">
                   {cat.name}
                 </span>
               </div>
@@ -107,25 +105,19 @@ export default async function SubdomainPage({ params }: SubdomainPageProps) {
         </div>
       </section>
 
-      {/* GRILLA */}
+      {/* 4. GRILLA DE VEHÍCULOS */}
       <VehicleGrid vehicles={vehicles || []} whatsapp={config?.whatsapp} />
 
-      {/* FOOTER */}
+      {/* 5. FOOTER */}
       <footer className="bg-black py-24 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-20">
           <div className="space-y-8">
-            <h3 className="text-4xl font-black uppercase tracking-tighter">{config?.title || 'HOTCARS'}</h3>
+            <h3 className="text-4xl font-black uppercase tracking-tighter text-[#22c55e]">{config?.title || 'HOTCARS'}</h3>
             <div className="space-y-5">
               {config?.direccion && (
                 <div className="flex items-start gap-4 text-slate-400">
                   <MapPin size={22} className="text-[#22c55e] shrink-0" />
                   <span className="text-sm uppercase font-bold tracking-tight">{config.direccion}</span>
-                </div>
-              )}
-              {config?.horarios && (
-                <div className="flex items-start gap-4 text-slate-400">
-                  <Clock size={22} className="text-[#22c55e] shrink-0" />
-                  <span className="text-sm uppercase font-bold tracking-tight">{config.horarios}</span>
                 </div>
               )}
               {config?.telefono && (
