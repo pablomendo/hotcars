@@ -1,3 +1,4 @@
+'use client';
 import { Car, Truck, Mountain, Package, Container, Bike } from "lucide-react";
 import { motion } from "framer-motion";
 

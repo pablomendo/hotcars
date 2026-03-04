@@ -1,3 +1,4 @@
+'use client';
 import { Search, MessageCircle, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
