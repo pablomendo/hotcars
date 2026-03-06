@@ -7,7 +7,7 @@ import {
   Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle,
   Instagram, Facebook, MessageCircle, Share2, Image as ImageIcon,
   Type, Globe, Trash2, Upload, MapPin, Clock, Phone, ExternalLink,
-  Loader2
+  Loader2, ChevronUp, ChevronDown
 } from 'lucide-react';
 
 export default function MiWebPage() {
@@ -244,7 +244,7 @@ export default function MiWebPage() {
                     .from('inventario')
                     .select('*')
                     .eq('created_by_user_id', uid)
-                    .order('created_at', { ascending: false }),
+                    .order('web_order', { ascending: true }),
                 supabase
                     .from('flip_compartido')
                     .select('auto_id, inventario:auto_id(*)')
@@ -258,7 +258,7 @@ export default function MiWebPage() {
                 .filter((i: any) => i !== null);
 
             const allData = [...propios, ...terceros].sort((a, b) =>
-                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                (a.web_order || 0) - (b.web_order || 0)
             );
 
             const mappedData = allData.map((v) => {
@@ -284,6 +284,50 @@ export default function MiWebPage() {
 
             setInv(mappedData);
         } catch (err) { console.error(err); } finally { setLoading(false); }
+    };
+
+    const handleMoveUp = (id: string) => {
+        const index = filtered.findIndex(v => v.id === id);
+        if (index <= 0) return;
+
+        const current = filtered[index];
+        const above = filtered[index - 1];
+
+        const currentOrder = current.web_order || 0;
+        const aboveOrder = above.web_order || 0;
+
+        setInv(prev => prev.map(v => {
+            if (v.id === current.id) return { ...v, web_order: aboveOrder };
+            if (v.id === above.id) return { ...v, web_order: currentOrder };
+            return v;
+        }));
+
+        Promise.all([
+            supabase.from('inventario').update({ web_order: aboveOrder }).eq('id', current.id),
+            supabase.from('inventario').update({ web_order: currentOrder }).eq('id', above.id),
+        ]);
+    };
+
+    const handleMoveDown = (id: string) => {
+        const index = filtered.findIndex(v => v.id === id);
+        if (index >= filtered.length - 1) return;
+
+        const current = filtered[index];
+        const below = filtered[index + 1];
+
+        const currentOrder = current.web_order || 0;
+        const belowOrder = below.web_order || 0;
+
+        setInv(prev => prev.map(v => {
+            if (v.id === current.id) return { ...v, web_order: belowOrder };
+            if (v.id === below.id) return { ...v, web_order: currentOrder };
+            return v;
+        }));
+
+        Promise.all([
+            supabase.from('inventario').update({ web_order: belowOrder }).eq('id', current.id),
+            supabase.from('inventario').update({ web_order: currentOrder }).eq('id', below.id),
+        ]);
     };
 
     const handleAction = async (id: string, updates: any) => {
@@ -538,7 +582,7 @@ export default function MiWebPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {!loading && filtered.map((v) => (
+                        {!loading && filtered.map((v, index) => (
                             <div key={v.id} className={`bg-[#141b1f] border rounded-xl overflow-hidden transition-all ${v.show ? 'border-white/5' : 'border-red-900/40 opacity-50'}`}>
                                 <div className="p-4 flex flex-col gap-3">
                                     <div className="w-full aspect-video rounded-lg bg-slate-900 overflow-hidden border border-white/10 relative">
@@ -560,8 +604,20 @@ export default function MiWebPage() {
                                 <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5 font-sans">
                                     <button onClick={() => handleAction(v.id, { is_featured: !v.featured })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.featured ? 'text-yellow-500 bg-yellow-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}><Star size={13} className={v.featured && v.show ? "fill-yellow-500" : ""} /><span className="text-[7px] font-black uppercase tracking-tighter">Destacar</span></button>
                                     <button onClick={() => handleAction(v.id, { is_new: !v.isNew })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.isNew ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}><Zap size={13} className={v.isNew && v.show ? "fill-blue-500" : ""} /><span className="text-[7px] font-black uppercase tracking-tighter">Nuevo</span></button>
-                                    <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'reservado' ? 'activo' : 'reservado' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'reservado' ? 'text-yellow-600 bg-yellow-600/5' : 'text-slate-500 hover:text-yellow-500'}`}><DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Reservar</span></button>
-                                    <button onClick={() => handleAction(v.id, { inventory_status: v.inventory_status === 'vendido' ? 'activo' : 'vendido' })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.inventory_status === 'vendido' ? 'text-[#22c55e] bg-[#22c55e]/5' : 'text-slate-500 hover:text-[#22c55e]'}`}><Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span></button>
+                                    <button
+                                        onClick={() => handleMoveUp(v.id)}
+                                        disabled={index === 0}
+                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === 0 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}
+                                    >
+                                        <ChevronUp size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Subir</span>
+                                    </button>
+                                    <button
+                                        onClick={() => handleMoveDown(v.id)}
+                                        disabled={index === filtered.length - 1}
+                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === filtered.length - 1 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}
+                                    >
+                                        <ChevronDown size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Bajar</span>
+                                    </button>
                                     <button onClick={() => handleAction(v.id, { show_on_web: !v.show })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.show ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>{v.show ? <Eye size={13} /> : <EyeOff size={13} />}<span className="text-[7px] font-black uppercase tracking-tighter">{v.show ? 'Ocultar' : 'Mostrar'}</span></button>
                                 </div>
                             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Loader2, Instagram, Facebook, MessageCircle, Send, Eye, MapPin, X, Bell, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Loader2, MapPin, X, Bell, Eye } from 'lucide-react';
 
 export default function MarketplaceDashboard() {
   return (
@@ -129,6 +129,7 @@ function MarketplaceContent() {
     }
   };
 
+  // ── Efecto inicial: solo corre con searchParams (no con displayLimit)
   useEffect(() => {
     const cat = searchParams.get('categoria');
     const marc = searchParams.get('marca');
@@ -137,10 +138,19 @@ function MarketplaceContent() {
     if (cat) setSelectedCategory(cat.toUpperCase());
     if (marc) setSearch(mod ? `${marc} ${mod}` : marc);
     
-    fetchInventory({ categoria: cat, marca: marc, modelo: mod }, displayLimit);
+    fetchInventory({ categoria: cat, marca: marc, modelo: mod }, 15);
     checkUser();
     fetchMarcasBase();
-  }, [searchParams, fetchInventory, displayLimit]);
+  }, [searchParams, fetchInventory]);
+
+  // ── Efecto separado: solo corre cuando displayLimit cambia por "Ver más"
+  useEffect(() => {
+    if (displayLimit === 15) return;
+    const cat = searchParams.get('categoria');
+    const marc = searchParams.get('marca');
+    const mod = searchParams.get('modelo');
+    fetchInventory({ categoria: cat, marca: marc, modelo: mod }, displayLimit);
+  }, [displayLimit]);
 
   useEffect(() => {
     const savedScroll = sessionStorage.getItem('marketplace_scroll');
@@ -211,7 +221,6 @@ function MarketplaceContent() {
                 </p>
                 {!user && (
                   <>
-                    {/* ✅ FIX: cursor-pointer agregado */}
                     <button onClick={() => handleAuthRedirect('/register')} className="w-full py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform cursor-pointer">Registrate</button>
                     <button onClick={() => handleAuthRedirect('/login')} className="w-full py-4 bg-white/20 text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm border border-white/30 backdrop-blur-sm cursor-pointer">Ingresar</button>
                   </>
@@ -230,7 +239,6 @@ function MarketplaceContent() {
                 <img src={slide.img} alt={`Hero ${idx + 1}`} className="w-full h-auto object-cover align-top" />
                 {!user && (
                   <div className={`absolute bottom-[18%] flex gap-4 pointer-events-auto z-10 ${slide.ctaPosition === 'right' ? 'right-[8%]' : 'left-[9.5%]'}`}>
-                    {/* ✅ FIX: cursor-pointer agregado */}
                     <button
                       onClick={() => handleAuthRedirect(slide.primaryPath)}
                       className="px-10 py-4 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-xl shadow-2xl text-sm hover:scale-105 transition-transform cursor-pointer"
@@ -368,7 +376,12 @@ function MarketplaceContent() {
             >
               <div className="relative h-[130px] md:h-[180px] w-full bg-gray-100 flex-shrink-0">
                 {v.fotos?.[0] ? (
-                  <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} className="w-full h-full object-cover" />
+                  <img
+                    src={v.fotos[0]}
+                    alt={`${v.marca} ${v.modelo}`}
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase italic text-[8px]">Sin Foto</div>
                 )}

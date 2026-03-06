@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle, User, Save
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -23,6 +23,19 @@ export default function InventoryPage() {
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
     const [openSection, setOpenSection] = useState<string | null>('unidad');
     const [showLimitModal, setShowLimitModal] = useState(false);
+
+    // --- NUEVO: estado datos_clientes ---
+    const [clienteData, setClienteData] = useState<any>({
+        nombre: '',
+        contacto: '',
+        senia_reserva: '',
+        moneda_senia: 'ARS',
+        fecha_vencimiento: '',
+        notas: ''
+    });
+    const [isSavingCliente, setIsSavingCliente] = useState(false);
+    const [clienteSaved, setClienteSaved] = useState(false);
+    // ------------------------------------
 
     const extraInfo = useMemo(() => {
         if (!selectedAuto) return null;
@@ -70,7 +83,7 @@ export default function InventoryPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [userId]);
+    }, []);
 
     const fetchInventory = async (currentUserId?: string) => {
         if (!currentUserId) return;
@@ -130,8 +143,76 @@ export default function InventoryPage() {
         }
     };
 
+    // --- NUEVO: cargar datos_clientes al abrir modal ---
+    const fetchClienteData = async (autoId: string) => {
+        try {
+            const { data } = await supabase
+                .from('datos_clientes')
+                .select('nombre, contacto, senia_reserva, moneda_senia, fecha_vencimiento, notas')
+                .eq('auto_id', autoId)
+                .maybeSingle();
+
+            if (data) {
+                setClienteData({
+                    nombre: data.nombre || '',
+                    contacto: data.contacto || '',
+                    senia_reserva: data.senia_reserva || '',
+                    moneda_senia: data.moneda_senia || 'ARS',
+                    fecha_vencimiento: data.fecha_vencimiento || '',
+                    notas: data.notas || ''
+                });
+            } else {
+                setClienteData({ nombre: '', contacto: '', senia_reserva: '', moneda_senia: 'ARS', fecha_vencimiento: '', notas: '' });
+            }
+        } catch (err: any) {
+            console.error("Error cargando datos_clientes:", err.message);
+        }
+    };
+
+    const handleSaveCliente = async () => {
+        if (!selectedAuto?.id) return;
+        setIsSavingCliente(true);
+        try {
+            const { error } = await supabase
+                .from('datos_clientes')
+                .upsert({
+                    auto_id: selectedAuto.id,
+                    nombre: clienteData.nombre,
+                    contacto: clienteData.contacto,
+                    senia_reserva: clienteData.senia_reserva ? Number(clienteData.senia_reserva) : null,
+                    moneda_senia: clienteData.moneda_senia,
+                    fecha_vencimiento: clienteData.fecha_vencimiento || null,
+                    notas: clienteData.notas
+                }, { onConflict: 'auto_id' });
+
+            if (error) throw error;
+            setClienteSaved(true);
+            setTimeout(() => setClienteSaved(false), 2500);
+        } catch (err: any) {
+            alert("Error al guardar: " + err.message);
+        } finally {
+            setIsSavingCliente(false);
+        }
+    };
+    // ---------------------------------------------------
+
+    const handleOpenModal = (v: any) => {
+        setSelectedAuto(v);
+        setOpenSection('unidad');
+        setClienteSaved(false);
+        if (v.isProprio) fetchClienteData(v.id);
+    };
+
     const handleAction = async (item: any, action: string) => {
         const id = item.id;
+
+        // --- NUEVO: blindaje Editar solo propios ---
+        if (action === 'EDIT') {
+            if (!item.isProprio) return;
+            router.push(`/publicar?id=${id}`);
+            return;
+        }
+        // ------------------------------------------
 
         if (action === 'DELETE') {
             if (item.isProprio) {
@@ -373,7 +454,7 @@ export default function InventoryPage() {
                             const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
                             const isProcessing = processingId === v.id;
                             return (
-                                <div key={v.id} onClick={() => !isProcessing && setSelectedAuto(v)} className={`bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden flex flex-col group transition-all hover:border-white/20 cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
+                                <div key={v.id} onClick={() => !isProcessing && handleOpenModal(v)} className={`bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden flex flex-col group transition-all hover:border-white/20 cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
                                     <div className="relative w-full aspect-[16/10] bg-slate-900 overflow-hidden">
                                         {isProcessing ? (
                                             <div className="absolute inset-0 flex items-center justify-center bg-black/40 z-20">
@@ -381,7 +462,6 @@ export default function InventoryPage() {
                                             </div>
                                         ) : null}
                                         {v.images[0] ? (
-                                            // ✅ FIX: loading="lazy" para no cargar todas las imágenes a la vez
                                             <img src={v.images[0]} alt="" loading="lazy" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-700 text-[9px] font-black uppercase tracking-tighter">Sin foto</div>
@@ -521,7 +601,7 @@ export default function InventoryPage() {
                                     const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
                                     const isProcessing = processingId === v.id;
                                     return (
-                                        <tr key={v.id} onClick={() => !isProcessing && setSelectedAuto(v)} className={`hover:bg-white/[0.02] transition-colors group cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
+                                        <tr key={v.id} onClick={() => !isProcessing && handleOpenModal(v)} className={`hover:bg-white/[0.02] transition-colors group cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
                                             <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2 text-left">
                                                 {isProcessing ? <Loader2 size={12} className="animate-spin text-[#22c55e]" /> : null}
                                                 {v.brand} {v.model}
@@ -605,13 +685,15 @@ export default function InventoryPage() {
                 const isProcessingModal = processingId === selectedAuto.id;
                 return (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-                        <div className="bg-[#f3f4f6] w-full max-w-[500px] rounded-2xl shadow-2xl overflow-hidden text-slate-800">
-                            <div className="bg-[#111827] p-5 flex justify-between items-center text-white text-left">
+                        <div className="bg-[#f3f4f6] w-full max-w-[500px] rounded-2xl shadow-2xl overflow-hidden text-slate-800 max-h-[90vh] overflow-y-auto">
+                            <div className="bg-[#111827] p-5 flex justify-between items-center text-white text-left sticky top-0 z-10">
                                 <span className="font-black italic tracking-tighter text-xl uppercase">Hot<span className="text-[#22c55e]">Cars</span> ADMIN</span>
                                 <button onClick={() => setSelectedAuto(null)}><X size={24}/></button>
                             </div>
 
                             <div className={`p-4 space-y-2 bg-white text-left ${isProcessingModal ? 'opacity-50 pointer-events-none' : ''}`}>
+                                
+                                {/* Sección: Información de la Unidad */}
                                 <div className="border border-slate-200 rounded-xl overflow-hidden">
                                     <button onClick={() => setOpenSection(openSection === 'unidad' ? null : 'unidad')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
                                         <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Información de la Unidad</span>
@@ -627,10 +709,115 @@ export default function InventoryPage() {
                                     )}
                                 </div>
 
+                                {/* Sección: Datos del Cliente / Seña — solo para propios */}
+                                {selectedAuto.isProprio && (
+                                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                        <button onClick={() => setOpenSection(openSection === 'cliente' ? null : 'cliente')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
+                                            <div className="flex items-center gap-2">
+                                                <User size={14} className="text-slate-400"/>
+                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Datos del Cliente / Seña</span>
+                                            </div>
+                                            {openSection === 'cliente' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
+                                        </button>
+                                        {openSection === 'cliente' && (
+                                            <div className="p-4 border-t border-slate-100 animate-in slide-in-from-top duration-200 space-y-3">
+                                                
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Nombre</label>
+                                                        <input
+                                                            type="text"
+                                                            value={clienteData.nombre}
+                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, nombre: e.target.value }))}
+                                                            placeholder="Ej: Juan Pérez"
+                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
+                                                        />
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Contacto</label>
+                                                        <input
+                                                            type="text"
+                                                            value={clienteData.contacto}
+                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, contacto: e.target.value }))}
+                                                            placeholder="Tel / WhatsApp"
+                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Seña</label>
+                                                        <input
+                                                            type="number"
+                                                            value={clienteData.senia_reserva}
+                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, senia_reserva: e.target.value }))}
+                                                            placeholder="0"
+                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
+                                                        />
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Moneda</label>
+                                                        <select
+                                                            value={clienteData.moneda_senia}
+                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, moneda_senia: e.target.value }))}
+                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
+                                                        >
+                                                            <option value="ARS">$ ARS</option>
+                                                            <option value="USD">USD</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vencimiento de Seña</label>
+                                                    <input
+                                                        type="date"
+                                                        value={clienteData.fecha_vencimiento}
+                                                        onChange={(e) => setClienteData((p: any) => ({ ...p, fecha_vencimiento: e.target.value }))}
+                                                        className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
+                                                    />
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Notas</label>
+                                                    <textarea
+                                                        value={clienteData.notas}
+                                                        onChange={(e) => setClienteData((p: any) => ({ ...p, notas: e.target.value }))}
+                                                        placeholder="Observaciones del trato, condiciones, etc."
+                                                        rows={3}
+                                                        className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    onClick={handleSaveCliente}
+                                                    disabled={isSavingCliente}
+                                                    className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+                                                        clienteSaved 
+                                                        ? 'bg-[#22c55e] text-white' 
+                                                        : 'bg-slate-900 text-white hover:bg-slate-700'
+                                                    }`}
+                                                >
+                                                    {isSavingCliente ? (
+                                                        <Loader2 size={13} className="animate-spin"/>
+                                                    ) : clienteSaved ? (
+                                                        <><Check size={13}/> Guardado</>
+                                                    ) : (
+                                                        <><Save size={13}/> Guardar datos</>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Acciones */}
                                 <div className="grid grid-cols-3 gap-2 pt-4">
                                     <button 
                                         disabled={!selectedAuto.isProprio}
-                                        className={`bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
+                                        onClick={() => handleAction(selectedAuto, 'EDIT')}
+                                        className={`bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-slate-700 transition-all ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
                                     >
                                         <Pencil size={14}/> Editar
                                     </button>

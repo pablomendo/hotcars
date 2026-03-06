@@ -20,7 +20,7 @@ export default async function SubdomainPage({ params }: { params: { subdomain: s
 
   const { data: vehicles } = await supabase
     .from('inventario')
-    .select('*')
+    .select('id, marca, modelo, version, anio, km, pv, moneda, fotos, is_featured, is_new, inventory_status, categoria, localidad, provincia, descripcion, acepta_permuta, financiacion, created_at, show_on_web, created_by_user_id')
     .eq('created_by_user_id', config.user_id)
     .eq('show_on_web', true)
     .neq('inventory_status', 'pausado')
