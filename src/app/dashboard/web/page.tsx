@@ -7,8 +7,38 @@ import {
   Settings as SettingsIcon, Search, LayoutGrid, List, PauseCircle,
   Instagram, Facebook, MessageCircle, Share2, Image as ImageIcon,
   Type, Globe, Trash2, Upload, MapPin, Clock, Phone, ExternalLink,
-  Loader2, ChevronUp, ChevronDown
+  Loader2, ChevronUp, ChevronDown, Power, FileText, Palette, MessageSquare, Tag,
+  X, AlertTriangle, AlertCircle, CheckCircle2
 } from 'lucide-react';
+
+// ── Sistema de modales de feedback ─────────────────────────────────────────
+type FeedbackVariant = 'success' | 'error' | 'warning';
+interface FeedbackModal {
+    open: boolean;
+    variant: FeedbackVariant;
+    title: string;
+    message: string;
+    buttonLabel?: string;
+    onConfirm?: () => void;
+}
+const FEEDBACK_DEFAULTS: FeedbackModal = { open: false, variant: 'success', title: '', message: '' };
+
+const FEEDBACK_STYLES: Record<FeedbackVariant, { iconBg: string; iconColor: string; btnBg: string; btnShadow: string; Icon: any }> = {
+    success: { iconBg: 'bg-green-50',  iconColor: 'text-[#22c55e]', btnBg: 'bg-[#22c55e] hover:bg-[#16a34a]', btnShadow: 'shadow-green-200',  Icon: CheckCircle2   },
+    error:   { iconBg: 'bg-red-50',    iconColor: 'text-red-500',   btnBg: 'bg-red-500 hover:bg-red-600',     btnShadow: 'shadow-red-200',    Icon: X              },
+    warning: { iconBg: 'bg-orange-50', iconColor: 'text-orange-500',btnBg: 'bg-[#ff4d00] hover:bg-[#e64500]', btnShadow: 'shadow-orange-200', Icon: AlertCircle    },
+};
+// ───────────────────────────────────────────────────────────────────────────
+
+// ── Temas predefinidos ──────────────────────────────────────────────────────
+const THEMES = [
+  { id: 'verde_oscuro',  label: 'Verde Oscuro',  accent: '#22c55e', bg: '#0b1114', card: '#141b1f', preview: ['#0b1114','#22c55e'] },
+  { id: 'rojo_carbono',  label: 'Rojo Carbono',  accent: '#ef4444', bg: '#0f0a0a', card: '#1a1010', preview: ['#0f0a0a','#ef4444'] },
+  { id: 'azul_acero',    label: 'Azul Acero',    accent: '#3b82f6', bg: '#090e14', card: '#101825', preview: ['#090e14','#3b82f6'] },
+  { id: 'naranja_tuning',label: 'Naranja Tuning', accent: '#f97316', bg: '#0f0a05', card: '#1a1208', preview: ['#0f0a05','#f97316'] },
+  { id: 'blanco_total',  label: 'Blanco Total',  accent: '#f1f5f9', bg: '#0d0d0d', card: '#181818', preview: ['#0d0d0d','#f1f5f9'] },
+  { id: 'dorado_vip',    label: 'Dorado VIP',    accent: '#eab308', bg: '#09080a', card: '#161208', preview: ['#09080a','#eab308'] },
+];
 
 export default function MiWebPage() {
     const [inv, setInv] = useState<any[]>([]);
@@ -26,11 +56,29 @@ export default function MiWebPage() {
         cover_image: false
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const logoInputRef = useRef<HTMLInputElement>(null);
     const [previewImage, setPreviewImage] = useState('/portada_mi_web.jpg');
     const [isUploadingCover, setIsUploadingCover] = useState(false);
     const [showSocialsInFooter, setShowSocialsInFooter] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [maxWebVehicles, setMaxWebVehicles] = useState(10);
+    const [feedback, setFeedback] = useState<FeedbackModal>(FEEDBACK_DEFAULTS);
+
+    const showFeedback = (variant: FeedbackVariant, title: string, message: string, buttonLabel = 'Aceptar', onConfirm?: () => void) => {
+        setFeedback({ open: true, variant, title, message, buttonLabel, onConfirm });
+    };
+    const closeFeedback = () => setFeedback(FEEDBACK_DEFAULTS);
+
+    const [isOnline, setIsOnline] = useState(true);
+    const [isTogglingOnline, setIsTogglingOnline] = useState(false);
+    const [logoUrl, setLogoUrl] = useState<string>('');
+    const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+    const [descripcion, setDescripcion] = useState('');
+    const [selectedTheme, setSelectedTheme] = useState('verde_oscuro');
+    const [whatsappFlotante, setWhatsappFlotante] = useState(false);
+    const [whatsappFlotanteNumero, setWhatsappFlotanteNumero] = useState('');
+    const [seoTitulo, setSeoTitulo] = useState('');
+    const [seoDescripcion, setSeoDescripcion] = useState('');
 
     const [config, setConfig] = useState({
         subdomain: 'miagencia',
@@ -47,6 +95,9 @@ export default function MiWebPage() {
     });
 
     const [dbConfig, setDbConfig] = useState<any>(null);
+
+    const isPro = ['PRO','VIP'].includes(userData.plan_type.toUpperCase());
+    const isVip = userData.plan_type.toUpperCase() === 'VIP';
 
     const fetchWebConfig = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -74,6 +125,14 @@ export default function MiWebPage() {
                 });
                 setPreviewImage(data.cover_image_url || '/portada_mi_web.jpg');
                 setShowSocialsInFooter(!!data.show_socials_footer);
+                setIsOnline(data.is_online !== false);
+                setLogoUrl(data.logo_url || '');
+                setDescripcion(data.descripcion || '');
+                setSelectedTheme(data.theme || 'verde_oscuro');
+                setWhatsappFlotante(!!data.whatsapp_flotante);
+                setWhatsappFlotanteNumero(data.whatsapp_flotante_numero || '');
+                setSeoTitulo(data.seo_titulo || '');
+                setSeoDescripcion(data.seo_descripcion || '');
             }
         }
     };
@@ -101,11 +160,11 @@ export default function MiWebPage() {
 
                     if (diffHours < 24) {
                         if (newChangeCount >= 3) {
-                            alert("Ya agotaste tus 3 ediciones de cortesía en las primeras 24hs.");
+                            showFeedback('warning', 'Ediciones agotadas', 'Ya usaste tus 3 ediciones de cortesía en las últimas 24 hs. El subdominio no fue modificado.');
                             subdomainToSave = current.subdomain;
                         }
                     } else if (diffDays < 30) {
-                        alert(`Subdominio bloqueado. Podrás cambiarlo en ${30 - diffDays} días.`);
+                        showFeedback('warning', 'Subdominio bloqueado', `Podrás cambiar tu subdominio en ${30 - diffDays} día${30 - diffDays !== 1 ? 's' : ''}. El cambio no fue aplicado.`);
                         subdomainToSave = current.subdomain;
                     }
                 }
@@ -132,7 +191,14 @@ export default function MiWebPage() {
                 telefono: config.telefono,
                 show_socials_footer: showSocialsInFooter,
                 cover_image_url: previewImage,
-                change_count: newChangeCount
+                change_count: newChangeCount,
+                logo_url: logoUrl,
+                descripcion: descripcion,
+                theme: selectedTheme,
+                whatsapp_flotante: whatsappFlotante,
+                whatsapp_flotante_numero: whatsappFlotanteNumero,
+                seo_titulo: seoTitulo,
+                seo_descripcion: seoDescripcion,
             };
 
             if (subdomainToSave !== current?.subdomain || !current) {
@@ -144,11 +210,34 @@ export default function MiWebPage() {
                 .upsert(dataToSave, { onConflict: 'user_id' });
 
             if (error) throw error;
-            alert(subdomainToSave !== config.subdomain ? "Configuración guardada (Subdominio bloqueado/sin cambios)" : "¡Configuración guardada!");
+            showFeedback(
+                'success',
+                '¡Configuración guardada!',
+                subdomainToSave !== config.subdomain
+                    ? 'Los cambios fueron guardados. El subdominio no fue modificado.'
+                    : 'Todos los cambios de tu web fueron guardados correctamente.'
+            );
             await fetchWebConfig();
         } catch (err) {
             console.error(err);
-            alert("Error al guardar la configuración");
+            showFeedback('error', 'Error al guardar', 'No se pudieron guardar los cambios. Revisá tu conexión e intentá nuevamente.');
+        }
+    };
+
+    const handleToggleOnline = async () => {
+        if (!userData.id) return;
+        setIsTogglingOnline(true);
+        const next = !isOnline;
+        try {
+            const { error } = await supabase
+                .from('web_configs')
+                .upsert({ user_id: userData.id, is_online: next }, { onConflict: 'user_id' });
+            if (error) throw error;
+            setIsOnline(next);
+        } catch (err: any) {
+            showFeedback('error', 'Error de conexión', 'No se pudo cambiar el estado de tu web. Intentá nuevamente.');
+        } finally {
+            setIsTogglingOnline(false);
         }
     };
 
@@ -161,28 +250,50 @@ export default function MiWebPage() {
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         setIsUploadingCover(true);
         try {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', 'hotcars_web_configs');
-            
             const res = await fetch(
                 `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
                 { method: 'POST', body: formData }
             );
             const data = await res.json();
-            
             if (data.secure_url) {
                 setPreviewImage(data.secure_url);
             } else {
-                alert('Error al subir la imagen');
+                showFeedback('error', 'Error al subir imagen', 'No se pudo subir la foto de portada. Verificá el formato e intentá de nuevo.');
             }
         } catch (err) {
-            alert('Error al conectar con el servidor de imágenes');
+            showFeedback('error', 'Error de conexión', 'No se pudo conectar con el servidor de imágenes. Intentá nuevamente.');
         } finally {
             setIsUploadingCover(false);
+        }
+    };
+
+    const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsUploadingLogo(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'hotcars_web_configs');
+            const res = await fetch(
+                `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                { method: 'POST', body: formData }
+            );
+            const data = await res.json();
+            if (data.secure_url) {
+                setLogoUrl(data.secure_url);
+            } else {
+                showFeedback('error', 'Error al subir logo', 'No se pudo subir el logo. Verificá que sea PNG, WebP o SVG e intentá de nuevo.');
+            }
+        } catch (err) {
+            showFeedback('error', 'Error de conexión', 'No se pudo conectar con el servidor de imágenes. Intentá nuevamente.');
+        } finally {
+            setIsUploadingLogo(false);
         }
     };
 
@@ -236,7 +347,6 @@ export default function MiWebPage() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const uid = currentUserId || user?.id;
-
             if (!uid) return;
 
             const [propiosRes, flipsRes] = await Promise.all([
@@ -265,7 +375,6 @@ export default function MiWebPage() {
                 const status = (v.inventory_status || 'activo').toLowerCase();
                 let shouldShow = !!v.show_on_web;
                 if (status === 'pausado') shouldShow = false;
-
                 return {
                     ...v,
                     brand: v.marca,
@@ -289,19 +398,15 @@ export default function MiWebPage() {
     const handleMoveUp = (id: string) => {
         const index = filtered.findIndex(v => v.id === id);
         if (index <= 0) return;
-
         const current = filtered[index];
         const above = filtered[index - 1];
-
         const currentOrder = current.web_order || 0;
         const aboveOrder = above.web_order || 0;
-
         setInv(prev => prev.map(v => {
             if (v.id === current.id) return { ...v, web_order: aboveOrder };
             if (v.id === above.id) return { ...v, web_order: currentOrder };
             return v;
         }));
-
         Promise.all([
             supabase.from('inventario').update({ web_order: aboveOrder }).eq('id', current.id),
             supabase.from('inventario').update({ web_order: currentOrder }).eq('id', above.id),
@@ -311,19 +416,15 @@ export default function MiWebPage() {
     const handleMoveDown = (id: string) => {
         const index = filtered.findIndex(v => v.id === id);
         if (index >= filtered.length - 1) return;
-
         const current = filtered[index];
         const below = filtered[index + 1];
-
         const currentOrder = current.web_order || 0;
         const belowOrder = below.web_order || 0;
-
         setInv(prev => prev.map(v => {
             if (v.id === current.id) return { ...v, web_order: belowOrder };
             if (v.id === below.id) return { ...v, web_order: currentOrder };
             return v;
         }));
-
         Promise.all([
             supabase.from('inventario').update({ web_order: belowOrder }).eq('id', current.id),
             supabase.from('inventario').update({ web_order: currentOrder }).eq('id', below.id),
@@ -335,30 +436,20 @@ export default function MiWebPage() {
 
         if ('show_on_web' in updates) {
             const mostrar = updates.show_on_web;
-
             if (mostrar && item?.inventory_status === 'pausado') {
-                alert("No podés mostrar en la web una unidad que está pausada en el inventario.");
+                showFeedback('warning', 'Unidad pausada', 'No podés mostrar en la web una unidad que está pausada en el inventario. Activala primero desde Inventario.');
                 return;
             }
-
             const { data, error } = await supabase.rpc('toggle_visibilidad_web', {
                 p_auto_id: id,
                 p_user_id: item?.isProprio ? userData.id : item?.owner_user_id,
                 p_mostrar: mostrar
             });
-
-            if (error) {
-                console.error(error);
-                return;
-            }
-
+            if (error) { console.error(error); return; }
             if (!data.ok) {
-                if (data.error === 'limite_alcanzado') {
-                    setShowLimitModal(true);
-                }
+                if (data.error === 'limite_alcanzado') setShowLimitModal(true);
                 return;
             }
-
             setInv(prev => prev.map(v => v.id === id ? { ...v, show: mostrar, show_on_web: mostrar } : v));
             setTimeout(() => fetchInventory(), 500);
             return;
@@ -380,11 +471,9 @@ export default function MiWebPage() {
     const filtered = useMemo(() => {
         return inv.filter(v => {
             if (v.inventory_status === 'pausado') return false;
-
             const searchMatch = (v.brand?.toLowerCase() || "").includes(search.toLowerCase()) || 
                                (v.model?.toLowerCase() || "").includes(search.toLowerCase());
             if (!searchMatch) return false;
-            
             switch(tab) {
                 case 'OCULTO': return !v.show;
                 case 'DESTACADOS': return v.show && v.featured;
@@ -405,6 +494,30 @@ export default function MiWebPage() {
                 button { cursor: pointer; }
             `}</style>
 
+            {/* ── Modal feedback ── */}
+            {feedback.open && (() => {
+                const s = FEEDBACK_STYLES[feedback.variant];
+                const Icon = s.Icon;
+                return (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
+                        <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                            <div className={`w-20 h-20 ${s.iconBg} rounded-full flex items-center justify-center mb-8 ${s.iconColor} border border-current/10`}>
+                                <Icon size={48} strokeWidth={2} />
+                            </div>
+                            <h3 className="text-2xl font-black uppercase text-[#1e293b] mb-4">{feedback.title}</h3>
+                            <p className="text-gray-500 text-[15px] leading-relaxed mb-10 font-medium text-center">{feedback.message}</p>
+                            <button
+                                onClick={() => { closeFeedback(); feedback.onConfirm?.(); }}
+                                className={`w-full py-5 ${s.btnBg} text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl ${s.btnShadow} transition-all active:scale-95 mb-6`}
+                            >
+                                {feedback.buttonLabel || 'Aceptar'}
+                            </button>
+                            <button onClick={closeFeedback} className="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] hover:text-gray-600">Cerrar</button>
+                        </div>
+                    </div>
+                );
+            })()}
+
             {showLimitModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
                     <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
@@ -415,10 +528,7 @@ export default function MiWebPage() {
                         <p className="text-gray-500 text-[15px] font-medium text-center leading-relaxed mb-10">
                             Tu plan permite hasta <strong>{maxWebVehicles}</strong> unidades visibles en tu web. <br/> Ocultá alguna o mejorá tu plan.
                         </p>
-                        <button 
-                            onClick={() => setShowLimitModal(false)} 
-                            className="w-full py-5 bg-[#ff4d00] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-200 hover:bg-[#e64500] transition-all active:scale-95 mb-6"
-                        >
+                        <button onClick={() => setShowLimitModal(false)} className="w-full py-5 bg-[#ff4d00] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl shadow-orange-200 hover:bg-[#e64500] transition-all active:scale-95 mb-6">
                             Mejorar plan ahora
                         </button>
                         <button onClick={() => setShowLimitModal(false)} className="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] hover:text-gray-600">Cerrar</button>
@@ -426,6 +536,7 @@ export default function MiWebPage() {
                 </div>
             )}
 
+            {/* ── Header ── */}
             <div className="fixed top-0 left-0 right-0 z-[50] bg-[#0b1114] border-b border-white/5 px-6 py-4">
                 <div className="max-w-[1600px] mx-auto flex justify-between items-center h-12">
                     <div className="flex flex-col text-left">
@@ -433,6 +544,14 @@ export default function MiWebPage() {
                         <span className="text-[9px] text-[#22c55e] font-mono tracking-tight uppercase opacity-70 mt-1">{config.subdomain}.hotcars.com.ar</span>
                     </div>
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleToggleOnline}
+                            disabled={isTogglingOnline}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all ${isOnline ? 'bg-[#22c55e]/10 border-[#22c55e]/30 text-[#22c55e]' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}
+                        >
+                            {isTogglingOnline ? <Loader2 size={12} className="animate-spin"/> : <Power size={12}/>}
+                            {isOnline ? 'Online' : 'Offline'}
+                        </button>
                         <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userData.plan_type}</span>
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                             {counts.VISIBLE} / {userData.plan_type === 'VIP' ? '∞' : maxWebVehicles} visibles
@@ -442,6 +561,7 @@ export default function MiWebPage() {
                 </div>
             </div>
 
+            {/* ── Tabs ── */}
             <div className="fixed top-[76px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 px-6 pt-[14px] pb-3 lg:h-20 flex flex-col items-center justify-center">
                 <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center">
                     <div className="grid grid-cols-3 lg:flex items-center gap-1 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
@@ -478,8 +598,10 @@ export default function MiWebPage() {
                     </div>
 
                     {openConfig && (
-                        <div className="w-full space-y-4 mb-12 animate-in fade-in slide-in-from-top-2 duration-300 font-sans">
+                        <div className="w-full mb-12 animate-in fade-in slide-in-from-top-2 duration-300 font-sans">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                                {/* 1 — Dominio HotCars */}
                                 <ConfigCard title="Dominio HotCars" description={`${config.subdomain}.hotcars.com.ar`}>
                                     <div className="flex flex-col gap-3">
                                         <div className="flex items-center justify-end gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
@@ -497,6 +619,7 @@ export default function MiWebPage() {
                                     </div>
                                 </ConfigCard>
 
+                                {/* 2 — Dominio Propio */}
                                 <ConfigCard title="Dominio Propio" description={planFeatures.custom_domain ? 'Disponible en tu plan' : 'Solo VIP'}>
                                     <div className={`flex flex-col gap-3 ${!planFeatures.custom_domain ? 'opacity-20 pointer-events-none' : ''}`}>
                                         <div className="flex items-center justify-end gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2">
@@ -509,7 +632,8 @@ export default function MiWebPage() {
                                     </div>
                                 </ConfigCard>
 
-                                <ConfigCard title="Redes y Contacto" description="Configuración vertical">
+                                {/* 3 — Redes y Contacto */}
+                                <ConfigCard title="Redes y Contacto" description="Instagram, Facebook, TikTok, WhatsApp">
                                     <div className="flex flex-col gap-2">
                                         <SocialInput icon={<Instagram size={14}/>} placeholder="Instagram" value={config.instagram} onChange={(val:string) => setConfig({...config, instagram: val})} />
                                         <SocialInput icon={<Facebook size={14}/>} placeholder="Facebook" value={config.facebook} onChange={(val:string) => setConfig({...config, facebook: val})} />
@@ -517,11 +641,10 @@ export default function MiWebPage() {
                                         <SocialInput icon={<MessageCircle size={14} className="text-green-500" />} placeholder="WhatsApp" value={config.whatsapp} onChange={(val:string) => setConfig({...config, whatsapp: val})} />
                                     </div>
                                 </ConfigCard>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* 4 — Editar Portada */}
                                 <ConfigCard title="Editar Portada" description={planFeatures.cover_image ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
-                                    <div className="relative aspect-video rounded-xl border border-white/10 overflow-hidden bg-slate-900 group">
+                                    <div className="relative aspect-video rounded-xl border border-white/10 overflow-hidden bg-slate-900">
                                         <img src={previewImage} className={`w-full h-full object-cover opacity-60 ${!planFeatures.cover_image ? 'grayscale' : ''}`} alt="Preview" />
                                         {isUploadingCover && (
                                             <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
@@ -531,7 +654,7 @@ export default function MiWebPage() {
                                         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
                                             <input className="bg-transparent text-white text-lg font-black uppercase tracking-[4px] text-center outline-none w-full mb-1" value={config.title} onChange={(e) => setConfig({...config, title: e.target.value})} />
                                             <input className="bg-transparent text-slate-300 text-[10px] uppercase tracking-widest text-center outline-none w-full" value={config.subtitle} onChange={(e) => setConfig({...config, subtitle: e.target.value})} />
-                                            <div className="flex flex-col items-center gap-4 mt-6">
+                                            <div className="flex flex-col items-center gap-3 mt-4">
                                                 <button onClick={handleTriggerFile} className={`bg-white/10 text-white text-[10px] font-black px-5 py-2 rounded uppercase border border-white/10 transition-all flex items-center gap-2 ${!planFeatures.cover_image || isUploadingCover ? 'opacity-20 pointer-events-none' : ''}`}>
                                                     {isUploadingCover ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                                                     {isUploadingCover ? 'Subiendo...' : 'Agregar Foto'}
@@ -543,33 +666,153 @@ export default function MiWebPage() {
                                     </div>
                                 </ConfigCard>
 
+                                {/* 5 — Banners */}
                                 <ConfigCard title="Banners Promocionales" description={planFeatures.banners ? 'Disponible en tu plan' : 'Solo VIP'}>
-                                    <div className={`grid grid-cols-1 gap-3 aspect-video flex flex-col ${!planFeatures.banners ? 'opacity-20 pointer-events-none' : ''}`}>
-                                        <div className="flex-1 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:border-[#134e4d]/30 transition-all cursor-pointer relative"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 1</span></div>
-                                        <div className="flex-1 border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center bg-black/20 hover:border-[#134e4d]/30 transition-all cursor-pointer relative"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 2</span></div>
+                                    <div className={`flex flex-col gap-3 ${!planFeatures.banners ? 'opacity-20 pointer-events-none' : ''}`}>
+                                        <div className="border-2 border-dashed border-white/5 rounded-xl flex items-center justify-center bg-black/20 hover:border-[#134e4d]/30 transition-all cursor-pointer py-10">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 1</span>
+                                        </div>
+                                        <div className="border-2 border-dashed border-white/5 rounded-xl flex items-center justify-center bg-black/20 hover:border-[#134e4d]/30 transition-all cursor-pointer py-10">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Banner 2</span>
+                                        </div>
                                     </div>
                                 </ConfigCard>
-                            </div>
 
-                            <ConfigCard title="Pie de Página" description={planFeatures.footer ? 'Disponible en tu plan' : 'Solo VIP'}>
-                                <div className={`flex flex-col gap-4 ${!planFeatures.footer ? 'opacity-20 pointer-events-none' : ''}`}>
-                                    <div className="flex flex-row items-center gap-2 mt-2">
-                                        <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><MapPin size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Direccion" value={config.direccion} onChange={(e) => setConfig({...config, direccion: e.target.value})} /></div>
-                                        <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><Clock size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Horarios" value={config.horarios} onChange={(e) => setConfig({...config, horarios: e.target.value})} /></div>
-                                        <div className="flex-1 flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><Phone size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Telefono" value={config.telefono} onChange={(e) => setConfig({...config, telefono: e.target.value})} /></div>
+                                {/* 6 — Logo */}
+                                <ConfigCard title="Logo de Agencia" description={isPro ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
+                                    <div className={`flex flex-col gap-4 ${!isPro ? 'opacity-20 pointer-events-none' : ''}`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" /> : <ImageIcon size={20} className="text-slate-600" />}
+                                            </div>
+                                            <div className="flex flex-col gap-2 flex-1">
+                                                <p className="text-[10px] text-slate-500 leading-relaxed">PNG con <span className="text-white font-black">fondo transparente</span> para mejor resultado.</p>
+                                                <button onClick={() => logoInputRef.current?.click()} disabled={isUploadingLogo} className="flex items-center gap-2 bg-white/5 border border-white/10 text-white text-[10px] font-black px-4 py-2 rounded-lg uppercase hover:bg-white/10 transition-all w-fit">
+                                                    {isUploadingLogo ? <Loader2 size={13} className="animate-spin"/> : <Upload size={13}/>}
+                                                    {isUploadingLogo ? 'Subiendo...' : 'Subir Logo'}
+                                                </button>
+                                                {logoUrl && <button onClick={() => setLogoUrl('')} className="text-[9px] text-red-400 font-black uppercase tracking-widest hover:text-red-300 w-fit">Quitar logo</button>}
+                                            </div>
+                                        </div>
+                                        <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase shadow-md w-full">Confirmar</button>
+                                        <input type="file" ref={logoInputRef} className="hidden" accept="image/png,image/webp,image/svg+xml" onChange={handleLogoFileChange} />
                                     </div>
-                                    <FooterPreview config={config} showSocials={showSocialsInFooter} />
-                                    <div className="flex flex-col items-center gap-4 border-t border-white/5 pt-4">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Iconos Redes:</span>
-                                            <button onClick={() => setShowSocialsInFooter(!showSocialsInFooter)} className={`relative w-8 h-4 rounded-full transition-colors ${showSocialsInFooter ? 'bg-[#134e4d]' : 'bg-white/10'}`}>
-                                                <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${showSocialsInFooter ? 'translate-x-4' : 'translate-x-0'}`} />
+                                </ConfigCard>
+
+                                {/* 7 — Descripción */}
+                                <ConfigCard title="Descripción de Agencia" description={isPro ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
+                                    <div className={`flex flex-col gap-3 ${!isPro ? 'opacity-20 pointer-events-none' : ''}`}>
+                                        <textarea
+                                            value={descripcion}
+                                            onChange={(e) => setDescripcion(e.target.value)}
+                                            maxLength={300}
+                                            rows={6}
+                                            placeholder="Contá quiénes son, qué ofrecen, en qué se especializan."
+                                            className="bg-black/40 border border-white/5 rounded-lg px-4 py-3 text-[11px] text-white outline-none resize-none focus:border-[#22c55e]/40 transition-all placeholder:text-white/20 font-bold uppercase"
+                                        />
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] text-slate-600 font-mono">{descripcion.length}/300</span>
+                                            <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase shadow-md">Confirmar</button>
+                                        </div>
+                                    </div>
+                                </ConfigCard>
+
+                                {/* 8 — Estilo Visual */}
+                                <ConfigCard title="Estilo Visual" description={isPro ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
+                                    <div className={`flex flex-col gap-3 ${!isPro ? 'opacity-20 pointer-events-none' : ''}`}>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {THEMES.map((theme) => (
+                                                <button
+                                                    key={theme.id}
+                                                    onClick={() => setSelectedTheme(theme.id)}
+                                                    className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all ${selectedTheme === theme.id ? 'border-[#22c55e] bg-[#22c55e]/5' : 'border-white/5 bg-black/20 hover:border-white/20'}`}
+                                                >
+                                                    <div className="w-full h-6 rounded-lg overflow-hidden flex">
+                                                        <div className="flex-1" style={{ backgroundColor: theme.preview[0] }}/>
+                                                        <div className="w-3" style={{ backgroundColor: theme.preview[1] }}/>
+                                                    </div>
+                                                    <span className="text-[7px] font-black uppercase tracking-tight text-slate-400 text-center leading-tight">{theme.label}</span>
+                                                    {selectedTheme === theme.id && (
+                                                        <div className="absolute top-1 right-1 w-3 h-3 bg-[#22c55e] rounded-full flex items-center justify-center">
+                                                            <Check size={7} className="text-black"/>
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase shadow-md w-full mt-1">Confirmar</button>
+                                    </div>
+                                </ConfigCard>
+
+                                {/* 9 — WhatsApp Flotante */}
+                                <ConfigCard title="WhatsApp Flotante" description={isVip ? 'Disponible en tu plan' : 'Solo VIP'}>
+                                    <div className={`flex flex-col gap-4 ${!isVip ? 'opacity-20 pointer-events-none' : ''}`}>
+                                        <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5">
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-[11px] font-black text-white uppercase">Botón flotante</span>
+                                                <span className="text-[9px] text-slate-500">Aparece en todas las páginas</span>
+                                            </div>
+                                            <button onClick={() => setWhatsappFlotante(!whatsappFlotante)} className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${whatsappFlotante ? 'bg-[#22c55e]' : 'bg-white/10'}`}>
+                                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${whatsappFlotante ? 'translate-x-5' : 'translate-x-0'}`} />
                                             </button>
                                         </div>
-                                        <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-12 py-2 rounded uppercase shadow-xl transition-all">Confirmar Cambios</button>
+                                        <div className={`transition-all ${!whatsappFlotante ? 'opacity-40 pointer-events-none' : ''}`}>
+                                            <SocialInput icon={<MessageCircle size={14} className="text-green-500"/>} placeholder="Número (ej: 5491112345678)" value={whatsappFlotanteNumero} onChange={(val: string) => setWhatsappFlotanteNumero(val)} />
+                                            <p className="text-[9px] text-slate-600 mt-2 px-1">Sin + ni espacios. Ej: 5491112345678</p>
+                                        </div>
+                                        <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase shadow-md w-full">Confirmar</button>
                                     </div>
-                                </div>
-                            </ConfigCard>
+                                </ConfigCard>
+
+                                {/* 10 — Vista previa al compartir */}
+                                <ConfigCard title="Vista previa al compartir" description={isVip ? 'Solo VIP — preview en WhatsApp y redes' : 'Solo VIP'}>
+                                    <div className={`flex flex-col gap-3 ${!isVip ? 'opacity-20 pointer-events-none' : ''}`}>
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Tag size={11}/> Título del link</label>
+                                            <input type="text" value={seoTitulo} onChange={(e) => setSeoTitulo(e.target.value)} maxLength={60} placeholder="Ej: Automotriz López | Usados en Córdoba" className="bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[11px] text-white outline-none focus:border-[#22c55e]/40 transition-all placeholder:text-white/20 font-bold uppercase" />
+                                            <span className="text-[9px] text-slate-600 font-mono text-right">{seoTitulo.length}/60</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><FileText size={11}/> Descripción</label>
+                                            <textarea value={seoDescripcion} onChange={(e) => setSeoDescripcion(e.target.value)} maxLength={160} rows={2} placeholder="Ej: Encontrá los mejores autos usados." className="bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[11px] text-white outline-none resize-none focus:border-[#22c55e]/40 transition-all placeholder:text-white/20 font-bold uppercase" />
+                                            <span className="text-[9px] text-slate-600 font-mono text-right">{seoDescripcion.length}/160</span>
+                                        </div>
+                                        <div className="bg-[#1f2c34] rounded-xl overflow-hidden border border-white/5">
+                                            <div className="h-10 bg-[#141b1f] flex items-center justify-center border-b border-white/5">
+                                                {logoUrl ? <img src={logoUrl} className="h-7 object-contain opacity-60" alt="logo"/> : <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">preview</span>}
+                                            </div>
+                                            <div className="p-2 flex flex-col gap-0.5">
+                                                <span className="text-[10px] font-black text-white truncate">{seoTitulo || 'Título de tu web'}</span>
+                                                <span className="text-[9px] text-slate-400 line-clamp-1">{seoDescripcion || 'Descripción al compartir.'}</span>
+                                                <span className="text-[8px] text-slate-600 uppercase tracking-tight">{config.subdomain}.hotcars.com.ar</span>
+                                            </div>
+                                        </div>
+                                        <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase shadow-md w-full">Confirmar</button>
+                                    </div>
+                                </ConfigCard>
+
+                                {/* 11 — Pie de Página */}
+                                <ConfigCard title="Pie de Página" description={planFeatures.footer ? 'Disponible en tu plan' : 'Solo VIP'}>
+                                    <div className={`flex flex-col gap-4 ${!planFeatures.footer ? 'opacity-20 pointer-events-none' : ''}`}>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><MapPin size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Dirección" value={config.direccion} onChange={(e) => setConfig({...config, direccion: e.target.value})} /></div>
+                                            <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><Clock size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Horarios" value={config.horarios} onChange={(e) => setConfig({...config, horarios: e.target.value})} /></div>
+                                            <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><Phone size={14} className="text-slate-500" /><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Teléfono" value={config.telefono} onChange={(e) => setConfig({...config, telefono: e.target.value})} /></div>
+                                        </div>
+                                        <FooterPreview config={config} showSocials={showSocialsInFooter} />
+                                        <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Redes:</span>
+                                                <button onClick={() => setShowSocialsInFooter(!showSocialsInFooter)} className={`relative w-8 h-4 rounded-full transition-colors ${showSocialsInFooter ? 'bg-[#134e4d]' : 'bg-white/10'}`}>
+                                                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${showSocialsInFooter ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+                                            <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-6 py-2 rounded uppercase shadow-md">Confirmar</button>
+                                        </div>
+                                    </div>
+                                </ConfigCard>
+
+                            </div>
                         </div>
                     )}
 
@@ -604,20 +847,8 @@ export default function MiWebPage() {
                                 <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5 font-sans">
                                     <button onClick={() => handleAction(v.id, { is_featured: !v.featured })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.featured ? 'text-yellow-500 bg-yellow-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}><Star size={13} className={v.featured && v.show ? "fill-yellow-500" : ""} /><span className="text-[7px] font-black uppercase tracking-tighter">Destacar</span></button>
                                     <button onClick={() => handleAction(v.id, { is_new: !v.isNew })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.isNew ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}><Zap size={13} className={v.isNew && v.show ? "fill-blue-500" : ""} /><span className="text-[7px] font-black uppercase tracking-tighter">Nuevo</span></button>
-                                    <button
-                                        onClick={() => handleMoveUp(v.id)}
-                                        disabled={index === 0}
-                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === 0 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}
-                                    >
-                                        <ChevronUp size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Subir</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleMoveDown(v.id)}
-                                        disabled={index === filtered.length - 1}
-                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === filtered.length - 1 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}
-                                    >
-                                        <ChevronDown size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Bajar</span>
-                                    </button>
+                                    <button onClick={() => handleMoveUp(v.id)} disabled={index === 0} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === 0 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}><ChevronUp size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Subir</span></button>
+                                    <button onClick={() => handleMoveDown(v.id)} disabled={index === filtered.length - 1} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === filtered.length - 1 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}><ChevronDown size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Bajar</span></button>
                                     <button onClick={() => handleAction(v.id, { show_on_web: !v.show })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.show ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>{v.show ? <Eye size={13} /> : <EyeOff size={13} />}<span className="text-[7px] font-black uppercase tracking-tighter">{v.show ? 'Ocultar' : 'Mostrar'}</span></button>
                                 </div>
                             </div>

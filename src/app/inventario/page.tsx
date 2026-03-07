@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import hiddenData from '@/lib/tsconfig.sys.json';
@@ -21,13 +21,19 @@ export default function InventoryPage() {
     const [userPlan, setUserPlan] = useState<string>('Free'); 
 
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
-    const [openSection, setOpenSection] = useState<string | null>('unidad');
+    const [openSection, setOpenSection] = useState<string | null>(null);
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
-    // --- NUEVO: estado datos_clientes ---
+    const clienteOriginalRef = useRef<any>(null);
+    const consignatarioOriginalRef = useRef<any>(null);
+
+    // --- estado cliente_comprador ---
     const [clienteData, setClienteData] = useState<any>({
         nombre: '',
+        dni: '',
         contacto: '',
+        forma_pago: '',
         senia_reserva: '',
         moneda_senia: 'ARS',
         fecha_vencimiento: '',
@@ -35,7 +41,54 @@ export default function InventoryPage() {
     });
     const [isSavingCliente, setIsSavingCliente] = useState(false);
     const [clienteSaved, setClienteSaved] = useState(false);
+    // --------------------------------
+
+    // --- estado cliente_consignatario ---
+    const [consignatarioData, setConsignatarioData] = useState<any>({
+        nombre: '',
+        dni: '',
+        telefono: '',
+        comision_porcentaje: '',
+        precio_minimo: '',
+        moneda: 'ARS',
+        vigencia_hasta: '',
+        notas: ''
+    });
+    const [isSavingConsignatario, setIsSavingConsignatario] = useState(false);
+    const [consignatarioSaved, setConsignatarioSaved] = useState(false);
     // ------------------------------------
+
+    const hasUnsavedChanges = () => {
+        const clienteChanged = clienteOriginalRef.current &&
+            JSON.stringify(clienteData) !== JSON.stringify(clienteOriginalRef.current);
+        const consignatarioChanged = consignatarioOriginalRef.current &&
+            JSON.stringify(consignatarioData) !== JSON.stringify(consignatarioOriginalRef.current);
+        return clienteChanged || consignatarioChanged;
+    };
+
+    const handleRequestClose = () => {
+        if (hasUnsavedChanges()) {
+            setShowCloseConfirm(true);
+        } else {
+            setSelectedAuto(null);
+        }
+    };
+
+    const handleForceClose = () => {
+        setShowCloseConfirm(false);
+        setSelectedAuto(null);
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && selectedAuto) {
+                e.preventDefault();
+                handleRequestClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedAuto, clienteData, consignatarioData]);
 
     const extraInfo = useMemo(() => {
         if (!selectedAuto) return null;
@@ -143,29 +196,55 @@ export default function InventoryPage() {
         }
     };
 
-    // --- NUEVO: cargar datos_clientes al abrir modal ---
     const fetchClienteData = async (autoId: string) => {
         try {
             const { data } = await supabase
-                .from('datos_clientes')
-                .select('nombre, contacto, senia_reserva, moneda_senia, fecha_vencimiento, notas')
+                .from('cliente_comprador')
+                .select('nombre, dni, contacto, forma_pago, senia_reserva, moneda_senia, fecha_vencimiento, notas')
                 .eq('auto_id', autoId)
                 .maybeSingle();
 
-            if (data) {
-                setClienteData({
-                    nombre: data.nombre || '',
-                    contacto: data.contacto || '',
-                    senia_reserva: data.senia_reserva || '',
-                    moneda_senia: data.moneda_senia || 'ARS',
-                    fecha_vencimiento: data.fecha_vencimiento || '',
-                    notas: data.notas || ''
-                });
-            } else {
-                setClienteData({ nombre: '', contacto: '', senia_reserva: '', moneda_senia: 'ARS', fecha_vencimiento: '', notas: '' });
-            }
+            const loaded = data ? {
+                nombre: data.nombre || '',
+                dni: data.dni || '',
+                contacto: data.contacto || '',
+                forma_pago: data.forma_pago || '',
+                senia_reserva: data.senia_reserva || '',
+                moneda_senia: data.moneda_senia || 'ARS',
+                fecha_vencimiento: data.fecha_vencimiento || '',
+                notas: data.notas || ''
+            } : { nombre: '', dni: '', contacto: '', forma_pago: '', senia_reserva: '', moneda_senia: 'ARS', fecha_vencimiento: '', notas: '' };
+
+            setClienteData(loaded);
+            clienteOriginalRef.current = loaded;
         } catch (err: any) {
-            console.error("Error cargando datos_clientes:", err.message);
+            console.error("Error cargando cliente_comprador:", err.message);
+        }
+    };
+
+    const fetchConsignatarioData = async (autoId: string) => {
+        try {
+            const { data } = await supabase
+                .from('cliente_consignatario')
+                .select('nombre, dni, telefono, comision_porcentaje, precio_minimo, moneda, vigencia_hasta, notas')
+                .eq('auto_id', autoId)
+                .maybeSingle();
+
+            const loaded = data ? {
+                nombre: data.nombre || '',
+                dni: data.dni || '',
+                telefono: data.telefono || '',
+                comision_porcentaje: data.comision_porcentaje || '',
+                precio_minimo: data.precio_minimo || '',
+                moneda: data.moneda || 'ARS',
+                vigencia_hasta: data.vigencia_hasta || '',
+                notas: data.notas || ''
+            } : { nombre: '', dni: '', telefono: '', comision_porcentaje: '', precio_minimo: '', moneda: 'ARS', vigencia_hasta: '', notas: '' };
+
+            setConsignatarioData(loaded);
+            consignatarioOriginalRef.current = loaded;
+        } catch (err: any) {
+            console.error("Error cargando cliente_consignatario:", err.message);
         }
     };
 
@@ -174,11 +253,13 @@ export default function InventoryPage() {
         setIsSavingCliente(true);
         try {
             const { error } = await supabase
-                .from('datos_clientes')
+                .from('cliente_comprador')
                 .upsert({
                     auto_id: selectedAuto.id,
                     nombre: clienteData.nombre,
+                    dni: clienteData.dni,
                     contacto: clienteData.contacto,
+                    forma_pago: clienteData.forma_pago,
                     senia_reserva: clienteData.senia_reserva ? Number(clienteData.senia_reserva) : null,
                     moneda_senia: clienteData.moneda_senia,
                     fecha_vencimiento: clienteData.fecha_vencimiento || null,
@@ -186,6 +267,7 @@ export default function InventoryPage() {
                 }, { onConflict: 'auto_id' });
 
             if (error) throw error;
+            clienteOriginalRef.current = { ...clienteData };
             setClienteSaved(true);
             setTimeout(() => setClienteSaved(false), 2500);
         } catch (err: any) {
@@ -194,25 +276,57 @@ export default function InventoryPage() {
             setIsSavingCliente(false);
         }
     };
-    // ---------------------------------------------------
+
+    const handleSaveConsignatario = async () => {
+        if (!selectedAuto?.id) return;
+        setIsSavingConsignatario(true);
+        try {
+            const { error } = await supabase
+                .from('cliente_consignatario')
+                .upsert({
+                    auto_id: selectedAuto.id,
+                    nombre: consignatarioData.nombre,
+                    dni: consignatarioData.dni,
+                    telefono: consignatarioData.telefono,
+                    comision_porcentaje: consignatarioData.comision_porcentaje ? Number(consignatarioData.comision_porcentaje) : null,
+                    precio_minimo: consignatarioData.precio_minimo ? Number(consignatarioData.precio_minimo) : null,
+                    moneda: consignatarioData.moneda,
+                    vigencia_hasta: consignatarioData.vigencia_hasta || null,
+                    notas: consignatarioData.notas
+                }, { onConflict: 'auto_id' });
+
+            if (error) throw error;
+            consignatarioOriginalRef.current = { ...consignatarioData };
+            setConsignatarioSaved(true);
+            setTimeout(() => setConsignatarioSaved(false), 2500);
+        } catch (err: any) {
+            alert("Error al guardar: " + err.message);
+        } finally {
+            setIsSavingConsignatario(false);
+        }
+    };
 
     const handleOpenModal = (v: any) => {
         setSelectedAuto(v);
-        setOpenSection('unidad');
+        setOpenSection(null);
         setClienteSaved(false);
-        if (v.isProprio) fetchClienteData(v.id);
+        setConsignatarioSaved(false);
+        clienteOriginalRef.current = null;
+        consignatarioOriginalRef.current = null;
+        if (v.isProprio) {
+            fetchClienteData(v.id);
+            fetchConsignatarioData(v.id);
+        }
     };
 
     const handleAction = async (item: any, action: string) => {
         const id = item.id;
 
-        // --- NUEVO: blindaje Editar solo propios ---
         if (action === 'EDIT') {
             if (!item.isProprio) return;
             router.push(`/publicar?id=${id}`);
             return;
         }
-        // ------------------------------------------
 
         if (action === 'DELETE') {
             if (item.isProprio) {
@@ -377,6 +491,33 @@ export default function InventoryPage() {
                             Mejorar plan ahora
                         </button>
                         <button onClick={() => setShowLimitModal(false)} className="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] hover:text-gray-600">Cerrar</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal confirmación cierre con cambios sin guardar */}
+            {showCloseConfirm && (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 text-center">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                        <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mb-6 text-yellow-500 border border-yellow-100">
+                            <AlertTriangle size={36} strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-lg font-black uppercase text-[#1e293b] mb-3">Cambios sin guardar</h3>
+                        <p className="text-gray-500 text-[13px] leading-relaxed mb-8 font-medium text-center">
+                            Tenés cambios que no fueron guardados. ¿Qué querés hacer?
+                        </p>
+                        <button
+                            onClick={handleForceClose}
+                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-700 transition-all active:scale-95 mb-3"
+                        >
+                            Descartar cambios
+                        </button>
+                        <button
+                            onClick={() => setShowCloseConfirm(false)}
+                            className="w-full py-4 bg-[#22c55e] text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-[#16a34a] transition-all active:scale-95"
+                        >
+                            Seguir editando
+                        </button>
                     </div>
                 </div>
             )}
@@ -681,88 +822,148 @@ export default function InventoryPage() {
             </div>
 
             {selectedAuto && (() => {
-                const isExpired = selectedAuto.expires_at && new Date(selectedAuto.expires_at) < new Date();
                 const isProcessingModal = processingId === selectedAuto.id;
                 return (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
                         <div className="bg-[#f3f4f6] w-full max-w-[500px] rounded-2xl shadow-2xl overflow-hidden text-slate-800 max-h-[90vh] overflow-y-auto">
-                            <div className="bg-[#111827] p-5 flex justify-between items-center text-white text-left sticky top-0 z-10">
-                                <span className="font-black italic tracking-tighter text-xl uppercase">Hot<span className="text-[#22c55e]">Cars</span> ADMIN</span>
-                                <button onClick={() => setSelectedAuto(null)}><X size={24}/></button>
+
+                            {/* Header */}
+                            <div className="bg-[#111827] px-5 py-4 flex justify-between items-center sticky top-0 z-10">
+                                <div className="flex items-center gap-3">
+                                    <img src="/logo_hotcars_blanco.png" alt="HotCars" className="h-6 w-auto object-contain" />
+                                    <div className="flex flex-col">
+                                        <span className="text-white/50 text-[9px] font-black uppercase tracking-[0.2em] leading-none mb-0.5">
+                                            {selectedAuto.brand} {selectedAuto.model}
+                                        </span>
+                                        <span className="text-white text-[11px] font-black uppercase tracking-widest leading-none">
+                                            Gestión de clientes y señas
+                                        </span>
+                                    </div>
+                                </div>
+                                <button onClick={handleRequestClose} className="text-white/60 hover:text-white transition-colors">
+                                    <X size={22}/>
+                                </button>
                             </div>
 
                             <div className={`p-4 space-y-2 bg-white text-left ${isProcessingModal ? 'opacity-50 pointer-events-none' : ''}`}>
-                                
-                                {/* Sección: Información de la Unidad */}
-                                <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                    <button onClick={() => setOpenSection(openSection === 'unidad' ? null : 'unidad')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
-                                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Información de la Unidad</span>
-                                        {openSection === 'unidad' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
-                                    </button>
-                                    {openSection === 'unidad' && (
-                                        <div className="p-4 grid grid-cols-2 gap-y-3 border-t border-slate-100 animate-in slide-in-from-top duration-200">
-                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Marca</span><span className="text-xs font-black uppercase">{selectedAuto.brand}</span></div>
-                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Modelo</span><span className="text-xs font-black uppercase">{selectedAuto.model}</span></div>
-                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Estado Inv.</span><span className="text-xs font-black uppercase text-[#00984a]">{isExpired ? 'VENCIDA' : selectedAuto.inventory_status}</span></div>
-                                            <div className="flex flex-col"><span className="text-[9px] font-bold text-slate-400 uppercase">Relación</span><span className="text-xs font-black uppercase text-orange-600">{selectedAuto.isProprio ? 'PROPIO (MÍO)' : 'TERCERO (FLIP)'}</span></div>
-                                        </div>
-                                    )}
-                                </div>
 
-                                {/* Sección: Datos del Cliente / Seña — solo para propios */}
+                                {/* Sección: Cliente Consignatario — solo para propios */}
+                                {selectedAuto.isProprio && (
+                                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                        <button onClick={() => setOpenSection(openSection === 'consignatario' ? null : 'consignatario')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
+                                            <div className="flex items-center gap-2">
+                                                <User size={14} className="text-slate-400"/>
+                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Cliente Consignatario</span>
+                                            </div>
+                                            {openSection === 'consignatario' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
+                                        </button>
+                                        {openSection === 'consignatario' && (
+                                            <div className="p-4 border-t border-slate-100 animate-in slide-in-from-top duration-200 space-y-3">
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Nombre</label>
+                                                        <input type="text" value={consignatarioData.nombre} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Juan Pérez" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">DNI</label>
+                                                        <input type="text" value={consignatarioData.dni} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, dni: e.target.value }))} placeholder="Ej: 30123456" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Teléfono</label>
+                                                        <input type="text" value={consignatarioData.telefono} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, telefono: e.target.value }))} placeholder="Tel / WhatsApp" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Comisión %</label>
+                                                        <input type="number" value={consignatarioData.comision_porcentaje} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, comision_porcentaje: e.target.value }))} placeholder="Ej: 5" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Precio mínimo</label>
+                                                        <input type="number" value={consignatarioData.precio_minimo} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, precio_minimo: e.target.value }))} placeholder="0" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Moneda</label>
+                                                        <select value={consignatarioData.moneda} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, moneda: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white">
+                                                            <option value="ARS">$ ARS</option>
+                                                            <option value="USD">USD</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vigencia hasta</label>
+                                                    <input type="date" value={consignatarioData.vigencia_hasta} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, vigencia_hasta: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Notas</label>
+                                                    <textarea value={consignatarioData.notas} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, notas: e.target.value }))} placeholder="Condiciones del acuerdo, observaciones, etc." rows={3} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"/>
+                                                </div>
+
+                                                <button onClick={handleSaveConsignatario} disabled={isSavingConsignatario} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-[#22c55e] text-white hover:bg-[#16a34a]">
+                                                    {isSavingConsignatario ? <Loader2 size={13} className="animate-spin"/> : consignatarioSaved ? <><Check size={13}/> Guardado</> : <><Save size={13}/> Guardar consignatario</>}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Sección: Comprador / Seña — solo para propios */}
                                 {selectedAuto.isProprio && (
                                     <div className="border border-slate-200 rounded-xl overflow-hidden">
                                         <button onClick={() => setOpenSection(openSection === 'cliente' ? null : 'cliente')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
                                             <div className="flex items-center gap-2">
                                                 <User size={14} className="text-slate-400"/>
-                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Datos del Cliente / Seña</span>
+                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Comprador / Seña</span>
                                             </div>
                                             {openSection === 'cliente' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
                                         </button>
                                         {openSection === 'cliente' && (
                                             <div className="p-4 border-t border-slate-100 animate-in slide-in-from-top duration-200 space-y-3">
-                                                
+
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Nombre</label>
-                                                        <input
-                                                            type="text"
-                                                            value={clienteData.nombre}
-                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, nombre: e.target.value }))}
-                                                            placeholder="Ej: Juan Pérez"
-                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
-                                                        />
+                                                        <input type="text" value={clienteData.nombre} onChange={(e) => setClienteData((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Juan Pérez" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">DNI</label>
+                                                        <input type="text" value={clienteData.dni} onChange={(e) => setClienteData((p: any) => ({ ...p, dni: e.target.value }))} placeholder="Ej: 30123456" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Contacto</label>
-                                                        <input
-                                                            type="text"
-                                                            value={clienteData.contacto}
-                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, contacto: e.target.value }))}
-                                                            placeholder="Tel / WhatsApp"
-                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
-                                                        />
+                                                        <input type="text" value={clienteData.contacto} onChange={(e) => setClienteData((p: any) => ({ ...p, contacto: e.target.value }))} placeholder="Tel / WhatsApp" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Forma de pago</label>
+                                                        <select value={clienteData.forma_pago} onChange={(e) => setClienteData((p: any) => ({ ...p, forma_pago: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white">
+                                                            <option value="">Seleccionar</option>
+                                                            <option value="Efectivo">Efectivo</option>
+                                                            <option value="Transferencia">Transferencia</option>
+                                                            <option value="Cripto">Cripto</option>
+                                                            <option value="Cheque">Cheque</option>
+                                                            <option value="Otro">Otro</option>
+                                                        </select>
                                                     </div>
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Seña</label>
-                                                        <input
-                                                            type="number"
-                                                            value={clienteData.senia_reserva}
-                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, senia_reserva: e.target.value }))}
-                                                            placeholder="0"
-                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
-                                                        />
+                                                        <input type="number" value={clienteData.senia_reserva} onChange={(e) => setClienteData((p: any) => ({ ...p, senia_reserva: e.target.value }))} placeholder="0" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Moneda</label>
-                                                        <select
-                                                            value={clienteData.moneda_senia}
-                                                            onChange={(e) => setClienteData((p: any) => ({ ...p, moneda_senia: e.target.value }))}
-                                                            className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
-                                                        >
+                                                        <select value={clienteData.moneda_senia} onChange={(e) => setClienteData((p: any) => ({ ...p, moneda_senia: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white">
                                                             <option value="ARS">$ ARS</option>
                                                             <option value="USD">USD</option>
                                                         </select>
@@ -771,93 +972,26 @@ export default function InventoryPage() {
 
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vencimiento de Seña</label>
-                                                    <input
-                                                        type="date"
-                                                        value={clienteData.fecha_vencimiento}
-                                                        onChange={(e) => setClienteData((p: any) => ({ ...p, fecha_vencimiento: e.target.value }))}
-                                                        className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"
-                                                    />
+                                                    <input type="date" value={clienteData.fecha_vencimiento} onChange={(e) => setClienteData((p: any) => ({ ...p, fecha_vencimiento: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                 </div>
 
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Notas</label>
-                                                    <textarea
-                                                        value={clienteData.notas}
-                                                        onChange={(e) => setClienteData((p: any) => ({ ...p, notas: e.target.value }))}
-                                                        placeholder="Observaciones del trato, condiciones, etc."
-                                                        rows={3}
-                                                        className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"
-                                                    />
+                                                    <textarea value={clienteData.notas} onChange={(e) => setClienteData((p: any) => ({ ...p, notas: e.target.value }))} placeholder="Observaciones del trato, condiciones, etc." rows={3} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"/>
                                                 </div>
 
-                                                <button
-                                                    onClick={handleSaveCliente}
-                                                    disabled={isSavingCliente}
-                                                    className={`w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-                                                        clienteSaved 
-                                                        ? 'bg-[#22c55e] text-white' 
-                                                        : 'bg-slate-900 text-white hover:bg-slate-700'
-                                                    }`}
-                                                >
-                                                    {isSavingCliente ? (
-                                                        <Loader2 size={13} className="animate-spin"/>
-                                                    ) : clienteSaved ? (
-                                                        <><Check size={13}/> Guardado</>
-                                                    ) : (
-                                                        <><Save size={13}/> Guardar datos</>
-                                                    )}
+                                                <button onClick={handleSaveCliente} disabled={isSavingCliente} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-[#22c55e] text-white hover:bg-[#16a34a]">
+                                                    {isSavingCliente ? <Loader2 size={13} className="animate-spin"/> : clienteSaved ? <><Check size={13}/> Guardado</> : <><Save size={13}/> Guardar comprador</>}
                                                 </button>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Acciones */}
-                                <div className="grid grid-cols-3 gap-2 pt-4">
-                                    <button 
-                                        disabled={!selectedAuto.isProprio}
-                                        onClick={() => handleAction(selectedAuto, 'EDIT')}
-                                        className={`bg-slate-900 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:bg-slate-700 transition-all ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
-                                    >
-                                        <Pencil size={14}/> Editar
-                                    </button>
-                                    
-                                    {isExpired ? (
-                                        <button 
-                                            disabled={!selectedAuto.isProprio}
-                                            onClick={() => handleAction(selectedAuto, 'RENEW')} 
-                                            className={`bg-blue-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
-                                        >
-                                            {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <RefreshCcw size={14}/>} Renovar
-                                        </button>
-                                    ) : (
-                                        <>
-                                            {selectedAuto.inventory_status === 'pausado' ? (
-                                                <button 
-                                                    disabled={!selectedAuto.isProprio}
-                                                    onClick={() => handleAction(selectedAuto, 'ACTIVATE')} 
-                                                    className={`bg-green-600 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
-                                                >
-                                                    {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <Play size={14}/>} Activar
-                                                </button>
-                                            ) : (
-                                                <button 
-                                                    disabled={!selectedAuto.isProprio}
-                                                    onClick={() => handleAction(selectedAuto, 'PAUSE')} 
-                                                    className={`bg-yellow-500 text-white py-3.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center gap-2 shadow-lg ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : ''}`}
-                                                >
-                                                    {isProcessingModal ? <Loader2 className="animate-spin" size={14} /> : <PauseCircle size={14}/>} Pausar
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
-
-                                    <button 
-                                        disabled={!selectedAuto.isProprio}
-                                        onClick={() => handleAction(selectedAuto, selectedAuto.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} 
-                                        className={`py-3.5 rounded-xl text-[10px] font-black uppercase border flex items-center justify-center gap-2 transition-all ${!selectedAuto.isProprio ? 'opacity-20 grayscale' : (selectedAuto.commercial_status === 'reservado' ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50')}`}
-                                    >
-                                        <DollarSign size={14}/> {selectedAuto.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}
+                                {/* Botón cerrar panel */}
+                                <div className="pt-4">
+                                    <button onClick={handleRequestClose} className="w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-700 transition-all">
+                                        <X size={13}/> Cerrar panel
                                     </button>
                                 </div>
                             </div>
