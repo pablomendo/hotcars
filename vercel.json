@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/plan-expiring",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}
+```
+
+`0 12 * * *` = todos los días a las 12:00 UTC (09:00 Argentina).
+
+---
+
+## Parte 3 — Variables de entorno
+
+En Vercel dashboard → Settings → Environment Variables, agregá:
+```
+SUPABASE_SERVICE_ROLE_KEY   =  tu service role key (está en Supabase → Settings → API)
+CRON_SECRET                 =  cualquier string largo random, ej: openssl rand -hex 32
