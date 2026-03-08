@@ -2,24 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { 
-  Loader2, ImageIcon
-} from 'lucide-react';
+import { Loader2, ImageIcon, LogOut, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Link from 'next/link';
+
+const PAGE_SIZE = 10;
 
 export default function FlipsCompartidosPage() {
     const [receivedFlips, setReceivedFlips] = useState<any[]>([]);
     const [sentFlips, setSentFlips] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState<string | null>(null);
+    const [userPlan, setUserPlan] = useState<string>('free');
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [userNames, setUserNames] = useState<Record<string, string>>({});
+
+    // --- paginación ---
+    const [receivedPage, setReceivedPage] = useState(1);
+    const [sentPage, setSentPage] = useState(1);
+
+    // --- modal confirm ---
+    const [confirmCancel, setConfirmCancel] = useState<any>(null);
+
+    // --- modal detalle vehículo ---
+    const [selectedVehicle, setSelectedVehicle] = useState<any>(null); // { flip, tipo: 'recibida' | 'enviada' }
 
     useEffect(() => {
         const initialize = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 setUserId(user.id);
+                const { data: profile } = await supabase
+                    .from('usuarios')
+                    .select('plan_type')
+                    .eq('auth_id', user.id)
+                    .maybeSingle();
+                if (profile) setUserPlan((profile.plan_type || 'free').toLowerCase());
                 fetchFlips(user.id);
             }
         };
@@ -34,7 +51,9 @@ export default function FlipsCompartidosPage() {
                 .select(`
                     *,
                     inventario:auto_id (
-                        id, marca, modelo, anio, owner_user_id, fotos
+                        id, marca, modelo, version, anio, km, fotos,
+                        owner_user_id, moneda, pv, pc, ganancia_dueno, ganancia_flipper,
+                        provincia, localidad
                     )
                 `);
 
@@ -56,7 +75,6 @@ export default function FlipsCompartidosPage() {
                         .from('usuarios')
                         .select('auth_id, nombre')
                         .in('auth_id', idsArray);
-
                     if (usuarios) {
                         const namesMap: Record<string, string> = {};
                         usuarios.forEach((u: any) => {
@@ -68,6 +86,8 @@ export default function FlipsCompartidosPage() {
 
                 setReceivedFlips(received);
                 setSentFlips(sent);
+                setReceivedPage(1);
+                setSentPage(1);
             }
         } catch (error) {
             console.error("Error HotCars:", error);
@@ -83,7 +103,6 @@ export default function FlipsCompartidosPage() {
                 .from('flip_compartido')
                 .update({ status: newStatus })
                 .eq('id', flipId);
-
             if (error) throw error;
             if (userId) fetchFlips(userId);
         } catch (error: any) {
@@ -93,15 +112,16 @@ export default function FlipsCompartidosPage() {
         }
     };
 
-    const handleCancelFlip = async (flipId: string) => {
-        if (!confirm("¿Seguro que quieres cancelar esta solicitud?")) return;
+    const executeCancelFlip = async () => {
+        if (!confirmCancel) return;
+        const flipId = confirmCancel.id;
+        setConfirmCancel(null);
         setProcessingId(flipId);
         try {
             const { error } = await supabase
                 .from('flip_compartido')
                 .delete()
                 .eq('id', flipId);
-
             if (error) throw error;
             if (userId) fetchFlips(userId);
         } catch (error: any) {
@@ -119,17 +139,132 @@ export default function FlipsCompartidosPage() {
         }
     };
 
+    const formatCurrency = (val: any, moneda: string) => {
+        const num = Number(val) || 0;
+        const prefix = moneda === 'USD' ? 'USD ' : '$ ';
+        return prefix + num.toLocaleString('es-AR');
+    };
+
+    const paginate = (arr: any[], page: number) => arr.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    const totalPages = (arr: any[]) => Math.ceil(arr.length / PAGE_SIZE);
+
+    const Pagination = ({ page, setPage, total }: { page: number; setPage: (p: number) => void; total: number }) => {
+        if (total <= 1) return null;
+        return (
+            <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-slate-100">
+                <button onClick={() => setPage(page - 1)} disabled={page === 1} className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition-all">
+                    <ChevronLeft size={14}/> Anterior
+                </button>
+                <span className="text-[11px] font-bold text-slate-400">{page} / {total}</span>
+                <button onClick={() => setPage(page + 1)} disabled={page === total} className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition-all">
+                    Siguiente <ChevronRight size={14}/>
+                </button>
+            </div>
+        );
+    };
+
     if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#f8fafc]"><Loader2 className="animate-spin text-[#22c55e]" /></div>;
+
+    const receivedPaged = paginate(receivedFlips, receivedPage);
+    const sentPaged = paginate(sentFlips, sentPage);
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-20 pt-24 font-sans text-slate-800 text-left">
+
+            {/* Modal detalle vehículo */}
+            {selectedVehicle && (() => {
+                const inv = selectedVehicle.flip.inventario;
+                const esDueno = selectedVehicle.tipo === 'recibida';
+                const ganancia = esDueno ? Number(inv?.ganancia_dueno) || 0 : Number(inv?.ganancia_flipper) || 0;
+                return (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                            {/* Foto */}
+                            <div className="relative w-full aspect-[16/9] bg-slate-100">
+                                {inv?.fotos?.[0] ? (
+                                    <img src={inv.fotos[0]} alt="" className="w-full h-full object-cover"/>
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-400"><ImageIcon size={32}/></div>
+                                )}
+                                <button onClick={() => setSelectedVehicle(null)} className="absolute top-3 right-3 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all">
+                                    <X size={16}/>
+                                </button>
+                            </div>
+
+                            {/* Datos */}
+                            <div className="p-5">
+                                <h3 className="text-base font-black uppercase text-[#1e293b] leading-tight">
+                                    {inv?.marca} {inv?.modelo}
+                                </h3>
+                                {inv?.version && (
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{inv.version}</p>
+                                )}
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                    {inv?.anio}{inv?.km ? ` • ${Number(inv.km).toLocaleString('es-AR')} km` : ''}
+                                    {inv?.provincia ? ` • ${inv.provincia}` : ''}
+                                </p>
+
+                                <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio venta</span>
+                                        <span className="text-sm font-black text-[#22c55e]">{formatCurrency(inv?.pv, inv?.moneda)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center opacity-60">
+                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Precio compra</span>
+                                        <span className="text-xs font-bold text-slate-600">{formatCurrency(inv?.pc, inv?.moneda)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-t border-slate-100 pt-2">
+                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                                            {esDueno ? 'Tu ganancia (dueño)' : 'Tu ganancia (flipper)'}
+                                        </span>
+                                        <span className="text-sm font-black text-[#1e293b]">{formatCurrency(ganancia, inv?.moneda)}</span>
+                                    </div>
+                                </div>
+
+                                <button onClick={() => setSelectedVehicle(null)} className="mt-4 w-full py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-700 transition-all">
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {/* Modal confirmar cancelación */}
+            {confirmCancel && (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 text-center">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 text-red-500 border border-red-100">
+                            <LogOut size={32} strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-lg font-black uppercase text-[#1e293b] mb-3">
+                            {confirmCancel.tipo === 'recibida' ? 'Cancelar Flip' : 'Cancelar Solicitud'}
+                        </h3>
+                        <p className="text-gray-500 text-[13px] leading-relaxed mb-2 font-medium text-center">
+                            {confirmCancel.tipo === 'recibida' ? 'Estás por cancelar el flip activo de' : 'Estás por cancelar tu solicitud para'}
+                        </p>
+                        <p className="text-[#1e293b] text-[14px] font-black uppercase mb-8">
+                            {confirmCancel.marca} {confirmCancel.modelo}
+                        </p>
+                        <button onClick={executeCancelFlip} className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-red-700 transition-all active:scale-95 mb-3">
+                            Sí, cancelar
+                        </button>
+                        <button onClick={() => setConfirmCancel(null)} className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all active:scale-95">
+                            Volver
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="max-w-6xl mx-auto px-6 space-y-12">
                 
                 {/* SOLICITUDES RECIBIDAS */}
                 <section>
                     <h2 className="text-xl font-bold text-[#334155] mb-1">Solicitudes Recibidas</h2>
-                    <p className="text-sm text-slate-400 italic mb-4">Solicitudes de otros usuarios para vender tus vehículos</p>
-                    
+                    <p className="text-sm text-slate-400 italic mb-4">
+                        Solicitudes de otros usuarios para vender tus vehículos
+                        {receivedFlips.length > 0 && <span className="ml-2 text-slate-500 not-italic font-bold">({receivedFlips.length})</span>}
+                    </p>
                     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm text-left">
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-[#f1f5f9] border-b border-slate-200 text-[#64748b] text-[12px] font-bold uppercase tracking-wider">
@@ -142,12 +277,12 @@ export default function FlipsCompartidosPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {receivedFlips.length === 0 ? (
+                                {receivedPaged.length === 0 ? (
                                     <tr><td colSpan={5} className="p-8 text-center text-slate-400 font-medium">No tienes solicitudes recibidas</td></tr>
-                                ) : receivedFlips.map((flip) => (
-                                    <tr key={flip.id} className="text-sm hover:bg-slate-50 transition-colors">
+                                ) : receivedPaged.map((flip) => (
+                                    <tr key={flip.id} className={`text-sm hover:bg-slate-50 transition-colors ${processingId === flip.id ? 'opacity-50 pointer-events-none' : ''}`}>
                                         <td className="px-6 py-2">
-                                            <Link href={`/inventario/${flip.inventario?.id}`} target="_blank" className="flex items-center gap-4 group cursor-pointer">
+                                            <button onClick={() => setSelectedVehicle({ flip, tipo: 'recibida' })} className="flex items-center gap-4 group cursor-pointer text-left">
                                                 <div className="w-12 h-9 bg-slate-100 rounded overflow-hidden border border-slate-200 flex-shrink-0">
                                                     {flip.inventario?.fotos?.[0] ? (
                                                         <img src={flip.inventario.fotos[0]} alt="" className="w-full h-full object-cover" />
@@ -158,7 +293,7 @@ export default function FlipsCompartidosPage() {
                                                 <span className="font-bold text-slate-700 group-hover:text-[#22c55e] transition-colors uppercase">
                                                     {flip.inventario?.marca} {flip.inventario?.modelo}
                                                 </span>
-                                            </Link>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-2 text-slate-600 font-medium text-[13px]">
                                             {userNames[flip.vendedor_user_id] || flip.vendedor_user_id?.slice(0, 8) + '...'}
@@ -172,19 +307,30 @@ export default function FlipsCompartidosPage() {
                                                     <button onClick={() => handleUpdateStatus(flip.id, 'rejected')} className="bg-[#ef4444] hover:bg-[#dc2626] text-white px-4 py-1.5 rounded text-xs font-bold transition-all cursor-pointer active:scale-95 whitespace-nowrap">Rechazar</button>
                                                 </div>
                                             )}
+                                            {flip.status === 'approved' && userPlan !== 'free' && (
+                                                <button
+                                                    onClick={() => setConfirmCancel({ id: flip.id, marca: flip.inventario?.marca, modelo: flip.inventario?.modelo, tipo: 'recibida' })}
+                                                    className="border border-[#ef4444] text-[#ef4444] hover:bg-[#ef4444] hover:text-white px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer whitespace-nowrap inline-block"
+                                                >
+                                                    Cancelar Flip
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                        <Pagination page={receivedPage} setPage={setReceivedPage} total={totalPages(receivedFlips)} />
                     </div>
                 </section>
 
                 {/* SOLICITUDES ENVIADAS */}
                 <section>
                     <h2 className="text-xl font-bold text-[#334155] mb-1">Solicitudes Enviadas</h2>
-                    <p className="text-sm text-slate-400 italic mb-4">Solicitudes que has enviado para vender vehículos ajenos</p>
-                    
+                    <p className="text-sm text-slate-400 italic mb-4">
+                        Solicitudes que has enviado para vender vehículos ajenos
+                        {sentFlips.length > 0 && <span className="ml-2 text-slate-500 not-italic font-bold">({sentFlips.length})</span>}
+                    </p>
                     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm text-left">
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-[#f1f5f9] border-b border-slate-200 text-[#64748b] text-[12px] font-bold uppercase tracking-wider">
@@ -197,12 +343,12 @@ export default function FlipsCompartidosPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {sentFlips.length === 0 ? (
+                                {sentPaged.length === 0 ? (
                                     <tr><td colSpan={5} className="p-8 text-center text-slate-400 font-medium">No has enviado solicitudes aún</td></tr>
-                                ) : sentFlips.map((flip) => (
-                                    <tr key={flip.id} className="text-sm hover:bg-slate-50 transition-colors">
+                                ) : sentPaged.map((flip) => (
+                                    <tr key={flip.id} className={`text-sm hover:bg-slate-50 transition-colors ${processingId === flip.id ? 'opacity-50 pointer-events-none' : ''}`}>
                                         <td className="px-6 py-2">
-                                            <Link href={`/inventario/${flip.inventario?.id}`} target="_blank" className="flex items-center gap-4 group cursor-pointer">
+                                            <button onClick={() => setSelectedVehicle({ flip, tipo: 'enviada' })} className="flex items-center gap-4 group cursor-pointer text-left">
                                                 <div className="w-12 h-9 bg-slate-100 rounded overflow-hidden border border-slate-200 flex-shrink-0">
                                                     {flip.inventario?.fotos?.[0] ? (
                                                         <img src={flip.inventario.fotos[0]} alt="" className="w-full h-full object-cover" />
@@ -213,7 +359,7 @@ export default function FlipsCompartidosPage() {
                                                 <span className="font-bold text-slate-700 group-hover:text-[#22c55e] transition-colors uppercase">
                                                     {flip.inventario?.marca} {flip.inventario?.modelo}
                                                 </span>
-                                            </Link>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-2 text-slate-600 font-medium text-[13px]">
                                             {userNames[flip.inventario?.owner_user_id] || flip.inventario?.owner_user_id?.slice(0, 8) + '...'}
@@ -221,8 +367,8 @@ export default function FlipsCompartidosPage() {
                                         <td className="px-6 py-2 text-slate-500 font-medium whitespace-nowrap">{new Date(flip.created_at).toLocaleDateString('es-AR')}</td>
                                         <td className="px-6 py-2 text-center">{getStatusLabel(flip.status)}</td>
                                         <td className="px-6 py-2 text-right">
-                                            <button 
-                                                onClick={() => handleCancelFlip(flip.id)}
+                                            <button
+                                                onClick={() => setConfirmCancel({ id: flip.id, marca: flip.inventario?.marca, modelo: flip.inventario?.modelo, tipo: 'enviada' })}
                                                 className="border border-[#ef4444] text-[#ef4444] hover:bg-[#ef4444] hover:text-white px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer whitespace-nowrap inline-block"
                                             >
                                                 Cancelar Solicitud
@@ -232,6 +378,7 @@ export default function FlipsCompartidosPage() {
                                 ))}
                             </tbody>
                         </table>
+                        <Pagination page={sentPage} setPage={setSentPage} total={totalPages(sentFlips)} />
                     </div>
                 </section>
             </div>

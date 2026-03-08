@@ -13,12 +13,13 @@ type Props = {
     notifications: any[];
     unreadCount: number;
     activeCategory: string;
+    categoryCounts: Record<string, number>;
     onCategoryChange: (id: string) => void;
     onNotificationClick: (n: any) => void;
     formatRelativeDate: (d: string) => string;
 };
 
-export default function NotificationsPanel({ notifications, unreadCount, activeCategory, onCategoryChange, onNotificationClick, formatRelativeDate }: Props) {
+export default function NotificationsPanel({ notifications, unreadCount, activeCategory, categoryCounts = {}, onCategoryChange, onNotificationClick, formatRelativeDate }: Props) {
     return (
         <div className="absolute right-0 mt-2 w-80 bg-[#1a2e38] border border-white/10 rounded-xl shadow-xl z-[110] animate-in fade-in zoom-in duration-200 overflow-hidden">
             <div className="px-4 py-3 border-b border-white/5 flex flex-col gap-2 bg-black/20">
@@ -27,15 +28,24 @@ export default function NotificationsPanel({ notifications, unreadCount, activeC
                     <span className="text-[10px] text-slate-400">{unreadCount} pendientes</span>
                 </div>
                 <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
-                    {CATEGORIES.map((cat) => (
-                        <button
-                            key={cat.id}
-                            onClick={(e) => { e.stopPropagation(); onCategoryChange(cat.id); }}
-                            className={`px-3 py-1.5 rounded-md text-[9px] font-bold transition-all whitespace-nowrap cursor-pointer ${activeCategory === cat.id ? 'bg-[#00984a] text-white shadow-lg shadow-[#00984a]/20' : 'bg-white/5 text-slate-400 hover:text-white'}`}
-                        >
-                            {cat.label}
-                        </button>
-                    ))}
+                    {CATEGORIES.map((cat) => {
+                        const count = cat.id === 'todas' ? unreadCount : (categoryCounts[cat.id] || 0);
+                        const isActive = activeCategory === cat.id;
+                        return (
+                            <button
+                                key={cat.id}
+                                onClick={(e) => { e.stopPropagation(); onCategoryChange(cat.id); }}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[9px] font-bold transition-all whitespace-nowrap cursor-pointer ${isActive ? 'bg-[#00984a] text-white shadow-lg shadow-[#00984a]/20' : 'bg-white/5 text-slate-400 hover:text-white'}`}
+                            >
+                                {cat.label}
+                                {count > 0 && (
+                                    <span className={`inline-flex items-center justify-center min-w-[14px] h-[14px] px-[3px] rounded-full text-[8px] font-black ${isActive ? 'bg-white text-[#00984a]' : 'bg-red-500 text-white'}`}>
+                                        {count > 9 ? '+9' : count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
             <div className="max-h-[380px] overflow-y-auto p-2 space-y-2">

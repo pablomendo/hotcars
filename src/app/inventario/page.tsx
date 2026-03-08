@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle, User, Save
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle, User, Save, Send
 } from 'lucide-react';
 
 export default function InventoryPage() {
@@ -24,6 +24,17 @@ export default function InventoryPage() {
     const [openSection, setOpenSection] = useState<string | null>(null);
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+
+    // --- modales confirm personalizados ---
+    const [confirmDeletePropio, setConfirmDeletePropio] = useState<any>(null);
+    const [confirmDeleteFlip, setConfirmDeleteFlip] = useState<any>(null);
+    // --------------------------------------
+
+    // --- mensaje al dueño (flip terceros) ---
+    const [flipMessage, setFlipMessage] = useState('');
+    const [isSendingMessage, setIsSendingMessage] = useState(false);
+    const [messageSent, setMessageSent] = useState(false);
+    // ----------------------------------------
 
     const clienteOriginalRef = useRef<any>(null);
     const consignatarioOriginalRef = useRef<any>(null);
@@ -306,16 +317,94 @@ export default function InventoryPage() {
         }
     };
 
+    // NUEVO: enviar mensaje al dueño del flip
+    const handleSendFlipMessage = async () => {
+        if (!flipMessage.trim() || !selectedAuto || !userId) return;
+        setIsSendingMessage(true);
+        try {
+            const { error: msgError } = await supabase.from('messages').insert({
+                sender_user_id: userId,
+                receiver_user_id: selectedAuto.owner_user_id,
+                content: flipMessage.trim(),
+                related_auto_id: selectedAuto.id,
+                type: 'flip'
+            });
+            if (msgError) throw msgError;
+
+            await supabase.from('notifications').insert({
+                user_id: selectedAuto.owner_user_id,
+                type: 'mensaje_flip',
+                category: 'message',
+                title: 'Nuevo mensaje sobre un Flip',
+                body: `Tenés un mensaje sobre tu ${selectedAuto.brand} ${selectedAuto.model}.`,
+                related_entity_type: 'inventario',
+                related_entity_id: selectedAuto.id,
+                action_url: '/messages'
+            });
+
+            setMessageSent(true);
+            setFlipMessage('');
+            setTimeout(() => setMessageSent(false), 3000);
+        } catch (err: any) {
+            alert("Error al enviar: " + err.message);
+        } finally {
+            setIsSendingMessage(false);
+        }
+    };
+
     const handleOpenModal = (v: any) => {
         setSelectedAuto(v);
         setOpenSection(null);
         setClienteSaved(false);
         setConsignatarioSaved(false);
+        // NUEVO: reset estados mensaje
+        setMessageSent(false);
+        setFlipMessage(`Hola, tengo un interesado en tu ${v.brand} ${v.model}. ¿Podemos coordinar una visita?`);
         clienteOriginalRef.current = null;
         consignatarioOriginalRef.current = null;
         if (v.isProprio) {
             fetchClienteData(v.id);
             fetchConsignatarioData(v.id);
+        }
+    };
+
+    const executeDeletePropio = async (item: any) => {
+        const id = item.id;
+        setConfirmDeletePropio(null);
+        setProcessingId(id);
+        try {
+            const { error } = await supabase.from('inventario').delete().eq('id', id);
+            if (error) throw error;
+            setInv(prev => prev.filter(i => i.id !== id));
+            if (selectedAuto?.id === id) setSelectedAuto(null);
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const executeDeleteFlip = async (item: any) => {
+        const id = item.id;
+        setConfirmDeleteFlip(null);
+        setProcessingId(id);
+        try {
+            const { error } = await supabase
+                .from('flip_compartido')
+                .delete()
+                .eq('auto_id', id)
+                .eq('vendedor_user_id', userId);
+
+            if (error) throw error;
+
+            setInv(prev => prev.filter(i => i.id !== id));
+            if (selectedAuto?.id === id) setSelectedAuto(null);
+            
+            await fetchInventory(userId || undefined);
+        } catch (err: any) {
+            alert("Error al quitar flip: " + err.message);
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -330,39 +419,9 @@ export default function InventoryPage() {
 
         if (action === 'DELETE') {
             if (item.isProprio) {
-                if (!confirm('¿Eliminar unidad permanentemente?')) return;
-                setProcessingId(id);
-                try {
-                    const { error } = await supabase.from('inventario').delete().eq('id', id);
-                    if (error) throw error;
-                    setInv(prev => prev.filter(i => i.id !== id));
-                    if (selectedAuto?.id === id) setSelectedAuto(null);
-                } catch (err: any) {
-                    alert(err.message);
-                } finally {
-                    setProcessingId(null);
-                }
+                setConfirmDeletePropio(item);
             } else {
-                if (!confirm('Esta unidad es un FLIP compartido. ¿Deseas quitarla de tu inventario?')) return;
-                setProcessingId(id);
-                try {
-                    const { error } = await supabase
-                        .from('flip_compartido')
-                        .delete()
-                        .eq('auto_id', id)
-                        .eq('vendedor_user_id', userId);
-
-                    if (error) throw error;
-
-                    setInv(prev => prev.filter(i => i.id !== id));
-                    if (selectedAuto?.id === id) setSelectedAuto(null);
-                    
-                    await fetchInventory(userId || undefined);
-                } catch (err: any) {
-                    alert("Error al quitar flip: " + err.message);
-                } finally {
-                    setProcessingId(null);
-                }
+                setConfirmDeleteFlip(item);
             }
             return;
         }
@@ -474,6 +533,7 @@ export default function InventoryPage() {
                 button { cursor: pointer; }
             `}</style>
 
+            {/* Modal límite de plan */}
             {showLimitModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
                     <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
@@ -517,6 +577,66 @@ export default function InventoryPage() {
                             className="w-full py-4 bg-[#22c55e] text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-[#16a34a] transition-all active:scale-95"
                         >
                             Seguir editando
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal confirmar eliminar unidad propia */}
+            {confirmDeletePropio && (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 text-center">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 text-red-500 border border-red-100">
+                            <Trash2 size={32} strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-lg font-black uppercase text-[#1e293b] mb-3">Eliminar unidad</h3>
+                        <p className="text-gray-500 text-[13px] leading-relaxed mb-2 font-medium text-center">
+                            Estás por eliminar permanentemente
+                        </p>
+                        <p className="text-[#1e293b] text-[14px] font-black uppercase mb-8">
+                            {confirmDeletePropio.brand} {confirmDeletePropio.model}
+                        </p>
+                        <button
+                            onClick={() => executeDeletePropio(confirmDeletePropio)}
+                            className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-red-700 transition-all active:scale-95 mb-3"
+                        >
+                            Sí, eliminar
+                        </button>
+                        <button
+                            onClick={() => setConfirmDeletePropio(null)}
+                            className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal confirmar quitar flip compartido */}
+            {confirmDeleteFlip && (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 text-center">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6 text-red-500 border border-red-100">
+                            <LogOut size={32} strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-lg font-black uppercase text-[#1e293b] mb-3">Quitar Flip Compartido</h3>
+                        <p className="text-gray-500 text-[13px] leading-relaxed mb-2 font-medium text-center">
+                            Esta unidad es un Flip compartido. ¿Deseas quitarla de tu inventario?
+                        </p>
+                        <p className="text-[#1e293b] text-[14px] font-black uppercase mb-8">
+                            {confirmDeleteFlip.brand} {confirmDeleteFlip.model}
+                        </p>
+                        <button
+                            onClick={() => executeDeleteFlip(confirmDeleteFlip)}
+                            className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-red-700 transition-all active:scale-95 mb-3"
+                        >
+                            Sí, quitar
+                        </button>
+                        <button
+                            onClick={() => setConfirmDeleteFlip(null)}
+                            className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-200 transition-all active:scale-95"
+                        >
+                            Cancelar
                         </button>
                     </div>
                 </div>
@@ -836,7 +956,7 @@ export default function InventoryPage() {
                                             {selectedAuto.brand} {selectedAuto.model}
                                         </span>
                                         <span className="text-white text-[11px] font-black uppercase tracking-widest leading-none">
-                                            Gestión de clientes y señas
+                                            {selectedAuto.isProprio ? 'Gestión de clientes y señas' : 'Contactar al dueño'}
                                         </span>
                                     </div>
                                 </div>
@@ -846,6 +966,49 @@ export default function InventoryPage() {
                             </div>
 
                             <div className={`p-4 space-y-2 bg-white text-left ${isProcessingModal ? 'opacity-50 pointer-events-none' : ''}`}>
+
+                                {/* NUEVO: Flip de terceros — formulario de mensaje al dueño */}
+                                {!selectedAuto.isProprio && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3 p-4 bg-[#2596be]/10 rounded-xl border border-[#2596be]/20">
+                                            <Zap size={16} className="text-[#2596be] flex-shrink-0" fill="currentColor"/>
+                                            <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                                                Este auto es un <strong>Flip Compartido</strong>. Podés enviarle un mensaje directo al dueño sobre esta unidad.
+                                            </p>
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Mensaje al dueño</label>
+                                            <textarea
+                                                value={flipMessage}
+                                                onChange={(e) => setFlipMessage(e.target.value)}
+                                                rows={4}
+                                                placeholder="Escribí tu mensaje..."
+                                                className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"
+                                            />
+                                        </div>
+
+                                        {messageSent ? (
+                                            <div className="w-full py-3 rounded-xl bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                                                <Check size={13}/> Mensaje enviado
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={handleSendFlipMessage}
+                                                disabled={isSendingMessage || !flipMessage.trim()}
+                                                className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-[#22c55e] text-white hover:bg-[#16a34a] disabled:opacity-40 disabled:pointer-events-none"
+                                            >
+                                                {isSendingMessage ? <Loader2 size={13} className="animate-spin"/> : <><Send size={13}/> Enviar mensaje</>}
+                                            </button>
+                                        )}
+
+                                        <div className="pt-2">
+                                            <button onClick={() => setSelectedAuto(null)} className="w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-700 transition-all">
+                                                <X size={13}/> Cerrar
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Sección: Cliente Consignatario — solo para propios */}
                                 {selectedAuto.isProprio && (

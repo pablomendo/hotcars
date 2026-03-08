@@ -10,12 +10,17 @@ import NotificationsPanel from './NotificationsPanel';
 import MobilePanelMenu from './MobilePanelMenu';
 import MobileBottomNav from './MobileBottomNav';
 
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+function NavLink({ href, children, badge }: { href: string; children: React.ReactNode; badge?: number }) {
     const pathname = usePathname();
     const isActive = pathname === href;
     return (
-        <Link href={href} className={`text-[12px] font-bold px-3 py-1.5 rounded-lg transition-all duration-200 ${isActive ? 'bg-[#134e4d] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+        <Link href={href} className={`relative text-[12px] font-bold px-3 py-1.5 rounded-lg transition-all duration-200 inline-flex items-center gap-1.5 ${isActive ? 'bg-[#134e4d] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             {children}
+            {badge && badge > 0 ? (
+                <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-[3px] rounded-full text-[8px] font-black bg-[#00984a] text-white">
+                    {badge > 9 ? '+9' : badge}
+                </span>
+            ) : null}
         </Link>
     );
 }
@@ -26,6 +31,7 @@ export default function Header() {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
     const [activeCategory, setActiveCategory] = useState('todas');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
@@ -39,8 +45,31 @@ export default function Header() {
     const fetchNotifications = async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
-        const { count } = await supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', session.user.id).eq('is_read', false);
+
+        // Conteo total no leídas
+        const { count } = await supabase
+            .from('notifications')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', session.user.id)
+            .eq('is_read', false);
         setUnreadCount(count || 0);
+
+        // Conteo por categoría (no leídas) para badges del menú
+        const { data: allUnread } = await supabase
+            .from('notifications')
+            .select('category')
+            .eq('user_id', session.user.id)
+            .eq('is_read', false);
+
+        if (allUnread) {
+            const counts: Record<string, number> = {};
+            allUnread.forEach((n: any) => {
+                counts[n.category] = (counts[n.category] || 0) + 1;
+            });
+            setCategoryCounts(counts);
+        }
+
+        // Notificaciones filtradas para el panel
         let query = supabase.from('notifications').select('*').eq('user_id', session.user.id);
         if (activeCategory !== 'todas') query = query.eq('category', activeCategory);
         const { data } = await query.order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(5);
@@ -143,9 +172,9 @@ export default function Header() {
                             <>
                                 <NavLink href="/dashboard">Dashboard</NavLink>
                                 <NavLink href="/inventario">Inventario</NavLink>
-                                <NavLink href="/dashboard/web">Mi Web <span className="text-[#00984a] text-[10px] ml-1">●</span></NavLink>
-                                <NavLink href="/flips-compartidos">Flips Compartidos</NavLink>
-                                <NavLink href="/messages">Mensajes</NavLink>
+                                <NavLink href="/dashboard/web">Mi Web</NavLink>
+                                <NavLink href="/flips-compartidos" badge={categoryCounts['inventory']}>Flips Compartidos</NavLink>
+                                <NavLink href="/messages" badge={categoryCounts['message']}>Mensajes</NavLink>
                                 <NavLink href="/searched">Vehículos Buscados</NavLink>
                             </>
                         ) : (
