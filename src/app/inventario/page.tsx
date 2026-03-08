@@ -18,6 +18,7 @@ export default function InventoryPage() {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [isMounted, setIsMounted] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
+    const [userName, setUserName] = useState<string | null>(null);
     const [userPlan, setUserPlan] = useState<string>('Free'); 
 
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
@@ -121,11 +122,14 @@ export default function InventoryPage() {
                     
                     const { data: profile } = await supabase
                         .from('usuarios')
-                        .select('plan_type')
+                        .select('plan_type, nombre')
                         .eq('auth_id', user.id)
                         .maybeSingle();
 
-                    if (profile) setUserPlan(profile.plan_type || 'Free');
+                    if (profile) {
+                        setUserPlan(profile.plan_type || 'Free');
+                        setUserName(profile.nombre || null);
+                    }
                     
                     await fetchInventory(user.id);
                 }
@@ -325,6 +329,7 @@ export default function InventoryPage() {
             const { error: msgError } = await supabase.from('messages').insert({
                 sender_user_id: userId,
                 receiver_user_id: selectedAuto.owner_user_id,
+                sender_name: userName,
                 content: flipMessage.trim(),
                 related_auto_id: selectedAuto.id,
                 type: 'flip'
@@ -339,7 +344,7 @@ export default function InventoryPage() {
                 body: `Tenés un mensaje sobre tu ${selectedAuto.brand} ${selectedAuto.model}.`,
                 related_entity_type: 'inventario',
                 related_entity_id: selectedAuto.id,
-                action_url: '/messages'
+                action_url: '/mensajes'
             });
 
             setMessageSent(true);
@@ -1151,12 +1156,14 @@ export default function InventoryPage() {
                                     </div>
                                 )}
 
-                                {/* Botón cerrar panel */}
-                                <div className="pt-4">
-                                    <button onClick={handleRequestClose} className="w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-700 transition-all">
-                                        <X size={13}/> Cerrar panel
-                                    </button>
-                                </div>
+                                {/* Botón cerrar panel — solo para propios */}
+                                {selectedAuto.isProprio && (
+                                    <div className="pt-4">
+                                        <button onClick={handleRequestClose} className="w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-700 transition-all">
+                                            <X size={13}/> Cerrar panel
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

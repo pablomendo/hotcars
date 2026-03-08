@@ -174,7 +174,7 @@ export default function Header() {
                                 <NavLink href="/inventario">Inventario</NavLink>
                                 <NavLink href="/dashboard/web">Mi Web</NavLink>
                                 <NavLink href="/flips-compartidos" badge={categoryCounts['inventory']}>Flips Compartidos</NavLink>
-                                <NavLink href="/messages" badge={categoryCounts['message']}>Mensajes</NavLink>
+                                <NavLink href="/mensajes" badge={categoryCounts['message']}>Mensajes</NavLink>
                                 <NavLink href="/searched">Vehículos Buscados</NavLink>
                             </>
                         ) : (
