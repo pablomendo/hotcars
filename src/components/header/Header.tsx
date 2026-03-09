@@ -106,14 +106,18 @@ export default function Header() {
         return () => { subscription.unsubscribe(); supabase.removeChannel(channel); };
     }, [pathname, activeCategory]);
 
+    // FIX: cerrar panel primero, navegar después con delay para evitar conflicto en mobile
     const handleNotificationClick = async (notification: any) => {
         if (!notification.is_read) {
             await supabase.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', notification.id);
             fetchNotifications();
         }
         setIsNotificationsOpen(false);
-        if (notification.action_url) router.push(notification.action_url);
-        else if (notification.related_entity_type && notification.related_entity_id) router.push(`/${notification.related_entity_type}/${notification.related_entity_id}`);
+        const url = notification.action_url
+            ?? (notification.related_entity_type && notification.related_entity_id
+                ? `/${notification.related_entity_type}/${notification.related_entity_id}`
+                : null);
+        if (url) setTimeout(() => router.push(url), 50);
     };
 
     const handleLogout = async () => {
@@ -223,7 +227,13 @@ export default function Header() {
             )}
 
             {isMounted && (
-                <MobileBottomNav isLoggedIn={isLoggedIn} isMobileMenuOpen={isMobileMenuOpen} onToggleMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+                <MobileBottomNav
+                    isLoggedIn={isLoggedIn}
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    onToggleMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    unreadNotifications={unreadCount}
+                    unreadMessages={categoryCounts['message'] || 0}
+                />
             )}
         </>
     );

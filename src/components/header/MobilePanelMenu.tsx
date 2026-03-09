@@ -44,7 +44,7 @@ export default function MobilePanelMenu({ isLoggedIn, userData, onClose, onLogou
                         <MobileNavLink href="/inventario" onClose={onClose}>Inventario</MobileNavLink>
                         <MobileNavLink href="/dashboard/web" onClose={onClose}>Mi Web</MobileNavLink>
                         <MobileNavLink href="/flips-compartidos" onClose={onClose}>Flips Compartidos</MobileNavLink>
-                        <MobileNavLink href="/messages" onClose={onClose}>Mensajes</MobileNavLink>
+                        <MobileNavLink href="/mensajes" onClose={onClose}>Mensajes</MobileNavLink>
                         <MobileNavLink href="/searched" onClose={onClose}>Vehículos Buscados</MobileNavLink>
                         <MobileNavLink href="/perfil" onClose={onClose}>Configuración</MobileNavLink>
                         <button onClick={() => { onClose(); router.push('/potencial-hotcars'); }} className="text-sm font-semibold px-4 py-2.5 rounded-lg text-left text-slate-300 hover:text-white hover:bg-white/5 transition-all">✦ Potencial HotCars</button>

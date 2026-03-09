@@ -76,7 +76,6 @@ export default function MensajesPage() {
     }, [activeKey, messages]);
 
     const fetchMessages = async (uid: string) => {
-        // Traer mensajes sin join
         const { data, error } = await supabase
             .from('messages')
             .select('id, sender_user_id, receiver_user_id, sender_name, sender_phone, content, related_auto_id, type, is_read, created_at')
@@ -87,7 +86,6 @@ export default function MensajesPage() {
 
         const msgs = data || [];
 
-        // Traer datos de autos relacionados por separado
         const autoIds = [...new Set(msgs.map((m: any) => m.related_auto_id).filter(Boolean))];
         let autosMap: Record<string, any> = {};
 
@@ -121,7 +119,6 @@ export default function MensajesPage() {
         setMessages(prev => prev.map(m => unreadIds.includes(m.id) ? { ...m, is_read: true } : m));
     };
 
-    // Agrupar en conversaciones
     const conversations = useMemo((): Conversation[] => {
         if (!userId) return [];
 
@@ -206,9 +203,9 @@ export default function MensajesPage() {
     };
 
     const typeConfig = {
-        flip:        { label: 'Flip',        bg: 'bg-[#2596be]/20', text: 'text-[#2596be]', border: 'border-[#2596be]/30', icon: <Zap size={9} fill="currentColor"/> },
-        marketplace: { label: 'Web',         bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30', icon: <Globe size={9}/> },
-        direct:      { label: 'Directo',     bg: 'bg-slate-500/20',  text: 'text-slate-400',  border: 'border-slate-500/30',  icon: <MessageSquare size={9}/> },
+        flip:        { label: 'Flip',    bg: 'bg-[#2596be]/20', text: 'text-[#2596be]', border: 'border-[#2596be]/30', icon: <Zap size={9} fill="currentColor"/> },
+        marketplace: { label: 'Web',     bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30', icon: <Globe size={9}/> },
+        direct:      { label: 'Directo', bg: 'bg-slate-500/20',  text: 'text-slate-400',  border: 'border-slate-500/30',  icon: <MessageSquare size={9}/> },
     };
 
     const formatTime = (iso: string) => {
@@ -232,16 +229,16 @@ export default function MensajesPage() {
                 @font-face { font-family: 'Genos'; src: url('/fonts/genos/Genos-VariableFont_wght.ttf') format('truetype'); }
             `}</style>
 
-            {/* Subheader */}
-            <div className="fixed top-20 left-0 right-0 z-[40] bg-[#1c2e38] border-b border-white/5 px-6 py-3 flex items-center gap-3">
+            {/* Subheader — en mobile el header ocupa ~88px, en desktop 80px */}
+            <div className="fixed top-[88px] lg:top-20 left-0 right-0 z-[40] bg-[#1c2e38] border-b border-white/5 px-6 py-3 flex items-center gap-3">
                 <span style={{ fontFamily: 'Genos' }} className="text-white text-[14px] font-light tracking-[4px] uppercase opacity-40">Mensajes</span>
                 <span className="text-[10px] font-black text-[#22c55e] bg-[#22c55e]/10 px-2 py-0.5 rounded uppercase tracking-widest">
                     {conversations.reduce((acc, c) => acc + c.unread, 0)} sin leer
                 </span>
             </div>
 
-            {/* Layout principal */}
-            <div className="flex flex-1 pt-[120px] h-[100vh] overflow-hidden">
+            {/* Layout principal — padding ajustado para mobile y desktop */}
+            <div className="flex flex-1 pt-[144px] lg:pt-[120px] h-[100vh] overflow-hidden">
 
                 {/* ---- LISTA DE CONVERSACIONES ---- */}
                 <div className={`w-full lg:w-[340px] flex-shrink-0 border-r border-white/5 flex flex-col bg-[#0d1518] ${showMobileThread ? 'hidden lg:flex' : 'flex'}`}>
@@ -261,7 +258,7 @@ export default function MensajesPage() {
                     </div>
 
                     {/* Lista */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
                         {filtered.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full opacity-30 gap-3">
                                 <MessageSquare size={32} className="text-slate-500" />
@@ -277,7 +274,6 @@ export default function MensajesPage() {
                                         onClick={() => handleSelectConv(conv)}
                                         className={`w-full text-left px-4 py-3.5 border-b border-white/5 flex gap-3 transition-all hover:bg-white/[0.03] ${isActive ? 'bg-[#134e4d]/30 border-l-2 border-l-[#22c55e]' : ''}`}
                                     >
-                                        {/* Avatar / foto auto */}
                                         <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-slate-800 flex items-center justify-center">
                                             {conv.auto_foto
                                                 ? <img src={conv.auto_foto} alt="" className="w-full h-full object-cover" />
@@ -368,7 +364,7 @@ export default function MensajesPage() {
                             </div>
 
                             {/* Mensajes */}
-                            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+                            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 pb-20 lg:pb-4">
                                 {activeConv.messages.map((m) => {
                                     const isMine = m.sender_user_id === userId;
                                     return (
@@ -394,7 +390,7 @@ export default function MensajesPage() {
                             </div>
 
                             {/* Input de respuesta */}
-                            <div className="px-4 py-3 border-t border-white/5 bg-[#0d1518] flex items-end gap-3">
+                            <div className="px-4 py-3 border-t border-white/5 bg-[#0d1518] flex items-end gap-3 mb-16 lg:mb-0">
                                 <textarea
                                     value={reply}
                                     onChange={(e) => setReply(e.target.value)}

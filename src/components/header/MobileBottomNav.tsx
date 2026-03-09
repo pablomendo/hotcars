@@ -8,10 +8,20 @@ type Props = {
     isLoggedIn: boolean;
     isMobileMenuOpen: boolean;
     onToggleMenu: () => void;
+    unreadNotifications?: number;
+    unreadMessages?: number;
 };
 
-export default function MobileBottomNav({ isLoggedIn, isMobileMenuOpen, onToggleMenu }: Props) {
+export default function MobileBottomNav({
+    isLoggedIn,
+    isMobileMenuOpen,
+    onToggleMenu,
+    unreadNotifications = 0,
+    unreadMessages = 0,
+}: Props) {
     const router = useRouter();
+    const totalBadge = unreadNotifications + unreadMessages;
+
     return (
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#12242e] border-t border-white/10 grid grid-cols-5 px-2 py-2" style={{ bottom: 0 }}>
             {isLoggedIn ? (
@@ -34,7 +44,14 @@ export default function MobileBottomNav({ isLoggedIn, isMobileMenuOpen, onToggle
                         <span className="text-[10px] font-bold uppercase tracking-wide">Panel</span>
                     </Link>
                     <button onClick={onToggleMenu} className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
-                        {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                        <div className="relative">
+                            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                            {!isMobileMenuOpen && totalBadge > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-[2px] bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full">
+                                    {totalBadge > 9 ? '+9' : totalBadge}
+                                </span>
+                            )}
+                        </div>
                         <span className="text-[10px] font-bold uppercase tracking-wide">{isMobileMenuOpen ? 'Cerrar' : 'Más'}</span>
                     </button>
                 </>
@@ -58,7 +75,9 @@ export default function MobileBottomNav({ isLoggedIn, isMobileMenuOpen, onToggle
                         <span className="text-[10px] font-bold uppercase tracking-wide">Ingresar</span>
                     </Link>
                     <button onClick={onToggleMenu} className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
-                        {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                        <div className="relative">
+                            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                        </div>
                         <span className="text-[10px] font-bold uppercase tracking-wide">{isMobileMenuOpen ? 'Cerrar' : 'Más'}</span>
                     </button>
                 </>
