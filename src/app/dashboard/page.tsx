@@ -17,7 +17,9 @@ export default function DashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [userPlan, setUserPlan] = useState('FREE');
     const [userName, setUserName] = useState('');
-    
+    const [totalMessages, setTotalMessages] = useState(0);
+    const [unreadMessages, setUnreadMessages] = useState(0);
+
     const DOLAR_BLUE = 1500;
 
     const normalizeStatus = (invStatus: string, commStatus: string) => {
@@ -38,7 +40,7 @@ export default function DashboardPage() {
                 const { data: { user } } = await supabase.auth.getUser();
                 
                 if (user) {
-                    const [profileRes, inventoryRes, flipsRes] = await Promise.all([
+                    const [profileRes, inventoryRes, flipsRes, messagesRes] = await Promise.all([
                         supabase
                             .from('usuarios')
                             .select('plan_type, nombre')
@@ -53,7 +55,11 @@ export default function DashboardPage() {
                             .from('flip_compartido')
                             .select('auto_id, inventario:auto_id(id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda, owner_user_id, is_flip, ganancia_flipper, ganancia_dueno)')
                             .eq('vendedor_user_id', user.id)
-                            .eq('status', 'approved')
+                            .eq('status', 'approved'),
+                        supabase
+                            .from('messages')
+                            .select('id, is_read')
+                            .eq('receiver_user_id', user.id),
                     ]);
                     
                     if (profileRes.data) {
@@ -62,6 +68,11 @@ export default function DashboardPage() {
                     }
 
                     if (inventoryRes.error) throw inventoryRes.error;
+
+                    // Mensajes reales
+                    const msgs = messagesRes.data || [];
+                    setTotalMessages(msgs.length);
+                    setUnreadMessages(msgs.filter((m: any) => !m.is_read).length);
 
                     const propios = inventoryRes.data || [];
                     const terceros = (flipsRes.data || [])
@@ -93,7 +104,6 @@ export default function DashboardPage() {
         fetchUserDataAndInventory();
     }, []);
 
-    // ✅ Igual que tab ACTIVOS en inventario: solo inventory_status === 'activo'
     const availableVehicles = useMemo(() => inventory.filter((v: any) => v.inventory_status?.toLowerCase() === 'activo'), [inventory]);
     const reservedVehicles = useMemo(() => inventory.filter((v: any) => v.rawStatus === 'reservado'), [inventory]);
     const activeFlips = useMemo(() => inventory.filter((v: any) => !v.isProprio && v.inventory_status?.toLowerCase() === 'activo'), [inventory]);
@@ -133,14 +143,14 @@ export default function DashboardPage() {
         }).length;
 
         return [
-            { id: 'activos', title: 'Autos Disponibles', value: availableVehicles.length, badge: 'En Stock', badgeType: 'up', subtext: 'Listos para vender' },
-            { id: 'reservados', title: 'Autos Reservados', value: reservedVehicles.length, badge: 'Señados', badgeType: 'neutral', subtext: 'Reservas activas' },
-            { id: 'mensajes', title: 'Mensajes', value: 15, subtext: 'Leads acumulados' },
-            { id: 'buscados', title: 'Modelos Buscados', value: mockSearchTickets.length, subtext: 'Pedidos comunidad' },
-            { id: 'clavos', title: 'Unidad Clavo', value: clavoCount, isCurrency: false, subtext: 'Revisar precio' },
-            { id: 'flips', title: 'Flips Compartidos', value: activeFlips.length, subtext: 'Solicitudes' }
+            { id: 'activos',    title: 'Autos Disponibles',  value: availableVehicles.length,  badge: 'En Stock',  badgeType: 'up',      subtext: 'Listos para vender' },
+            { id: 'reservados', title: 'Autos Reservados',   value: reservedVehicles.length,   badge: 'Señados',   badgeType: 'neutral', subtext: 'Reservas activas' },
+            { id: 'mensajes',   title: 'Mensajes',           value: totalMessages,             badge: unreadMessages > 0 ? `${unreadMessages} sin leer` : 'Al día', badgeType: unreadMessages > 0 ? 'down' : 'up', subtext: unreadMessages > 0 ? `${unreadMessages} pendientes de contestar` : 'Sin mensajes pendientes' },
+            { id: 'buscados',   title: 'Modelos Buscados',   value: mockSearchTickets.length,  subtext: 'Pedidos comunidad' },
+            { id: 'clavos',     title: 'Unidad Clavo',       value: clavoCount,                isCurrency: false,  subtext: 'Revisar precio' },
+            { id: 'flips',      title: 'Flips Compartidos',  value: activeFlips.length,        subtext: 'Solicitudes' }
         ];
-    }, [inventory, availableVehicles.length, reservedVehicles.length, activeFlips.length]);
+    }, [inventory, availableVehicles.length, reservedVehicles.length, activeFlips.length, totalMessages, unreadMessages]);
 
     const [items, setItems] = useState<any[]>([]);
     useEffect(() => { if (isMounted) setItems(kpiData); }, [kpiData, isMounted]);

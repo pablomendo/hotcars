@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Bell, User, Settings, LogOut } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import NotificationsPanel from './NotificationsPanel';
 import MobilePanelMenu from './MobilePanelMenu';
@@ -32,6 +32,7 @@ export default function Header() {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+    const [unreadMessages, setUnreadMessages] = useState(0);
     const [activeCategory, setActiveCategory] = useState('todas');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
@@ -42,11 +43,15 @@ export default function Header() {
     const userMenuRef = useRef<HTMLDivElement>(null);
     const notificationsRef = useRef<HTMLDivElement>(null);
 
-    const fetchNotifications = async () => {
+    // Ref para que el interval y el channel siempre lean la categoría actual sin re-crear closures
+    const activeCategoryRef = useRef(activeCategory);
+    useEffect(() => { activeCategoryRef.current = activeCategory; }, [activeCategory]);
+
+    const fetchNotifications = useCallback(async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
 
-        // Conteo total no leídas
+        // Contador total sin leer
         const { count } = await supabase
             .from('notifications')
             .select('*', { count: 'exact', head: true })
@@ -54,7 +59,7 @@ export default function Header() {
             .eq('is_read', false);
         setUnreadCount(count || 0);
 
-        // Conteo por categoría (no leídas) para badges del menú
+        // Conteo por categoría
         const { data: allUnread } = await supabase
             .from('notifications')
             .select('category')
@@ -69,12 +74,25 @@ export default function Header() {
             setCategoryCounts(counts);
         }
 
-        // Notificaciones filtradas para el panel
+        // Lista filtrada por categoría activa
         let query = supabase.from('notifications').select('*').eq('user_id', session.user.id);
-        if (activeCategory !== 'todas') query = query.eq('category', activeCategory);
-        const { data } = await query.order('priority', { ascending: false }).order('created_at', { ascending: false }).limit(5);
+        const cat = activeCategoryRef.current;
+        if (cat !== 'todas') query = query.eq('category', cat);
+        const { data } = await query.order('priority', { ascending: false }).order('created_at', { ascending: false });
         setNotifications(data || []);
-    };
+        // Mensajes sin leer reales desde tabla messages
+        const { count: msgCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('receiver_user_id', session.user.id)
+            .eq('is_read', false);
+        setUnreadMessages(msgCount || 0);
+    }, []); // sin dependencias — usa activeCategoryRef para leer siempre el valor actual
+
+    // Re-fetch al cambiar categoría
+    useEffect(() => {
+        fetchNotifications();
+    }, [activeCategory, fetchNotifications]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -103,21 +121,28 @@ export default function Header() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, fetchNotifications)
             .subscribe();
 
-        return () => { subscription.unsubscribe(); supabase.removeChannel(channel); };
-    }, [pathname, activeCategory]);
+        const interval = setInterval(fetchNotifications, 15000);
 
-    // FIX: cerrar panel primero, navegar después con delay para evitar conflicto en mobile
+        return () => { subscription.unsubscribe(); supabase.removeChannel(channel); clearInterval(interval); };
+    }, [pathname, fetchNotifications]);
+
     const handleNotificationClick = async (notification: any) => {
         if (!notification.is_read) {
             await supabase.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', notification.id);
-            fetchNotifications();
+            await fetchNotifications();
         }
         setIsNotificationsOpen(false);
-        const url = notification.action_url
-            ?? (notification.related_entity_type && notification.related_entity_id
-                ? `/${notification.related_entity_type}/${notification.related_entity_id}`
-                : null);
-        if (url) setTimeout(() => router.push(url), 50);
+
+        let url: string | null = null;
+        if (notification.category === 'message' && notification.related_entity_id) {
+            url = `/mensajes?auto=${notification.related_entity_id}`;
+        } else if (notification.action_url) {
+            url = notification.action_url;
+        } else if (notification.related_entity_type && notification.related_entity_id) {
+            url = `/${notification.related_entity_type}/${notification.related_entity_id}`;
+        }
+
+        if (url) setTimeout(() => router.push(url!), 50);
     };
 
     const handleLogout = async () => {
@@ -146,7 +171,7 @@ export default function Header() {
         <>
             <header className="fixed top-0 left-0 right-0 z-[100] w-full bg-[#12242e] border-b border-white/5 text-white px-6">
 
-                {/* MOBILE: dos filas */}
+                {/* MOBILE */}
                 <div className="lg:hidden flex flex-col pt-3 pb-2 gap-2">
                     <div className="flex justify-center">
                         <Link href="/"><Image src="/logo_hotcars_blanco.png" alt="HotCars Logo" width={200} height={60} unoptimized className="h-8 w-auto object-contain" priority /></Link>
@@ -162,7 +187,17 @@ export default function Header() {
                                 <Bell className="w-6 h-6" />
                                 {unreadCount > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">{unreadCount > 9 ? '+9' : unreadCount}</span>}
                             </button>
-                            {isNotificationsOpen && <NotificationsPanel notifications={notifications} unreadCount={unreadCount} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onNotificationClick={handleNotificationClick} formatRelativeDate={formatRelativeDate} />}
+                            {isNotificationsOpen && (
+                                <NotificationsPanel
+                                    notifications={notifications}
+                                    unreadCount={unreadCount}
+                                    activeCategory={activeCategory}
+                                    categoryCounts={categoryCounts}
+                                    onCategoryChange={setActiveCategory}
+                                    onNotificationClick={handleNotificationClick}
+                                    formatRelativeDate={formatRelativeDate}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>
@@ -178,8 +213,9 @@ export default function Header() {
                                 <NavLink href="/inventario">Inventario</NavLink>
                                 <NavLink href="/dashboard/web">Mi Web</NavLink>
                                 <NavLink href="/flips-compartidos" badge={categoryCounts['inventory']}>Flips Compartidos</NavLink>
-                                <NavLink href="/mensajes" badge={categoryCounts['message']}>Mensajes</NavLink>
+                                <NavLink href="/mensajes" badge={unreadMessages}>Mensajes</NavLink>
                                 <NavLink href="/searched">Vehículos Buscados</NavLink>
+                                <NavLink href="/potencial-hotcars">FAQ</NavLink>
                             </>
                         ) : (
                             <>
@@ -199,7 +235,17 @@ export default function Header() {
                                         <Bell className="w-5 h-5" />
                                         {unreadCount > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">{unreadCount > 9 ? '+9' : unreadCount}</span>}
                                     </button>
-                                    {isNotificationsOpen && <NotificationsPanel notifications={notifications} unreadCount={unreadCount} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onNotificationClick={handleNotificationClick} formatRelativeDate={formatRelativeDate} />}
+                                    {isNotificationsOpen && (
+                                        <NotificationsPanel
+                                            notifications={notifications}
+                                            unreadCount={unreadCount}
+                                            activeCategory={activeCategory}
+                                            categoryCounts={categoryCounts}
+                                            onCategoryChange={setActiveCategory}
+                                            onNotificationClick={handleNotificationClick}
+                                            formatRelativeDate={formatRelativeDate}
+                                        />
+                                    )}
                                 </div>
                                 <div className="relative hidden lg:block" ref={userMenuRef}>
                                     <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="w-10 h-10 rounded-full bg-[#134e4d] overflow-hidden items-center justify-center text-white font-bold text-sm cursor-pointer hover:opacity-80 transition-opacity border border-white/10 flex">
@@ -232,7 +278,7 @@ export default function Header() {
                     isMobileMenuOpen={isMobileMenuOpen}
                     onToggleMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     unreadNotifications={unreadCount}
-                    unreadMessages={categoryCounts['message'] || 0}
+                    unreadMessages={unreadMessages}
                 />
             )}
         </>

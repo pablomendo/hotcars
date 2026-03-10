@@ -647,10 +647,12 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            <div className="fixed top-20 left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-6 pt-[14px] pb-3 lg:h-20">
-                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center">
-                    
-                    <div className="grid grid-cols-4 lg:flex items-center gap-1.5 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
+            {/* ── SUBHEADER FIJO ── */}
+            <div className="fixed top-[76px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-start px-4 py-2 lg:h-20 lg:pt-1fixed top-[70px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-start px-3 py-6 lg:h-16 lg:pt-2">
+                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-2">
+
+                    {/* Chips de tabs */}
+                    <div className="grid grid-cols-4 lg:flex items-center gap-1 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
                         {[
                             { id: 'ACTIVOS', label: 'Activos' },
                             { id: 'RESERVADOS', label: 'Reservados' },
@@ -662,7 +664,7 @@ export default function InventoryPage() {
                             <button 
                                 key={t.id} 
                                 onClick={() => setTab(t.id)} 
-                                className={`px-3 py-1.5 rounded-lg text-[10px] lg:text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap ${
+                                className={`px-2.5 py-1.5 rounded-lg text-[10px] lg:text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap ${
                                     tab === t.id 
                                     ? 'bg-[#134e4d] text-white shadow-md' 
                                     : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -676,11 +678,14 @@ export default function InventoryPage() {
                         ))}
                     </div>
 
-                    <div className="mt-1 flex items-center gap-3">
-                        <span style={{ fontFamily: 'Genos' }} className="text-white text-[12px] lg:text-[14px] font-light tracking-[3px] lg:tracking-[4px] uppercase opacity-40">
+                    {/* Fila inferior: INVENTARIO + plan */}
+                    <div className="flex items-center gap-3">
+                        <span
+                            style={{ fontFamily: 'Genos', fontWeight: 300, letterSpacing: '4px' }}
+                            className="text-white text-[13px] lg:text-[15px] uppercase opacity-40"
+                        >
                             Inventario
                         </span>
-                        
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userPlan}</span>
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -688,10 +693,13 @@ export default function InventoryPage() {
                             </span>
                         </div>
                     </div>
+
                 </div>
             </div>
 
-            <div className="max-w-[1600px] mx-auto px-6 pt-40 pb-20 lg:pt-44">
+            {/* ── CONTENIDO ── */}
+            {/* FIX: pt aumentado en mobile para compensar subheader de 2 filas */}
+            <div className="max-w-[1600px] mx-auto px-6 pt-[225px] pb-20 lg:pt-44">
                 <div className="flex flex-wrap items-center gap-3 mb-8">
                     <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
                         <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white/10 text-[#22c55e]' : 'text-slate-500'}`}>

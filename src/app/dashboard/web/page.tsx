@@ -11,7 +11,6 @@ import {
   X, AlertTriangle, AlertCircle, CheckCircle2
 } from 'lucide-react';
 
-// ── Sistema de modales de feedback ─────────────────────────────────────────
 type FeedbackVariant = 'success' | 'error' | 'warning';
 interface FeedbackModal {
     open: boolean;
@@ -28,9 +27,7 @@ const FEEDBACK_STYLES: Record<FeedbackVariant, { iconBg: string; iconColor: stri
     error:   { iconBg: 'bg-red-50',    iconColor: 'text-red-500',   btnBg: 'bg-red-500 hover:bg-red-600',     btnShadow: 'shadow-red-200',    Icon: X              },
     warning: { iconBg: 'bg-orange-50', iconColor: 'text-orange-500',btnBg: 'bg-[#ff4d00] hover:bg-[#e64500]', btnShadow: 'shadow-orange-200', Icon: AlertCircle    },
 };
-// ───────────────────────────────────────────────────────────────────────────
 
-// ── Temas predefinidos ──────────────────────────────────────────────────────
 const THEMES = [
   { id: 'verde_oscuro',  label: 'Verde Oscuro',  accent: '#22c55e', bg: '#0b1114', card: '#141b1f', preview: ['#0b1114','#22c55e'] },
   { id: 'rojo_carbono',  label: 'Rojo Carbono',  accent: '#ef4444', bg: '#0f0a0a', card: '#1a1010', preview: ['#0f0a0a','#ef4444'] },
@@ -102,7 +99,7 @@ export default function MiWebPage() {
     const fetchWebConfig = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('web_configs')
                 .select('*')
                 .eq('user_id', user.id)
@@ -460,12 +457,10 @@ export default function MiWebPage() {
     };
 
     const counts = useMemo(() => ({
-        VISIBLE: inv.filter(v => v.show && v.inventory_status !== 'pausado').length, 
-        OCULTO: inv.filter(v => !v.show && v.inventory_status !== 'pausado').length,
+        VISIBLE:    inv.filter(v => v.show && v.inventory_status !== 'pausado').length,
+        OCULTO:     inv.filter(v => !v.show && v.inventory_status !== 'pausado').length,
         DESTACADOS: inv.filter(v => v.show && v.featured && v.inventory_status !== 'pausado').length,
-        NUEVOS: inv.filter(v => v.show && v.isNew && v.inventory_status !== 'pausado').length,
-        RESERVADOS: inv.filter(v => v.inventory_status === 'reservado').length,
-        VENDIDOS: inv.filter(v => v.inventory_status === 'vendido').length,
+        NUEVOS:     inv.filter(v => v.show && v.isNew && v.inventory_status !== 'pausado').length,
     }), [inv]);
 
     const filtered = useMemo(() => {
@@ -475,12 +470,10 @@ export default function MiWebPage() {
                                (v.model?.toLowerCase() || "").includes(search.toLowerCase());
             if (!searchMatch) return false;
             switch(tab) {
-                case 'OCULTO': return !v.show;
+                case 'OCULTO':     return !v.show;
                 case 'DESTACADOS': return v.show && v.featured;
-                case 'NUEVOS': return v.show && v.isNew;
-                case 'RESERVADOS': return v.inventory_status === 'reservado';
-                case 'VENDIDOS': return v.inventory_status === 'vendido';
-                default: return v.show; 
+                case 'NUEVOS':     return v.show && v.isNew;
+                default:           return v.show;
             }
         });
     }, [tab, inv, search]);
@@ -494,7 +487,7 @@ export default function MiWebPage() {
                 button { cursor: pointer; }
             `}</style>
 
-            {/* ── Modal feedback ── */}
+            {/* Modal feedback */}
             {feedback.open && (() => {
                 const s = FEEDBACK_STYLES[feedback.variant];
                 const Icon = s.Icon;
@@ -536,7 +529,7 @@ export default function MiWebPage() {
                 </div>
             )}
 
-            {/* ── Header ── */}
+            {/* Header */}
             <div className="fixed top-0 left-0 right-0 z-[50] bg-[#0b1114] border-b border-white/5 px-6 py-4">
                 <div className="max-w-[1600px] mx-auto flex justify-between items-center h-12">
                     <div className="flex flex-col text-left">
@@ -552,8 +545,8 @@ export default function MiWebPage() {
                             {isTogglingOnline ? <Loader2 size={12} className="animate-spin"/> : <Power size={12}/>}
                             {isOnline ? 'Online' : 'Offline'}
                         </button>
-                        <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userData.plan_type}</span>
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest hidden lg:inline">Plan {userData.plan_type}</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden lg:inline">
                             {counts.VISIBLE} / {userData.plan_type === 'VIP' ? '∞' : maxWebVehicles} visibles
                         </span>
                         <button className="bg-[#134e4d] text-white px-6 py-2 rounded-xl text-[11px] font-black uppercase shadow-lg border border-[#22c55e]/20 transition-all">Publicar</button>
@@ -561,27 +554,51 @@ export default function MiWebPage() {
                 </div>
             </div>
 
-            {/* ── Tabs ── */}
-            <div className="fixed top-[76px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 px-6 pt-[14px] pb-3 lg:h-20 flex flex-col items-center justify-center">
-                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center">
-                    <div className="grid grid-cols-3 lg:flex items-center gap-1 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
+            {/* ── Tabs — FIX: subido 5px (top-[112px] → top-[107px]) ── */}
+            <div className="fixed top-[97px] lg:top-[76px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 px-4 lg:px-6 lg:h-20 flex flex-col items-center justify-center pt-3 pb-5 lg:py-3">
+                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-1 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit overflow-x-auto scrollbar-none">
                         {[
-                            { id: 'VISIBLE', label: 'Visible' }, { id: 'OCULTO', label: 'Oculto' },
-                            { id: 'DESTACADOS', label: 'Destacados' }, { id: 'NUEVOS', label: 'Nuevo Ingreso' },
-                            { id: 'RESERVADOS', label: 'Reservados' }, { id: 'VENDIDOS', label: 'Vendidos' }
+                            { id: 'VISIBLE',    label: 'Visible'    },
+                            { id: 'OCULTO',     label: 'Oculto'     },
+                            { id: 'DESTACADOS', label: 'Destacados' },
+                            { id: 'NUEVOS',     label: 'Nuevo'      },
                         ].map((t) => (
-                            <button key={t.id} onClick={() => setTab(t.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap ${tab === t.id ? 'bg-[#134e4d] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                            <button
+                                key={t.id}
+                                onClick={() => setTab(t.id)}
+                                className={`flex-1 lg:flex-none px-2 lg:px-3 py-1.5 rounded-lg text-[10px] lg:text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap flex-shrink-0 ${tab === t.id ? 'bg-[#134e4d] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                            >
                                 {t.label}
                                 {counts[t.id as keyof typeof counts] > 0 && (
-                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-black ${tab === t.id ? 'bg-black/40 text-white' : 'bg-[#00984a]/20 text-[#22c55e]'}`}>{counts[t.id as keyof typeof counts]}</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${tab === t.id ? 'bg-black/40 text-white' : 'bg-[#00984a]/20 text-[#22c55e]'}`}>
+                                        {counts[t.id as keyof typeof counts]}
+                                    </span>
                                 )}
                             </button>
                         ))}
                     </div>
+
+                    {/* Fila inferior: MI WEB + plan + contador */}
+                    <div className="flex items-center gap-3">
+                        <span style={{ fontFamily: 'Genos', fontWeight: 300, letterSpacing: '4px' }} className="text-white text-[13px] lg:text-[15px] uppercase opacity-40">
+                            Mi Web
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">
+                                Plan {userData.plan_type}
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                {counts.VISIBLE} / {userData.plan_type.toUpperCase() === 'VIP' ? '∞' : maxWebVehicles} Visibles
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
-            <div className="max-w-[1600px] mx-auto px-6 pt-64 lg:pt-56">
+            {/* ── Contenido — FIX: subido 3px (pt-[196px] → pt-[225px]) ── */}
+            <div className="max-w-[1600px] mx-auto px-6 pt-[225px] lg:pt-56">
                 <main className="w-full">
                     <div className="flex justify-start items-center gap-3 mb-6">
                         <button onClick={() => setOpenConfig(!openConfig)} className={`flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 transition-all ${openConfig ? 'bg-white/10 text-[#22c55e] border-[#22c55e]/30' : 'bg-white/5 text-slate-500 hover:text-white'}`}>
@@ -826,7 +843,7 @@ export default function MiWebPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {!loading && filtered.map((v, index) => (
-                            <div key={v.id} className={`bg-[#141b1f] border rounded-xl overflow-hidden transition-all ${v.show ? 'border-white/5' : 'border-red-900/40 opacity-50'}`}>
+                            <div key={v.id} className={`bg-[#141b1f] border rounded-xl overflow-hidden transition-all ${v.show ? 'border-white/5' : 'border-red-900/40'}`}>
                                 <div className="p-4 flex flex-col gap-3">
                                     <div className="w-full aspect-video rounded-lg bg-slate-900 overflow-hidden border border-white/10 relative">
                                         <img src={v.image} className="w-full h-full object-cover" alt="" />
