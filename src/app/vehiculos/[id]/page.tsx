@@ -30,6 +30,9 @@ export default function VehicleDetailPage() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
 
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavLoading, setIsFavLoading] = useState(false);
+
   const fetchVehicleData = useCallback(async () => {
     try {
       setLoading(true);
@@ -66,14 +69,23 @@ export default function VehicleDetailPage() {
       }
 
       if (currentUser && currentVehicle) {
-        const { data: flipData } = await supabase
-          .from('flip_compartido')
-          .select('status')
-          .eq('auto_id', currentVehicle.id)
-          .eq('vendedor_user_id', currentUser.id)
-          .maybeSingle();
+        const [flipData, favData] = await Promise.all([
+          supabase
+            .from('flip_compartido')
+            .select('status')
+            .eq('auto_id', currentVehicle.id)
+            .eq('vendedor_user_id', currentUser.id)
+            .maybeSingle(),
+          supabase
+            .from('favoritos')
+            .select('id')
+            .eq('auto_id', currentVehicle.id)
+            .eq('user_id', currentUser.id)
+            .maybeSingle()
+        ]);
         
-        setFlipStatus(flipData?.status || null);
+        setFlipStatus(flipData.data?.status || null);
+        setIsFavorite(!!favData.data);
       }
 
       if (currentVehicle?.owner_user_id) {
@@ -92,6 +104,25 @@ export default function VehicleDetailPage() {
   }, [params.id]);
 
   useEffect(() => { if (params.id) fetchVehicleData(); }, [fetchVehicleData, params.id]);
+
+  const handleToggleFavorite = async () => {
+    if (!user || !vehicle || isFavLoading) return;
+    setIsFavLoading(true);
+    const prev = isFavorite;
+    setIsFavorite(!prev);
+    try {
+      if (prev) {
+        await supabase.from('favoritos').delete().eq('auto_id', vehicle.id).eq('user_id', user.id);
+      } else {
+        await supabase.from('favoritos').insert({ user_id: user.id, auto_id: vehicle.id });
+      }
+    } catch (err) {
+      setIsFavorite(prev);
+      console.error("Error favorito:", err);
+    } finally {
+      setIsFavLoading(false);
+    }
+  };
 
   const handleFlipAction = async () => {
     if (!user || !vehicle || flipStatus || isProcessing) return; 
@@ -219,7 +250,6 @@ export default function VehicleDetailPage() {
                 ))}
               </div>
               <div className="flex-1 relative flex items-center justify-center group min-h-[240px] md:min-h-0">
-                {/* ✅ FIX galería: z-[5] para que el botón X de la galería no quede tapado */}
                 <div className="absolute inset-0 z-[5] cursor-pointer" onClick={() => setIsGalleryOpen(true)}></div>
                 <img src={vehicle.fotos?.[selectedImageIndex]} className="max-w-full max-h-full object-contain" alt="Principal" />
               </div>
@@ -228,21 +258,29 @@ export default function VehicleDetailPage() {
             <section className="md:col-span-4 md:border-l border-gray-100 p-6 flex flex-col justify-start">
                 <div className="flex justify-between items-start mb-1 text-left">
                   <span className="text-gray-500 text-[13px] font-bold">{vehicle.anio} | {Number(vehicle.km).toLocaleString('de-DE')} km</span>
-                  <Heart size={20} className="text-gray-300 cursor-pointer hover:text-red-500 transition-colors" />
+                  <button
+                    onClick={handleToggleFavorite}
+                    disabled={!user || isFavLoading}
+                    className="transition-all disabled:opacity-30"
+                    title={!user ? 'Iniciá sesión para guardar favoritos' : isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                  >
+                    <Heart
+                      size={20}
+                      className={`transition-all ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-300 hover:text-red-400'}`}
+                    />
+                  </button>
                 </div>
                 <h1 className="text-2xl font-bold text-[#333] leading-tight mb-1">{vehicle.marca} {vehicle.modelo}</h1>
                 <p className="text-[#3483fa] font-bold text-[14px] uppercase tracking-wide mb-1">{vehicle.version}</p>
                 <div className="flex items-center gap-1.5 text-gray-400 text-[12px] font-bold uppercase mb-4"><MapPin size={13}/> {vehicle.localidad}, {vehicle.provincia}</div>
                 <div className="mb-6">
                   <span className="text-4xl font-black text-[#333] tracking-tighter">{vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}</span>
-                  {/* ✅ FIX: ganancia solo visible para usuarios logueados */}
                   {user !== null && profitValue && (
                     <div className="flex items-center gap-1.5 text-[#00a650] mt-2 font-semibold">
                       <TrendingUp size={16} /> <span className="text-[14px] uppercase">{profitLabel}: ${Number(profitValue).toLocaleString('de-DE')}</span>
                     </div>
                   )}
                 </div>
-                {/* ✅ FIX: botón flip solo visible para usuarios logueados y no dueños */}
                 {user !== null && !isOwner && (
                   <button onClick={(flipStatus === 'approved' || flipStatus === 'pending') ? handleRemoveFlip : handleFlipAction} disabled={isProcessing} className={`w-full mb-4 py-4 border-2 border-dashed rounded-xl font-black uppercase text-[12px] flex items-center justify-center gap-2 transition-all cursor-pointer ${flipStatus === 'approved' || flipStatus === 'pending' ? 'border-red-200 text-red-500 bg-red-50 hover:bg-red-100' : 'border-[#2596be] text-[#2596be] hover:bg-[#2596be]/5 active:scale-95'}`}>
                     {isProcessing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} fill={flipStatus ? "none" : "currentColor"} />} 
@@ -306,7 +344,6 @@ export default function VehicleDetailPage() {
         </div>
       </div>
 
-      {/* ✅ FIX galería: botón X con z-[110] siempre por encima del overlay */}
       {isGalleryOpen && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm">
           <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors z-[110] cursor-pointer"><X size={32} /></button>

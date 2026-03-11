@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Bell, User, Settings, LogOut } from 'lucide-react';
+import { Bell, User, Settings, LogOut, Heart, Car, MapPin, Trash2, Loader2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -25,10 +25,62 @@ function NavLink({ href, children, badge }: { href: string; children: React.Reac
     );
 }
 
+function FavoritesPanel({ favorites, onRemove, onNavigate, removing, isMobile = false }: {
+    favorites: any[];
+    onRemove: (favId: string, autoId: string) => void;
+    onNavigate: (autoId: string) => void;
+    removing: string | null;
+    isMobile?: boolean;
+}) {
+    return (
+        <div className={`absolute ${isMobile ? 'right-0' : 'right-0'} mt-2 w-80 bg-[#1a2e38] border border-white/10 rounded-xl shadow-xl z-[110] animate-in fade-in zoom-in duration-200 overflow-hidden`}>
+            <div className="px-4 py-3 border-b border-white/5 bg-black/20 flex justify-between items-center">
+                <h3 className="text-sm font-bold text-white">Favoritos</h3>
+                <span className="text-[10px] text-slate-400">{favorites.length} guardado{favorites.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="max-h-[380px] overflow-y-auto p-2 space-y-2">
+                {favorites.length > 0 ? favorites.map((f) => (
+                    <div key={f.id} className="flex gap-3 p-2 rounded-lg border border-white/5 hover:border-white/10 hover:bg-white/[0.03] transition-all">
+                        <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0 cursor-pointer" onClick={() => onNavigate(f.auto.id)}>
+                            {f.auto.fotos?.[0]
+                                ? <img src={f.auto.fotos[0]} alt="" className="w-full h-full object-cover" />
+                                : <div className="w-full h-full flex items-center justify-center"><Car size={18} className="text-slate-600" /></div>
+                            }
+                        </div>
+                        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onNavigate(f.auto.id)}>
+                            <p className="text-[11px] font-black text-white uppercase tracking-tight truncate">{f.auto.marca} {f.auto.modelo}</p>
+                            <p className="text-[9px] text-slate-500 font-bold uppercase truncate">{f.auto.version}</p>
+                            <div className="flex items-center gap-1 text-slate-500 text-[9px] mt-0.5">
+                                <MapPin size={8} />{f.auto.localidad}
+                            </div>
+                            <p className="text-[12px] font-black text-white mt-0.5">
+                                {f.auto.moneda === 'USD' ? 'U$S' : '$'} {Number(f.auto.pv).toLocaleString('de-DE')}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => onRemove(f.id, f.auto.id)}
+                            disabled={removing === f.auto.id}
+                            className="flex-shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-40 self-center"
+                        >
+                            {removing === f.auto.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                        </button>
+                    </div>
+                )) : (
+                    <div className="px-4 py-8 text-center text-slate-500 text-xs">No tenés favoritos guardados</div>
+                )}
+            </div>
+            <Link href="/favoritos" className="block w-full py-3 text-center text-[10px] font-bold text-[#22c55e] hover:bg-white/5 border-t border-white/5 transition-colors uppercase tracking-wider">
+                Ver todos los favoritos
+            </Link>
+        </div>
+    );
+}
+
 export default function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
@@ -37,14 +89,54 @@ export default function Header() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const [userData, setUserData] = useState({ name: "Cargando...", avatar: null, plan: "Gratis" });
+    const [favorites, setFavorites] = useState<any[]>([]);
+    const [removingFav, setRemovingFav] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     const pathname = usePathname();
     const router = useRouter();
     const userMenuRef = useRef<HTMLDivElement>(null);
     const notificationsRef = useRef<HTMLDivElement>(null);
+    const favoritesRef = useRef<HTMLDivElement>(null);
+    const favoritesRefMobile = useRef<HTMLDivElement>(null);
 
     const activeCategoryRef = useRef(activeCategory);
     useEffect(() => { activeCategoryRef.current = activeCategory; }, [activeCategory]);
+
+    const fetchFavorites = useCallback(async (uid: string) => {
+        const { data, error } = await supabase
+            .from('favoritos')
+            .select('id, auto_id, created_at')
+            .eq('user_id', uid)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error || !data?.length) { setFavorites([]); return; }
+
+        const autoIds = data.map((f: any) => f.auto_id);
+        const { data: autos } = await supabase
+            .from('inventario')
+            .select('id, marca, modelo, anio, km, pv, moneda, fotos, localidad, provincia, version')
+            .in('id', autoIds);
+
+        const autosMap: Record<string, any> = {};
+        for (const a of autos || []) autosMap[a.id] = a;
+
+        setFavorites(data.map((f: any) => ({ ...f, auto: autosMap[f.auto_id] || null })).filter((f: any) => f.auto));
+    }, []);
+
+    const handleRemoveFav = async (favId: string, autoId: string) => {
+        if (!currentUserId) return;
+        setRemovingFav(autoId);
+        await supabase.from('favoritos').delete().eq('id', favId);
+        setFavorites(prev => prev.filter(f => f.id !== favId));
+        setRemovingFav(null);
+    };
+
+    const handleFavNavigate = (autoId: string) => {
+        setIsFavoritesOpen(false);
+        router.push(`/vehiculos/${autoId}`);
+    };
 
     const fetchNotifications = useCallback(async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -65,9 +157,7 @@ export default function Header() {
 
         if (allUnread) {
             const counts: Record<string, number> = {};
-            allUnread.forEach((n: any) => {
-                counts[n.category] = (counts[n.category] || 0) + 1;
-            });
+            allUnread.forEach((n: any) => { counts[n.category] = (counts[n.category] || 0) + 1; });
             setCategoryCounts(counts);
         }
 
@@ -85,9 +175,7 @@ export default function Header() {
         setUnreadMessages(msgCount || 0);
     }, []);
 
-    useEffect(() => {
-        fetchNotifications();
-    }, [activeCategory, fetchNotifications]);
+    useEffect(() => { fetchNotifications(); }, [activeCategory, fetchNotifications]);
 
     useEffect(() => {
         setIsMounted(true);
@@ -95,6 +183,7 @@ export default function Header() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
                 setIsLoggedIn(true);
+                setCurrentUserId(session.user.id);
                 const { data: profile } = await supabase.from('usuarios').select('full_name, profile_pic, plan_type').eq('auth_id', session.user.id).single();
                 if (profile) {
                     setUserData({ name: profile.full_name || "Usuario", avatar: profile.profile_pic || null, plan: profile.plan_type ? profile.plan_type.charAt(0).toUpperCase() + profile.plan_type.slice(1) : "Gratis" });
@@ -102,6 +191,7 @@ export default function Header() {
                     setUserData({ name: "Usuario", avatar: null, plan: "Gratis" });
                 }
                 fetchNotifications();
+                fetchFavorites(session.user.id);
             } else {
                 setIsLoggedIn(false);
             }
@@ -116,24 +206,25 @@ export default function Header() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, fetchNotifications)
             .subscribe();
 
+        const favChannel = supabase.channel('favoritos_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'favoritos' }, () => {
+                if (currentUserId) fetchFavorites(currentUserId);
+            })
+            .subscribe();
+
         const interval = setInterval(fetchNotifications, 15000);
 
-        return () => { subscription.unsubscribe(); supabase.removeChannel(channel); clearInterval(interval); };
-    }, [pathname, fetchNotifications]);
+        return () => { subscription.unsubscribe(); supabase.removeChannel(channel); supabase.removeChannel(favChannel); clearInterval(interval); };
+    }, [pathname, fetchNotifications, fetchFavorites]);
 
     const handleNotificationClick = async (notification: any) => {
         if (!notification.is_read) {
             await supabase.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', notification.id);
             await fetchNotifications();
         }
-
         const url = notification.action_url || null;
-
         if (url) {
-            setTimeout(() => {
-                setIsNotificationsOpen(false);
-                router.push(url);
-            }, 50);
+            setTimeout(() => { setIsNotificationsOpen(false); router.push(url); }, 50);
         } else {
             setIsNotificationsOpen(false);
         }
@@ -153,11 +244,13 @@ export default function Header() {
     };
 
     useEffect(() => {
-        // Click outside SOLO en desktop (lg = 1024px+)
         const handleClickOutside = (event: MouseEvent) => {
-            if (window.innerWidth < 1024) return;
             if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false);
             if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) setIsNotificationsOpen(false);
+            if (favoritesRef.current && !favoritesRef.current.contains(event.target as Node) &&
+                favoritesRefMobile.current && !favoritesRefMobile.current.contains(event.target as Node)) {
+                setIsFavoritesOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -174,12 +267,31 @@ export default function Header() {
                     </div>
                     <div className="flex items-center gap-2 px-2 pb-1">
                         <div className="flex-1 relative">
-                            <input type="text" placeholder="Buscar en HotCars..." className="w-full bg-white/10 border border-white/10 rounded-xl pl-4 pr-4 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-[#00984a]"
+                            <input type="text" placeholder="Buscar en HotCars..." className="w-full bg-white/10 border border-white/10 rounded-xl pl-4 pr-4 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-[#00984a] text-center placeholder:text-center"
                                 onKeyDown={(e) => { if (e.key === 'Enter') { const val = (e.target as HTMLInputElement).value.trim(); if (val) router.push(`/?marca=${encodeURIComponent(val)}`); } }}
                             />
                         </div>
+                        {isLoggedIn && (
+                            <div className="relative flex-shrink-0" ref={favoritesRefMobile}>
+                                <button
+                                    onClick={() => { setIsFavoritesOpen(!isFavoritesOpen); setIsNotificationsOpen(false); }}
+                                    className="text-slate-400 hover:text-red-400 transition-colors p-1 cursor-pointer"
+                                >
+                                    <Heart className="w-6 h-6" />
+                                </button>
+                                {isFavoritesOpen && (
+                                    <FavoritesPanel
+                                        favorites={favorites}
+                                        onRemove={handleRemoveFav}
+                                        onNavigate={handleFavNavigate}
+                                        removing={removingFav}
+                                        isMobile
+                                    />
+                                )}
+                            </div>
+                        )}
                         <div className="relative flex-shrink-0" ref={notificationsRef}>
-                            <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="text-slate-400 hover:text-white transition-colors p-1 relative cursor-pointer">
+                            <button onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsFavoritesOpen(false); }} className="text-slate-400 hover:text-white transition-colors p-1 relative cursor-pointer">
                                 <Bell className="w-6 h-6" />
                                 {unreadCount > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">{unreadCount > 9 ? '+9' : unreadCount}</span>}
                             </button>
@@ -226,8 +338,26 @@ export default function Header() {
                         {isLoggedIn && (
                             <>
                                 <Link href="/publicar" className="hidden lg:inline-flex items-center h-8 rounded-lg bg-[#134e4d] px-4 text-[12px] font-bold text-white cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm border border-white/10">Publicar Unidad</Link>
+
+                                <div className="relative hidden lg:block" ref={favoritesRef}>
+                                    <button
+                                        onClick={() => { setIsFavoritesOpen(!isFavoritesOpen); setIsNotificationsOpen(false); setIsUserMenuOpen(false); }}
+                                        className="text-slate-400 hover:text-red-400 transition-colors p-1 cursor-pointer"
+                                    >
+                                        <Heart className="w-5 h-5" />
+                                    </button>
+                                    {isFavoritesOpen && (
+                                        <FavoritesPanel
+                                            favorites={favorites}
+                                            onRemove={handleRemoveFav}
+                                            onNavigate={handleFavNavigate}
+                                            removing={removingFav}
+                                        />
+                                    )}
+                                </div>
+
                                 <div className="relative hidden lg:block" ref={notificationsRef}>
-                                    <button onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} className="text-slate-400 hover:text-white transition-colors p-1 relative cursor-pointer">
+                                    <button onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsFavoritesOpen(false); setIsUserMenuOpen(false); }} className="text-slate-400 hover:text-white transition-colors p-1 relative cursor-pointer">
                                         <Bell className="w-5 h-5" />
                                         {unreadCount > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">{unreadCount > 9 ? '+9' : unreadCount}</span>}
                                     </button>
@@ -243,8 +373,9 @@ export default function Header() {
                                         />
                                     )}
                                 </div>
+
                                 <div className="relative hidden lg:block" ref={userMenuRef}>
-                                    <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="w-10 h-10 rounded-full bg-[#134e4d] overflow-hidden items-center justify-center text-white font-bold text-sm cursor-pointer hover:opacity-80 transition-opacity border border-white/10 flex">
+                                    <button onClick={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsFavoritesOpen(false); setIsNotificationsOpen(false); }} className="w-10 h-10 rounded-full bg-[#134e4d] overflow-hidden items-center justify-center text-white font-bold text-sm cursor-pointer hover:opacity-80 transition-opacity border border-white/10 flex">
                                         {userData.avatar ? <img src={userData.avatar} alt="Usuario" className="w-full h-full object-cover" /> : <User className="w-5 h-5" />}
                                     </button>
                                     {isUserMenuOpen && (

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Heart, Plus, Settings, Menu, X, User, LogOut, HelpCircle } from 'lucide-react';
+import { Home, Plus, Settings, Menu, X, User, LogOut, HelpCircle, LayoutGrid } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -30,18 +30,18 @@ export default function MobileBottomNav({
                         <Home size={22} />
                         <span className="text-[10px] font-bold uppercase tracking-wide">Inicio</span>
                     </Link>
-                    <Link href="/favoritos" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
-                        <Heart size={22} />
-                        <span className="text-[10px] font-bold uppercase tracking-wide">Favoritos</span>
+                    <Link href="/dashboard" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <Settings size={22} />
+                        <span className="text-[10px] font-bold uppercase tracking-wide">Dashboard</span>
                     </Link>
                     <div className="flex items-center justify-center">
                         <button onClick={() => router.push('/publicar')} className="flex flex-col items-center justify-center w-14 h-14 rounded-full bg-[#134e4d] border-4 border-[#12242e] -mt-6 shadow-lg hover:opacity-90 active:scale-95 transition-all">
                             <Plus size={26} className="text-white" />
                         </button>
                     </div>
-                    <Link href="/dashboard" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
-                        <Settings size={22} />
-                        <span className="text-[10px] font-bold uppercase tracking-wide">Dashboard</span>
+                    <Link href="/inventario" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
+                        <LayoutGrid size={22} />
+                        <span className="text-[10px] font-bold uppercase tracking-wide">Inventario</span>
                     </Link>
                     <button onClick={onToggleMenu} className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                         <div className="relative">

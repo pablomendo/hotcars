@@ -118,8 +118,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
       const currentPlan = dbPlan.toUpperCase();
       setUserPlan(currentPlan);
 
-      // REGLA SOLICITADA: Tanto FREE como PRO/VIP inician con el Flip ACTIVADO
-      // Pero solo los NO-FREE podrán apagarlo más tarde.
       setIsFlipActive(true);
 
       const { data: planData } = await supabase
@@ -327,7 +325,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     setVehiclePhotos([]);
     setSelectedHighlights([]); setPvStr(""); setPcStr(""); setDescription(""); setIsManual(false);
     setProvincia(""); setLocalidad(""); setShareUser(""); 
-    setIsFlipActive(true); // Reinicia siempre activo
+    setIsFlipActive(true);
     setOpenSection(null); 
     setPublishStatus("loading");
     setWillBePaused(false);
@@ -377,6 +375,12 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
       return;
     }
 
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    if (!cloudName) {
+      alert("Error de configuración: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME no está definida. Verificá las variables de entorno en Vercel.");
+      return;
+    }
+
     setIsPublishing(true);
     setPublishStatus("loading");
     try {
@@ -385,14 +389,20 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
           const formData = new FormData();
           formData.append("file", base64);
           formData.append("upload_preset", "hotcars_inventario");
-          const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
             method: "POST",
             body: formData,
           });
           const data = await res.json();
+          if (!data.secure_url) {
+            console.error("Cloudinary error response:", data);
+            throw new Error("Cloudinary no devolvió URL. Error: " + (data.error?.message || JSON.stringify(data)));
+          }
           return data.secure_url;
         })
       );
+
+      console.log("Fotos subidas a Cloudinary:", uploadResults);
 
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const inventory_status = willBePaused ? 'pausado' : 'activo';
@@ -438,7 +448,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
       }, willBePaused ? 4000 : 2000);
 
     } catch (error: any) {
-      alert("Error al conectar con Supabase o Cloudinary: " + error.message);
+      alert("Error al publicar: " + error.message);
       setIsPublishing(false);
     }
   };
@@ -673,7 +683,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                         <button 
                           type="button" 
                           onClick={() => {
-                            // REGLA: Activado por defecto, pero solo los PRO/VIP pueden apagarlo
                             if (userPlan !== "FREE") {
                               setIsFlipActive(prev => !prev);
                             }
