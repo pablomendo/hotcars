@@ -51,11 +51,11 @@ export default function NotificationsPanel({ notifications, unreadCount, activeC
             <div className="max-h-[380px] overflow-y-auto p-2 space-y-2">
                 {notifications.length > 0 ? (
                     notifications.map((n, index) => (
-                        <div
+                        <button
                             key={n.id}
-                            onClick={() => onNotificationClick(n)}
+                            onClick={(e) => { e.stopPropagation(); onNotificationClick(n); }}
                             style={{ animationDelay: `${index * 75}ms` }}
-                            className={`p-3 rounded-lg border border-white/5 cursor-pointer hover:border-[#00984a]/30 hover:bg-[#134e4d]/10 transition-all relative animate-in slide-in-from-top-2 duration-300 fill-mode-both ${!n.is_read ? 'bg-white/[0.04] shadow-sm' : 'bg-transparent opacity-80'}`}
+                            className={`w-full text-left p-3 rounded-lg border border-white/5 cursor-pointer hover:border-[#00984a]/30 hover:bg-[#134e4d]/10 transition-all relative animate-in slide-in-from-top-2 duration-300 fill-mode-both ${!n.is_read ? 'bg-white/[0.04] shadow-sm' : 'bg-transparent opacity-80'}`}
                         >
                             <div className="flex justify-between items-start mb-1">
                                 <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded ${n.category === 'inventory' ? 'bg-blue-500/20 text-blue-400' : n.category === 'message' ? 'bg-[#00984a]/20 text-[#00984a]' : 'bg-slate-500/20 text-slate-400'}`}>
@@ -66,7 +66,7 @@ export default function NotificationsPanel({ notifications, unreadCount, activeC
                             <p className="text-[11px] font-bold text-white mb-1 line-clamp-1">{n.title}</p>
                             <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed">{n.body}</p>
                             {!n.is_read && <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#00984a] rounded-full shadow-[0_0_8px_#00984a]" />}
-                        </div>
+                        </button>
                     ))
                 ) : (
                     <div className="px-4 py-8 text-center text-slate-500 text-xs">No hay notificaciones en esta categoría</div>

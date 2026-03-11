@@ -43,7 +43,6 @@ export default function Header() {
     const userMenuRef = useRef<HTMLDivElement>(null);
     const notificationsRef = useRef<HTMLDivElement>(null);
 
-    // Ref para que el interval y el channel siempre lean la categoría actual sin re-crear closures
     const activeCategoryRef = useRef(activeCategory);
     useEffect(() => { activeCategoryRef.current = activeCategory; }, [activeCategory]);
 
@@ -51,7 +50,6 @@ export default function Header() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) return;
 
-        // Contador total sin leer
         const { count } = await supabase
             .from('notifications')
             .select('*', { count: 'exact', head: true })
@@ -59,7 +57,6 @@ export default function Header() {
             .eq('is_read', false);
         setUnreadCount(count || 0);
 
-        // Conteo por categoría
         const { data: allUnread } = await supabase
             .from('notifications')
             .select('category')
@@ -74,22 +71,20 @@ export default function Header() {
             setCategoryCounts(counts);
         }
 
-        // Lista filtrada por categoría activa
         let query = supabase.from('notifications').select('*').eq('user_id', session.user.id);
         const cat = activeCategoryRef.current;
         if (cat !== 'todas') query = query.eq('category', cat);
-        const { data } = await query.order('priority', { ascending: false }).order('created_at', { ascending: false });
+        const { data } = await query.order('created_at', { ascending: false });
         setNotifications(data || []);
-        // Mensajes sin leer reales desde tabla messages
+
         const { count: msgCount } = await supabase
             .from('messages')
             .select('*', { count: 'exact', head: true })
             .eq('receiver_user_id', session.user.id)
             .eq('is_read', false);
         setUnreadMessages(msgCount || 0);
-    }, []); // sin dependencias — usa activeCategoryRef para leer siempre el valor actual
+    }, []);
 
-    // Re-fetch al cambiar categoría
     useEffect(() => {
         fetchNotifications();
     }, [activeCategory, fetchNotifications]);
@@ -131,18 +126,17 @@ export default function Header() {
             await supabase.from('notifications').update({ is_read: true, read_at: new Date().toISOString() }).eq('id', notification.id);
             await fetchNotifications();
         }
-        setIsNotificationsOpen(false);
 
-        let url: string | null = null;
-        if (notification.category === 'message' && notification.related_entity_id) {
-            url = `/mensajes?auto=${notification.related_entity_id}`;
-        } else if (notification.action_url) {
-            url = notification.action_url;
-        } else if (notification.related_entity_type && notification.related_entity_id) {
-            url = `/${notification.related_entity_type}/${notification.related_entity_id}`;
+        const url = notification.action_url || null;
+
+        if (url) {
+            setTimeout(() => {
+                setIsNotificationsOpen(false);
+                router.push(url);
+            }, 50);
+        } else {
+            setIsNotificationsOpen(false);
         }
-
-        if (url) setTimeout(() => router.push(url!), 50);
     };
 
     const handleLogout = async () => {
@@ -159,7 +153,9 @@ export default function Header() {
     };
 
     useEffect(() => {
+        // Click outside SOLO en desktop (lg = 1024px+)
         const handleClickOutside = (event: MouseEvent) => {
+            if (window.innerWidth < 1024) return;
             if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false);
             if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) setIsNotificationsOpen(false);
         };

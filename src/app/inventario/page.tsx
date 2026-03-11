@@ -648,7 +648,7 @@ export default function InventoryPage() {
             )}
 
             {/* ── SUBHEADER FIJO ── */}
-            <div className="fixed top-[76px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-start px-4 py-2 lg:h-20 lg:pt-1fixed top-[70px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-start px-3 py-6 lg:h-16 lg:pt-2">
+            <div className="fixed top-[102px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-start px-4 py-1 lg:h-20 lg:pt-1">
                 <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-2">
 
                     {/* Chips de tabs */}

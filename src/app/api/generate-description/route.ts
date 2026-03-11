@@ -8,19 +8,13 @@ export async function POST(req: Request) {
     const apiKey = process.env.OPENAI_API_KEY;
     const url = "https://api.openai.com/v1/chat/completions";
 
-    const prompt = `Actúa como un experto en marketing automotriz y redactor SEO para HotCars.
-    
-Vehículo: ${brand} ${model} ${version || ""} ${year}
-Kilometraje: ${km} km
-Categoría: ${category || "Auto"}
-Puntos destacados: ${highlights?.join(", ") || "Excelente estado"}.
+    const prompt = `Tengo este vehículo para vender:
 
-Instrucciones:
-1. Escribe una descripción vendedora de máximo 120 palabras.
-2. Incluye la frase '${brand} ${model} ${year}' de forma natural al principio para SEO.
-3. Resalta el estado y la oportunidad de compra.
-4. Termina con un llamado a la acción profesional.
-5. No uses emojis excesivos ni lenguaje informal.`;
+${brand} ${model}${version ? " " + version : ""} ${year}
+Kilometraje: ${km} km
+${highlights?.length ? "Detalles: " + highlights.join(", ") : ""}
+
+Escribí una descripción corta para publicar en una plataforma de autos usados en Argentina. Máximo 90 palabras. Tiene que sonar como si la escribiera una persona real que conoce el auto, no una agencia ni un robot. Sin frases de marketing exageradas, sin "joya sobre ruedas", sin "no dejes pasar esta oportunidad". Directo, natural, con los datos importantes. Podés mencionar el ${brand} ${model} ${year} al principio. Sin emojis.`;
 
     const response = await fetch(url, {
       method: "POST",
@@ -29,12 +23,12 @@ Instrucciones:
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo", 
+        model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: "Eres un redactor experto en autos." },
+          { role: "system", content: "Sos un vendedor de autos usados en Argentina. Escribís descripciones cortas, claras y honestas. Nada de frases de marketing vacías. Usás lenguaje rioplatense natural." },
           { role: "user", content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.9,
         max_tokens: 300,
       }),
     });

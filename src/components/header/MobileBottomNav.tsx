@@ -41,7 +41,7 @@ export default function MobileBottomNav({
                     </div>
                     <Link href="/dashboard" className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                         <Settings size={22} />
-                        <span className="text-[10px] font-bold uppercase tracking-wide">Panel</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wide">Dashboard</span>
                     </Link>
                     <button onClick={onToggleMenu} className="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white transition-colors">
                         <div className="relative">
