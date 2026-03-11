@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import {
@@ -39,7 +39,7 @@ type Conversation = {
     messages: Message[];
 };
 
-export default function MensajesPage() {
+function MensajesContent() {
     const searchParams = useSearchParams();
     const autoParam = searchParams.get('auto');
 
@@ -257,7 +257,6 @@ export default function MensajesPage() {
 
     const activeConv = conversations.find(c => c.key === activeKey) || null;
 
-    // Mensajes del hilo filtrados por búsqueda
     const filteredThreadMessages = useMemo(() => {
         if (!activeConv) return [];
         if (!threadSearch.trim()) return activeConv.messages;
@@ -279,7 +278,6 @@ export default function MensajesPage() {
         const content = reply.trim();
         setReply('');
 
-        // Optimistic update: agregar mensaje al estado local inmediatamente
         const tempId = `temp_${Date.now()}`;
         const optimisticMsg: Message = {
             id: tempId,
@@ -308,10 +306,8 @@ export default function MensajesPage() {
                 is_read: false,
             });
             if (error) throw error;
-            // Reemplazar temp con el real en background
             fetchMessages(userId);
         } catch (err: any) {
-            // Revertir optimistic update si falla
             setMessages(prev => prev.filter(m => m.id !== tempId));
             setReply(content);
             alert(err.message);
@@ -627,5 +623,17 @@ export default function MensajesPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function MensajesPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]">
+                <Loader2 className="h-10 w-10 animate-spin text-[#22c55e]" />
+            </div>
+        }>
+            <MensajesContent />
+        </Suspense>
     );
 }
