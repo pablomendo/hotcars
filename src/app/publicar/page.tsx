@@ -61,7 +61,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   const [provincia, setProvincia] = useState("");
   const [localidad, setLocalidad] = useState("");
   
-  // ESTADOS PARA FLIP COMPARTIDO
   const [shareUser, setShareUser] = useState("");
   const [isFlipActive, setIsFlipActive] = useState(false);
 
@@ -103,21 +102,19 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   const [userPlan, setUserPlan] = useState<string>("FREE");
   const [willBePaused, setWillBePaused] = useState(false);
 
-  // CONSULTA MASIVA AL INICIO
   const fetchLimitsAndPlan = async (uId: string) => {
     try {
       const { data: profile } = await supabase
         .from('usuarios')
         .select('plan_type')
-        .eq('auth_id', uId)
+        .filter('auth_id', 'eq', uId)
         .maybeSingle();
-      
+
       if (!profile?.plan_type) return;
 
       const dbPlan = profile.plan_type.trim().toLowerCase();
       const currentPlan = dbPlan.toUpperCase();
       setUserPlan(currentPlan);
-
       setIsFlipActive(true);
 
       const { data: planData } = await supabase
@@ -128,13 +125,20 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
       const limit = planData?.max_inventory_vehicles ?? (currentPlan === 'FREE' ? 12 : 25);
 
-      const { count } = await supabase
+      const { count: propiosCount } = await supabase
         .from('inventario')
         .select('id', { count: 'exact', head: true })
         .eq('owner_user_id', uId)
         .eq('inventory_status', 'activo');
 
-      if (limit !== null && (count ?? 0) >= limit) {
+      const { count: tercerosCount } = await supabase
+        .from('flip_compartido')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendedor_user_id', uId);
+
+      const totalActivos = (propiosCount ?? 0) + (tercerosCount ?? 0);
+
+      if (currentPlan !== 'VIP' && limit !== null && totalActivos >= limit) {
         setWillBePaused(true);
       } else {
         setWillBePaused(false);
@@ -160,8 +164,11 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     }
   }, [userId]);
 
-  const handleSelectCategory = (catName: string) => {
+  const handleSelectCategory = async (catName: string) => {
     setSelectedCategory(catName);
+    if (userId) {
+      await fetchLimitsAndPlan(userId);
+    }
     setStep(2);
   };
 
@@ -259,7 +266,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   const smartScroll = (ref: React.RefObject<HTMLDivElement>) => {
     setTimeout(() => {
       if (ref.current) {
-        const yOffset = -120; 
+        const yOffset = -120;
         const y = ref.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
         window.scrollTo({ top: y, behavior: "smooth" });
       }
@@ -324,9 +331,9 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     setSelectedYear(""); setSelectedVersion(""); setKm(""); setMainPhoto(null);
     setVehiclePhotos([]);
     setSelectedHighlights([]); setPvStr(""); setPcStr(""); setDescription(""); setIsManual(false);
-    setProvincia(""); setLocalidad(""); setShareUser(""); 
+    setProvincia(""); setLocalidad(""); setShareUser("");
     setIsFlipActive(true);
-    setOpenSection(null); 
+    setOpenSection(null);
     setPublishStatus("loading");
     setWillBePaused(false);
   };
@@ -364,6 +371,39 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
     }
   };
 
+  const handleImprovePhotoIA = async () => {
+    if (vehiclePhotos.length === 0 || iaAttempts === 0 || isGeneratingIA) return;
+
+    setIsGeneratingIA(true); 
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand: selectedBrand,
+          model: selectedModel,
+          year: selectedYear,
+          imageBase64: vehiclePhotos[0] 
+        }),
+      });
+
+      const data = await res.json();
+      if (data.image) {
+        setVehiclePhotos(prev => {
+          const newPhotos = [...prev];
+          newPhotos[0] = data.image;
+          setMainPhoto(data.image);
+          return newPhotos;
+        });
+        setIaAttempts(prev => prev - 1);
+      }
+    } catch (err) {
+      console.error("Error mejorando imagen:", err);
+    } finally {
+      setIsGeneratingIA(false);
+    }
+  };
+
   const handleNextFromPhotos = () => {
     setStep(4);
     smartScroll(finalRef);
@@ -377,13 +417,45 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
     if (!cloudName) {
-      alert("Error de configuración: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME no está definida. Verificá las variables de entorno en Vercel.");
+      alert("Error de configuración.");
       return;
     }
 
     setIsPublishing(true);
     setPublishStatus("loading");
     try {
+      const { data: profile } = await supabase
+        .from('usuarios')
+        .select('plan_type')
+        .filter('auth_id', 'eq', userId)
+        .maybeSingle();
+
+      const dbPlan = profile?.plan_type?.trim().toLowerCase() || "free";
+      const { data: planData } = await supabase
+        .from('plan_limits')
+        .select('max_inventory_vehicles')
+        .ilike('plan_type', dbPlan)
+        .maybeSingle();
+
+      const limit = planData?.max_inventory_vehicles ?? (dbPlan === 'free' ? 12 : 25);
+      
+      const { count: pCount } = await supabase
+        .from('inventario')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_user_id', userId)
+        .eq('inventory_status', 'activo');
+
+      const { count: tCount } = await supabase
+        .from('flip_compartido')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendedor_user_id', userId);
+
+      const totalActual = (pCount ?? 0) + (tCount ?? 0);
+
+      const finalStatus = (dbPlan.toUpperCase() !== 'VIP' && totalActual >= limit) 
+        ? 'pausado' 
+        : 'activo';
+
       const uploadResults = await Promise.all(
         vehiclePhotos.map(async (base64) => {
           const formData = new FormData();
@@ -394,18 +466,11 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
             body: formData,
           });
           const data = await res.json();
-          if (!data.secure_url) {
-            console.error("Cloudinary error response:", data);
-            throw new Error("Cloudinary no devolvió URL. Error: " + (data.error?.message || JSON.stringify(data)));
-          }
           return data.secure_url;
         })
       );
 
-      console.log("Fotos subidas a Cloudinary:", uploadResults);
-
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-      const inventory_status = willBePaused ? 'pausado' : 'activo';
 
       const { error } = await supabase
         .from('inventario')
@@ -426,7 +491,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
             ganancia_flipper: flipperGain,
             ganancia_dueno: ownerGain,
             descripcion: description,
-            inventory_status: inventory_status,
+            inventory_status: finalStatus,
             commercial_status: 'disponible',
             compartido_con: isFlipActive ? (shareUser || "PUBLICO") : "",
             fotos: uploadResults,
@@ -439,13 +504,13 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
         ]);
 
       if (error) throw error;
-      if (willBePaused) setPublishStatus("paused");
+      if (finalStatus === 'pausado') setPublishStatus("paused");
       else setPublishStatus("success");
 
       setTimeout(() => {
         router.push("/inventario");
         if (onClose) onClose();
-      }, willBePaused ? 4000 : 2000);
+      }, finalStatus === 'pausado' ? 4000 : 2000);
 
     } catch (error: any) {
       alert("Error al publicar: " + error.message);
@@ -502,9 +567,9 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
 
       {step === 1 && (
         <div className="w-full animate-in fade-in duration-500 pt-20">
-          <div className="w-full h-64 md:h-72 flex flex-col pt-16 md:pt-20 items-center text-center px-6 bg-[#00984a]">
-            <h1 className="text-2xl md:text-4xl font-google font-medium text-white mb-2 tracking-tight">Empecemos a trabajar!</h1>
-            <p className="text-base md:text-xl font-google font-medium text-white opacity-95 tracking-tight">¿Qué tipo de unidad vas a publicar hoy?</p>
+          <div className="w-full h-64 md:h-72 flex flex-col pt-16 md:pt-[45px] items-center text-center px-6 bg-[#00984a]">
+            <h1 className="text-4xl md:text-[68px] font-normal text-white mb-2 tracking-tight" style={{ fontFamily: '"Instrument Serif", serif' }}>Empecemos a trabajar!</h1>
+            <p className="text-base md:text-[22px] text-white opacity-95 tracking-tight" style={{ fontFamily: '"Genos", sans-serif' }}>¿Qué tipo de unidad vas a publicar hoy?</p>
           </div>
           <div className="p-4 md:p-6 -mt-24 md:-mt-28">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-5 max-w-5xl mx-auto">
@@ -512,7 +577,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                 <div key={cat.name} className="cursor-pointer bg-white rounded-xl flex flex-col items-center justify-between p-4 aspect-square shadow-lg active:scale-95 transition-transform" onClick={() => handleSelectCategory(cat.name)}>
                   <div className="flex-1 flex items-center justify-center w-full">
                     <div className="relative w-[130px] h-[95px] md:w-[145px] md:h-[105px]">
-                        <Image src={cat.icon} alt={cat.name} fill className="object-contain" />
+                      <Image src={cat.icon} alt={cat.name} fill className="object-contain" />
                     </div>
                   </div>
                   <p className="text-[11px] md:text-[13px] font-extrabold text-gray-700 uppercase mt-2">{cat.name}</p>
@@ -660,50 +725,46 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                   <input type="text" placeholder="EJ: 45.000" className="w-full h-12 bg-white uppercase font-bold text-gray-800 border-gray-200 rounded-xl px-4 shadow-sm text-sm outline-none focus:border-[#00984a] transition-all border" value={km} onChange={handleKmChange} />
                 </div>
                 <div className="flex flex-col gap-3 pt-2">
-                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2 ml-1">
-                      <MapPin size={12} className="text-gray-400"/> selecciona los botones o escribe ubicacion del vehiculo
-                    </label>
-                    <div className="flex flex-wrap gap-2 mb-1 px-1 items-center">
-                        <button type="button" onClick={() => setProvincia("BUENOS AIRES")} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border flex items-center gap-1.5 ${provincia === "BUENOS AIRES" ? "bg-[#2563eb] border-[#2563eb] text-white shadow-md" : "bg-gray-100 border-gray-200 text-gray-500"}`}><div className={`w-1 h-1 rounded-full ${provincia === "BUENOS AIRES" ? "bg-white animate-pulse" : "bg-gray-300"}`}></div>PROVINCIA: BUENOS AIRES</button>
-                        <button type="button" onClick={() => setLocalidad("MERLO")} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border flex items-center gap-1.5 ${localidad === "MERLO" ? "bg-[#2563eb] border-[#2563eb] text-white shadow-md" : "bg-gray-100 border-gray-200 text-gray-500"}`}><div className={`w-1 h-1 rounded-full ${localidad === "MERLO" ? "bg-white animate-pulse" : "bg-gray-300"}`}></div>LOCALIDAD: MERLO</button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                        <input type="text" placeholder="PROVINCIA" value={provincia} onChange={(e) => setProvincia(e.target.value.toUpperCase())} className="w-full h-12 bg-white uppercase font-bold text-gray-800 border-gray-200 rounded-xl px-4 shadow-sm text-xs outline-none focus:border-gray-400" />
-                        <input type="text" placeholder="LOCALIDAD" value={localidad} onChange={(e) => setLocalidad(e.target.value.toUpperCase())} className="w-full h-12 bg-white uppercase font-bold text-gray-800 border-gray-200 rounded-xl px-4 shadow-sm text-xs outline-none focus:border-gray-400" />
-                    </div>
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2 ml-1">
+                    <MapPin size={12} className="text-gray-400"/> selecciona los botones o escribe ubicacion del vehiculo
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-1 px-1 items-center">
+                    <button type="button" onClick={() => setProvincia("BUENOS AIRES")} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border flex items-center gap-1.5 ${provincia === "BUENOS AIRES" ? "bg-[#2563eb] border-[#2563eb] text-white shadow-md" : "bg-gray-100 border-gray-200 text-gray-500"}`}><div className={`w-1 h-1 rounded-full ${provincia === "BUENOS AIRES" ? "bg-white animate-pulse" : "bg-gray-300"}`}></div>PROVINCIA: BUENOS AIRES</button>
+                    <button type="button" onClick={() => setLocalidad("MERLO")} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border flex items-center gap-1.5 ${localidad === "MERLO" ? "bg-[#2563eb] border-[#2563eb] text-white shadow-md" : "bg-gray-100 border-gray-200 text-gray-500"}`}><div className={`w-1 h-1 rounded-full ${localidad === "MERLO" ? "bg-white animate-pulse" : "bg-gray-300"}`}></div>LOCALIDAD: MERLO</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input type="text" placeholder="PROVINCIA" value={provincia} onChange={(e) => setProvincia(e.target.value.toUpperCase())} className="w-full h-12 bg-white uppercase font-bold text-gray-800 border-gray-200 rounded-xl px-4 shadow-sm text-xs outline-none focus:border-gray-400" />
+                    <input type="text" placeholder="LOCALIDAD" value={localidad} onChange={(e) => setLocalidad(e.target.value.toUpperCase())} className="w-full h-12 bg-white uppercase font-bold text-gray-800 border-gray-200 rounded-xl px-4 shadow-sm text-xs outline-none focus:border-gray-400" />
+                  </div>
                 </div>
                 <div className="mt-2 p-5 bg-gray-50 border border-gray-200 rounded-2xl space-y-4 shadow-inner">
-                    <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-0.5">
-                            <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
-                                <Share2 size={12} className="text-gray-400"/> Flip Compartido
-                            </label>
-                            {userPlan === "FREE" && <span className="text-[7px] font-bold text-orange-500 uppercase ml-5">Obligatorio en Plan Free</span>}
-                        </div>
-                        <button 
-                          type="button" 
-                          onClick={() => {
-                            if (userPlan !== "FREE") {
-                              setIsFlipActive(prev => !prev);
-                            }
-                          }} 
-                          className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border shadow-md ${isFlipActive ? "bg-[#2563eb] border-[#2563eb] text-white" : "bg-gray-200 border-gray-300 text-gray-500"} ${userPlan === "FREE" ? "pointer-events-none opacity-80" : "cursor-pointer active:scale-95"}`}
-                        >
-                          {isFlipActive ? "Flip activado" : "Activar Flip"}
-                        </button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5">
+                      <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
+                        <Share2 size={12} className="text-gray-400"/> Flip Compartido
+                      </label>
+                      {userPlan === "FREE" && <span className="text-[7px] font-bold text-orange-500 uppercase ml-5">Obligatorio en Plan Free</span>}
                     </div>
-                    <div className={`relative transition-all duration-300 ${isFlipActive ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10"><span className="text-[7px] font-black text-[#2563eb] uppercase">compartir primero con</span></div>
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1f2937] font-black text-sm">@</div>
-                        <input 
-                          type="text" 
-                          placeholder="tipear usuario..." 
-                          value={shareUser === "PUBLICO" ? "" : shareUser} 
-                          onChange={(e) => setShareUser(e.target.value)} 
-                          className="w-full h-12 bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#1f2937] text-gray-800 font-bold uppercase shadow-sm transition-all" 
-                          disabled={!isFlipActive}
-                        />
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { if (userPlan !== "FREE") { setIsFlipActive(prev => !prev); } }}
+                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border shadow-md ${isFlipActive ? "bg-[#2563eb] border-[#2563eb] text-white" : "bg-gray-200 border-gray-300 text-gray-500"} ${userPlan === "FREE" ? "pointer-events-none opacity-80" : "cursor-pointer active:scale-95"}`}
+                    >
+                      {isFlipActive ? "Flip activado" : "Activar Flip"}
+                    </button>
+                  </div>
+                  <div className={`relative transition-all duration-300 ${isFlipActive ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10"><span className="text-[7px] font-black text-[#2563eb] uppercase">compartir primero con</span></div>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1f2937] font-black text-sm">@</div>
+                    <input
+                      type="text"
+                      placeholder="tipear usuario..."
+                      value={shareUser === "PUBLICO" ? "" : shareUser}
+                      onChange={(e) => setShareUser(e.target.value)}
+                      className="w-full h-12 bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs outline-none focus:border-[#1f2937] text-gray-800 font-bold uppercase shadow-sm transition-all"
+                      disabled={!isFlipActive}
+                    />
+                  </div>
                 </div>
                 <button onClick={() => { setStep(2.5); smartScroll(highlightsRef); }} className="w-full mt-2 bg-[#00984a] text-white font-black py-4 rounded-xl uppercase shadow-md active:scale-95 transition-all">Siguiente</button>
               </div>
@@ -714,7 +775,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
             <div ref={highlightsRef} className="w-full text-left animate-in fade-in duration-500">
               <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google text-center md:text-left">Condición de Venta, Puntos clave y Descripción</h2>
               <div className="bg-white p-6 rounded-[32px] shadow-lg border border-gray-100 flex flex-col gap-6">
-                
                 <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Condición de venta</label>
                   <div className="grid grid-cols-2 gap-2">
@@ -723,7 +783,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                     ))}
                   </div>
                 </div>
-
                 <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Puntos clave</label>
                   {filteredHighlights.length > 0 && (
@@ -734,27 +793,25 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                     </div>
                   )}
                 </div>
-
                 <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Descripción</label>
                   <div className="w-full flex flex-col items-center gap-4">
                     <div className="w-full bg-[#f8f9fa] border border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-2 shadow-inner">
-                        <div className="bg-gray-200 text-gray-500 text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-tighter">presiona boton azul para generar descripcion por ia</div>
-                        <textarea className="w-full min-h-[100px] bg-transparent text-sm text-gray-700 outline-none resize-none text-center font-medium" placeholder="..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                      <div className="bg-gray-200 text-gray-500 text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-tighter">presiona boton azul para generar descripcion por ia</div>
+                      <textarea className="w-full min-h-[100px] bg-transparent text-sm text-gray-700 outline-none resize-none text-center font-medium" placeholder="..." value={description} onChange={(e) => setDescription(e.target.value)} />
                     </div>
-                    <button 
-                      onClick={handleGenerateIA} 
+                    <button
+                      onClick={handleGenerateIA}
                       disabled={isGeneratingIA || iaAttempts === 0}
                       className="bg-blue-600 text-white font-black py-3 px-8 rounded-xl text-[10px] uppercase flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit disabled:opacity-50"
                     >
-                      <Sparkles className={`h-4 w-4 ${isGeneratingIA ? "animate-spin" : ""}`} /> 
+                      <Sparkles className={`h-4 w-4 ${isGeneratingIA ? "animate-spin" : ""}`} />
                       {isGeneratingIA ? "Generando..." : "Generar descripción"}
                     </button>
                   </div>
                 </div>
-
                 {step === 2.5 && <button onClick={() => { setStep(3); smartScroll(photoRef); }} className="w-full bg-[#00984a] text-white font-black py-4 rounded-xl uppercase shadow-md active:scale-95 transition-all">Siguiente</button>}
-                {step > 2.5 && <div className="w-full flex justify-end"><button onClick={() => {setStep(2.5); smartScroll(highlightsRef);}} className="text-[10px] font-bold text-[#2563eb] uppercase underline">Editar descripción</button></div>}
+                {step > 2.5 && <div className="w-full flex justify-end"><button onClick={() => { setStep(2.5); smartScroll(highlightsRef); }} className="text-[10px] font-bold text-[#2563eb] uppercase underline">Editar descripción</button></div>}
               </div>
             </div>
           )}
@@ -768,7 +825,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                     <div onDragOver={(e) => e.preventDefault()} onDrop={handlePhotoUpload} className="col-span-4 aspect-[4/3] bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center relative group overflow-hidden shadow-inner">
                       {vehiclePhotos[0] ? (
                         <div className="relative w-full h-full">
-                           <img src={vehiclePhotos[0]} alt="Principal" className="w-full h-full object-contain object-center" style={{ filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${shadows}%)` }} />
+                          <img src={vehiclePhotos[0]} alt="Principal" className="w-full h-full object-contain object-center" style={{ filter: `brightness(${brightness}%) contrast(${contrast}%) saturate(${shadows}%)` }} />
                           <button onClick={() => removePhoto(0)} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"><RefreshCcw className="h-4 w-4" /></button>
                         </div>
                       ) : (
@@ -866,7 +923,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-4 mt-2">
-                  <button onClick={() => iaAttempts > 0 && setIaAttempts(prev => prev - 1)} disabled={iaAttempts === 0} className={`w-fit self-center py-1.5 px-4 rounded-lg font-bold uppercase text-[9px] flex items-center justify-center gap-2 transition-all shadow-sm ${iaAttempts > 0 ? "bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white hover:scale-[1.01]" : "bg-gray-200 text-gray-400 shadow-none"}`}><Sparkles className={`h-3 w-3 ${iaAttempts > 0 ? "animate-pulse" : ""}`} />Mejorar portada IA ({iaAttempts})</button>
+                  <button onClick={handleImprovePhotoIA} disabled={iaAttempts === 0 || isGeneratingIA || vehiclePhotos.length === 0} className={`w-fit self-center py-1.5 px-4 rounded-lg font-bold uppercase text-[9px] flex items-center justify-center gap-2 transition-all shadow-sm ${iaAttempts > 0 && !isGeneratingIA && vehiclePhotos.length > 0 ? "bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white hover:scale-[1.01]" : "bg-gray-200 text-gray-400 shadow-none"}`}><Sparkles className={`h-3 w-3 ${iaAttempts > 0 && !isGeneratingIA ? "animate-pulse" : ""}`} />{isGeneratingIA ? "Mejorando..." : `Mejorar portada IA (${iaAttempts})`}</button>
                   <button disabled={vehiclePhotos.length === 0} onClick={handleNextFromPhotos} className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors uppercase shadow-md active:scale-95 ${vehiclePhotos.length > 0 ? 'bg-[#00984a] text-white' : 'bg-gray-200 text-gray-400 shadow-none'}`}>Siguiente</button>
                 </div>
               </div>
@@ -876,8 +933,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
           {step === 4 && (
             <div ref={finalRef} className="w-full text-left animate-in fade-in duration-500 pb-10">
               <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div 
-                  onClick={() => setOpenSection(openSection === 'fotos' ? null : 'fotos')} 
+                <div
+                  onClick={() => setOpenSection(openSection === 'fotos' ? null : 'fotos')}
                   className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
@@ -891,8 +948,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                   {openSection === 'fotos' ? (
                     <ChevronDown size={18} className="text-[#00984a]"/>
                   ) : (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setStep(3); }} 
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setStep(3); }}
                       className="text-[10px] font-bold text-[#2563eb] uppercase underline"
                     >
                       Editar
@@ -921,7 +978,7 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
               <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google">Finalizar Publicación</h2>
               <div className="bg-white p-8 rounded-lg shadow-xl border border-gray-100 flex flex-col gap-8">
                 <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
-                    {["ARS", "USD"].map(m => (<button key={m} onClick={() => setCurrency(m)} className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${currency === m ? "bg-white shadow-sm text-[#00984a]" : "text-gray-400"}`}>{m}</button>))}
+                  {["ARS", "USD"].map(m => (<button key={m} onClick={() => setCurrency(m)} className={`px-6 py-2 rounded-lg text-xs font-black transition-all ${currency === m ? "bg-white shadow-sm text-[#00984a]" : "text-gray-400"}`}>{m}</button>))}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
@@ -933,7 +990,6 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                     <input type="text" className={inputClassName} placeholder="0.00" value={pcStr} onChange={(e) => handlePriceChange(e.target.value, "pc")} />
                   </div>
                 </div>
-                
                 <div className="bg-gray-50 rounded-lg p-5 border border-gray-100 flex flex-col items-center">
                   <div className="grid grid-cols-2 gap-8 w-full mb-4">
                     <div className="flex flex-col gap-1 opacity-50">
@@ -948,8 +1004,8 @@ export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
                   <div className="text-[#00984a] text-[10px] font-black uppercase text-center">Ganancia por esta unidad</div>
                 </div>
                 <div className="flex flex-col gap-4 border-t border-gray-100 pt-6">
-                  <button 
-                    onClick={finalizarPublicacion} 
+                  <button
+                    onClick={finalizarPublicacion}
                     disabled={isPublishing}
                     className="w-full bg-[#00984a] text-white font-black py-5 rounded-lg text-sm uppercase shadow-lg hover:bg-[#007a3b] transition-all active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >

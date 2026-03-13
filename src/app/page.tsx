@@ -129,7 +129,6 @@ function MarketplaceContent() {
     }
   };
 
-  // ── Efecto inicial: solo corre con searchParams (no con displayLimit)
   useEffect(() => {
     const cat = searchParams.get('categoria');
     const marc = searchParams.get('marca');
@@ -143,7 +142,6 @@ function MarketplaceContent() {
     fetchMarcasBase();
   }, [searchParams, fetchInventory]);
 
-  // ── Efecto separado: solo corre cuando displayLimit cambia por "Ver más"
   useEffect(() => {
     if (displayLimit === 15) return;
     const cat = searchParams.get('categoria');
@@ -199,7 +197,7 @@ function MarketplaceContent() {
   return (
     <main className="min-h-screen bg-[#e2e8f0] text-[#0f172a] font-sans tracking-tight overflow-x-hidden cursor-default pb-20 md:pb-0">
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&family=Instrument+Serif&family=Urbanist:ital,wght@1,700&display=swap');
         .no-scrollbar::-webkit-scrollbar { display: none; }
         img { display: block; max-width: 100%; }
       `}</style>
@@ -216,8 +214,8 @@ function MarketplaceContent() {
             <img src="/hero-mobile-hotcars.jpg" alt="Hero Mobile" className="w-full h-full object-cover" />
             <div className="absolute inset-0 flex flex-col justify-end pb-12 px-6 pointer-events-none">
               <div className="flex flex-col gap-3 pointer-events-auto">
-                <p className="text-white text-center font-bold text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-tight mb-4 px-2">
-                  Profesionalizate, publicá, compartí y gestioná tu inventario con tu propia web de <span className="text-white italic uppercase">HOT</span><span className="text-[#288b55] italic uppercase">CARS</span>
+                <p className="text-white text-center text-[26px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] leading-snug mb-4 px-2" style={{ fontFamily: '"Instrument Serif", serif' }}>
+                  Profesionalizate, publicá, compartí y gestioná tu inventario con tu propia web
                 </p>
                 {!user && (
                   <>
