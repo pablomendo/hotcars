@@ -470,9 +470,49 @@ export default function InventoryPage() {
             } else if (action === 'RESERVE') {
                 updateData = { commercial_status: 'reservado' };
             } else if (action === 'SELL') {
-                updateData = { commercial_status: 'vendido' };
+                // ── FIX: registra inventory_status, sold_at e inserta en ventas ──
+                const soldAt = new Date().toISOString();
+                updateData = {
+                    commercial_status: 'vendido',
+                    inventory_status: 'vendido',
+                    sold_at: soldAt,
+                };
+                await supabase.from('ventas').insert({
+                    owner_user_id: userId,
+                    auto_id: id,
+                    marca: item.brand,
+                    modelo: item.model,
+                    anio: item.year,
+                    moneda: item.prices?.currency?.includes('USD') ? 'USD' : 'ARS',
+                    precio_venta: item.prices?.salePrice || 0,
+                    precio_costo: item.prices?.purchasePrice || 0,
+                    ganancia: item.prices?.myProfit || 0,
+                    sold_at: soldAt,
+                });
             } else if (action === 'SET_AVAILABLE') {
-                updateData = { commercial_status: 'disponible' };
+                // ── Valida límite de plan antes de reactivar ──
+                const { data: rpcData, error: rpcError } = await supabase.rpc('activar_vehiculo_inventario', {
+                    p_auto_id: id,
+                    p_user_id: userId,
+                    p_accion: 'ACTIVATE'
+                });
+
+                if (rpcError) throw rpcError;
+
+                if (!rpcData.ok) {
+                    if (rpcData.error === 'limite_alcanzado') {
+                        setShowLimitModal(true);
+                    }
+                    return;
+                }
+
+                updateData = {
+                    commercial_status: 'disponible',
+                    sold_at: null,
+                };
+                await supabase.from('ventas').delete()
+                    .eq('auto_id', id)
+                    .eq('owner_user_id', userId);
             }
 
             setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
@@ -698,7 +738,6 @@ export default function InventoryPage() {
             </div>
 
             {/* ── CONTENIDO ── */}
-            {/* FIX: pt aumentado en mobile para compensar subheader de 2 filas */}
             <div className="max-w-[1600px] mx-auto px-6 pt-[225px] pb-20 lg:pt-44">
                 <div className="flex flex-wrap items-center gap-3 mb-8">
                     <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
@@ -980,7 +1019,7 @@ export default function InventoryPage() {
 
                             <div className={`p-4 space-y-2 bg-white text-left ${isProcessingModal ? 'opacity-50 pointer-events-none' : ''}`}>
 
-                                {/* NUEVO: Flip de terceros — formulario de mensaje al dueño */}
+                                {/* Flip de terceros — formulario de mensaje al dueño */}
                                 {!selectedAuto.isProprio && (
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3 p-4 bg-[#2596be]/10 rounded-xl border border-[#2596be]/20">
