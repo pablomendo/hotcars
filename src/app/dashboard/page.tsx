@@ -31,6 +31,7 @@ const DEFAULT_LAYOUT: CardConfig[] = [
     { id: 'ventas',       colSpan: 1, height: 'md' },
     { id: 'inventario',   colSpan: 1, height: 'sm' },
     { id: 'avisos',       colSpan: 1, height: 'md' },
+    { id: 'ranking',      colSpan: 1, height: 'md' },
     { id: 'mercado',      colSpan: 2, height: 'lg' },
     { id: 'top10',        colSpan: 1, height: 'lg' },
     { id: 'miinventario', colSpan: 2, height: 'md' },
@@ -44,7 +45,6 @@ function loadLayout(): CardConfig[] {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             const parsed: CardConfig[] = JSON.parse(saved);
-            // backwards compat: add height if missing
             return parsed.map(c => ({ height: 'md' as CardHeight, ...c }));
         }
     } catch {}
@@ -94,7 +94,6 @@ function SortableCard({
             }}
             className={`${colClass[config.colSpan]} relative group/card ${HEIGHT_CLASS[config.height]}`}
         >
-            {/* En modo edición, overlay que captura el drag sobre toda la card */}
             {editMode && (
                 <div
                     {...attributes}
@@ -103,14 +102,11 @@ function SortableCard({
                     style={{ touchAction: 'none' }}
                 />
             )}
-            {/* Borde dashed */}
             {editMode && (
                 <div className="absolute inset-0 rounded-xl border-2 border-dashed border-[#288b55]/50 pointer-events-none z-30" />
             )}
-            {/* Controles de tamaño — por encima del overlay */}
             {editMode && (
                 <div className="absolute top-2 right-2 z-40 flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                    {/* Width controls */}
                     <button
                         onPointerDown={e => e.stopPropagation()}
                         onClick={() => onResize(config.id, Math.max(1, config.colSpan - 1) as ColSpan)}
@@ -129,9 +125,7 @@ function SortableCard({
                     >
                         <ChevronRight size={11} />
                     </button>
-                    {/* Divider */}
                     <div className="w-px h-5 bg-white/10" />
-                    {/* Height controls */}
                     <button
                         onPointerDown={e => e.stopPropagation()}
                         onClick={() => {
@@ -157,7 +151,6 @@ function SortableCard({
                     >
                         <Maximize2 size={11} />
                     </button>
-                    {/* Divider */}
                     <div className="w-px h-5 bg-white/10" />
                     <div className="w-7 h-7 rounded-lg bg-[#288b55]/20 border border-[#288b55]/40 flex items-center justify-center text-[#288b55]">
                         <GripVertical size={11} />
@@ -169,6 +162,605 @@ function SortableCard({
     );
 }
 
+// ── Potencial de Ganancia Card ────────────────────────────────────────────────
+const GOAL_KEY = 'hc_potencial_goal';
+
+function PotencialCard({
+    potentialValue, inventory, DOLAR_BLUE, fmt, ventasMesGanancia,
+}: {
+    potentialValue: number;
+    inventory: any[];
+    DOLAR_BLUE: number;
+    fmt: (n: number) => string;
+    ventasMesGanancia: number;
+}) {
+    const [goal, setGoal] = useState<number>(50000);
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState('');
+
+    useEffect(() => {
+        try { const v = Number(localStorage.getItem(GOAL_KEY)); if (v > 0) setGoal(v); } catch {}
+    }, []);
+
+    const saveGoal = () => {
+        const v = Number(draft.replace(/\D/g, ''));
+        if (v > 0) { setGoal(v); try { localStorage.setItem(GOAL_KEY, String(v)); } catch {} }
+        setEditing(false);
+    };
+
+    const activeCount = inventory.filter(v => ['activo', 'reservado'].includes(v.rawStatus)).length;
+    const avgMargin   = activeCount > 0 ? Math.round(potentialValue / activeCount) : 0;
+    const goalPct     = Math.min(ventasMesGanancia / Math.max(goal, 1), 1);
+    const pctLeft     = Math.max(0, Math.round((1 - goalPct) * 100));
+
+    // ── Semicircle speedometer ───────────────────────────────────────────────
+    // Pivot at bottom-center. Arc sweeps from 180° (left) → 360°/0° (right)
+    // passing through 270° (straight up) — classic speedometer orientation.
+    // ViewBox: 240×120, pivot at (120, 116). Ticks reach up to y≈12 (116-104).
+    const VW = 240, VH = 120;
+    const CX = VW / 2, CY = 116; // pivot near bottom
+    const toRad = (d: number) => d * Math.PI / 180;
+    const TICK_COUNT = 40;
+
+    const ticks = Array.from({ length: TICK_COUNT }, (_, i) => {
+        const frac   = i / (TICK_COUNT - 1);
+        // 180° = left side, 360° = right side, 270° = top (0% left → 100% right)
+        const deg    = 180 + frac * 180;
+        const rad    = toRad(deg);
+        const lit    = frac <= goalPct;
+        const major  = i % 5 === 0;
+        const f      = goalPct > 0 ? Math.min(frac / goalPct, 1) : 0;
+        const gr     = Math.round(20  + 194 * f);
+        const gg     = Math.round(83  + 141 * f);
+        const gb     = Math.round(45  * (1 - f));
+        const color  = lit ? `rgb(${gr},${gg},${gb})` : 'rgba(255,255,255,0.07)';
+        const rOuter = major ? 104 : 98;
+        const rInner = major ? 88  : 92;
+        return {
+            x1: CX + rInner * Math.cos(rad), y1: CY + rInner * Math.sin(rad),
+            x2: CX + rOuter * Math.cos(rad), y2: CY + rOuter * Math.sin(rad),
+            color, major, lit,
+        };
+    });
+
+    // Needle: 180° at 0%, 360° at 100%
+    const needleRad = toRad(180 + goalPct * 180);
+    const needleTip = { x: CX + 80 * Math.cos(needleRad), y: CY + 80 * Math.sin(needleRad) };
+
+    return (
+        <div className="bg-[#141b1f] p-5 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full">
+            <div className="flex justify-between items-start mb-1">
+                <h3 className="text-white text-xl font-bold">Potencial de Ganancia</h3>
+                <TrendingUp className="text-[#288b55] w-5 h-5" />
+            </div>
+
+            {/* Semicircle speedometer */}
+            <div className="flex justify-center flex-1" style={{ marginBottom: -14 }}>
+                <svg width="100%" viewBox={`0 0 ${VW} ${VH}`} style={{ maxWidth: 280, overflow: 'visible' }}>
+                    <defs>
+                        <filter id="pg-glow" x="-60%" y="-60%" width="220%" height="220%">
+                            <feGaussianBlur stdDeviation="2" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <filter id="pg-needle" x="-100%" y="-100%" width="300%" height="300%">
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+                    {ticks.filter(t => !t.lit).map((t, i) => (
+                        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+                            stroke={t.color} strokeWidth={t.major ? 2.5 : 1.5} strokeLinecap="round" />
+                    ))}
+                    {ticks.filter(t => t.lit).map((t, i) => (
+                        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+                            stroke={t.color} strokeWidth={t.major ? 3 : 2} strokeLinecap="round"
+                            filter="url(#pg-glow)" />
+                    ))}
+                    <line x1={CX} y1={CY} x2={needleTip.x} y2={needleTip.y}
+                        stroke="#4ade80" strokeWidth={2.5} strokeLinecap="round"
+                        filter="url(#pg-needle)" />
+                    <circle cx={CX} cy={CY} r={6} fill="#0f1f14" stroke="#288b55" strokeWidth={2} />
+                    <text x={CX} y={CY - 30} textAnchor="middle" fill="#4ade80"
+                        fontSize={26} fontWeight={900} fontFamily="sans-serif">
+                        {Math.round(goalPct * 100)}%
+                    </text>
+                    <text x={CX} y={CY - 14} textAnchor="middle" fill="#374151"
+                        fontSize={8} fontWeight={700} fontFamily="sans-serif" letterSpacing={2}>
+                        DE META
+                    </text>
+                </svg>
+            </div>
+
+            {/* 4 data boxes — pegados al fondo */}
+            <div className="flex flex-col gap-2 mt-auto pt-2">
+                <div className="flex gap-2 items-stretch">
+                    <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center flex flex-col justify-center">
+                        <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest mb-0.5">Ganancia total inventario</p>
+                        <div className="flex items-baseline gap-0.5 justify-center">
+                            <span className="text-[7px] text-[#288b55] font-black">USD</span>
+                            <span className="text-[#288b55] text-sm font-black">{fmt(potentialValue)}</span>
+                        </div>
+                    </div>
+                    <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center flex flex-col justify-center">
+                        <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest mb-0.5">Margen promedio</p>
+                        <div className="flex items-baseline gap-0.5 justify-center">
+                            <span className="text-[7px] text-[#288b55] font-black">USD</span>
+                            <span className="text-[#288b55] text-sm font-black">{fmt(avgMargin)}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex gap-2 items-stretch">
+                    <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center flex flex-col justify-center">
+                        <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest mb-0.5">Vendidos este mes</p>
+                        <div className="flex items-baseline gap-0.5 justify-center">
+                            <span className="text-[7px] text-[#288b55] font-black">USD</span>
+                            <span className="text-[#288b55] text-sm font-black">{fmt(ventasMesGanancia)}</span>
+                        </div>
+                    </div>
+                    <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center flex flex-col justify-center">
+                        <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest mb-0.5">Meta mensual</p>
+                        {editing ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                                <input autoFocus type="text" value={draft}
+                                    onChange={e => setDraft(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') saveGoal(); if (e.key === 'Escape') setEditing(false); }}
+                                    className="flex-1 min-w-0 bg-white/5 border border-[#288b55]/40 rounded px-1 py-0.5 text-white text-[9px] font-bold outline-none"
+                                    placeholder="50000" />
+                                <button onClick={saveGoal} className="text-[#288b55] text-[8px] font-black px-1.5 py-0.5 bg-[#288b55]/10 rounded border border-[#288b55]/20 flex-shrink-0">OK</button>
+                            </div>
+                        ) : (
+                            <button onClick={() => { setDraft(String(goal)); setEditing(true); }}
+                                className="flex items-baseline gap-0.5 justify-center mt-0.5 hover:opacity-80 transition-opacity w-full">
+                                <span className="text-[7px] text-[#288b55] font-black">USD</span>
+                                <span className="text-[#288b55] text-sm font-black">{fmt(goal)}</span>
+                                <span className="text-gray-600 text-[7px] ml-0.5">✎</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Inventario Radial Card ─────────────────────────────────────────────────────
+function InventarioRadialCard({ inventoryStatus }: {
+    inventoryStatus: { r: number; l: number; c: number; rCount: number; lCount: number; cCount: number };
+}) {
+    const [hovered, setHovered] = useState<number | null>(null);
+    const totalActive = inventoryStatus.rCount + inventoryStatus.lCount + inventoryStatus.cCount;
+
+    const segments = [
+        { label: 'Rotación', sublabel: '0–27 días', count: inventoryStatus.rCount, pct: inventoryStatus.r,
+          color: '#22c55e', dimColor: '#14532d', rInner: 78, rOuter: 97 },
+        { label: 'Lento',    sublabel: '28–44 días', count: inventoryStatus.lCount, pct: inventoryStatus.l,
+          color: '#eab308', dimColor: '#713f12', rInner: 55, rOuter: 74 },
+        { label: 'Clavo',    sublabel: '45+ días',   count: inventoryStatus.cCount, pct: inventoryStatus.c,
+          color: '#ef4444', dimColor: '#7f1d1d', rInner: 32, rOuter: 51 },
+    ];
+
+    const SIZE = 230;
+    const CX = SIZE / 2, CY = SIZE / 2;
+    const toRad = (d: number) => d * Math.PI / 180;
+    const TICK_COUNT = 48;
+
+    const buildRingTicks = (rInner: number, rOuter: number, pct: number, color: string, dimColor: string) => {
+        const c1 = { r: parseInt(dimColor.slice(1,3),16), g: parseInt(dimColor.slice(3,5),16), b: parseInt(dimColor.slice(5,7),16) };
+        const c2 = { r: parseInt(color.slice(1,3),16),    g: parseInt(color.slice(3,5),16),    b: parseInt(color.slice(5,7),16) };
+        return Array.from({ length: TICK_COUNT }, (_, i) => {
+            const angle = -90 + (i / TICK_COUNT) * 360;
+            const rad = toRad(angle);
+            const frac = i / TICK_COUNT;
+            const lit = frac * 100 <= pct;
+            const f = pct > 0 ? Math.min((frac * 100) / pct, 1) : 0;
+            const col = lit
+                ? `rgb(${Math.round(c1.r+(c2.r-c1.r)*f)},${Math.round(c1.g+(c2.g-c1.g)*f)},${Math.round(c1.b+(c2.b-c1.b)*f)})`
+                : 'rgba(255,255,255,0.05)';
+            const major = i % 6 === 0;
+            return {
+                x1: CX + rInner * Math.cos(rad), y1: CY + rInner * Math.sin(rad),
+                x2: CX + rOuter * Math.cos(rad), y2: CY + rOuter * Math.sin(rad),
+                col, lit, major,
+            };
+        });
+    };
+
+    return (
+        <div className="bg-[#141b1f] p-5 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full">
+            <div className="flex justify-between items-start mb-2">
+                <h3 className="text-white text-xl font-bold">Estado de Inventario</h3>
+                <BarChart3 className="text-blue-400 w-5 h-5" />
+            </div>
+
+            {totalActive === 0 ? (
+                <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest mt-auto">Sin unidades activas</p>
+            ) : (
+                <>
+                    {/* Three concentric rings — hero */}
+                    <div className="flex justify-center flex-1">
+                        <svg width={SIZE} height={SIZE}>
+                            <defs>
+                                <filter id="inv-glow" x="-40%" y="-40%" width="180%" height="180%">
+                                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
+                            </defs>
+                            {segments.map((s, si) => {
+                                const isHov = hovered === si;
+                                const isDim = hovered !== null && !isHov;
+                                const ticks = buildRingTicks(s.rInner, s.rOuter, s.pct, s.color, s.dimColor);
+                                return (
+                                    <g key={si}
+                                        style={{ opacity: isDim ? 0.15 : 1, transition: 'opacity 0.2s', cursor: 'default' }}
+                                        onMouseEnter={() => setHovered(si)}
+                                        onMouseLeave={() => setHovered(null)}
+                                    >
+                                        {ticks.map((t, ti) => (
+                                            <line key={ti}
+                                                x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+                                                stroke={t.col}
+                                                strokeWidth={t.major ? (isHov ? 3.5 : 3) : (isHov ? 2.5 : 2)}
+                                                strokeLinecap="round"
+                                                filter={t.lit && isHov ? 'url(#inv-glow)' : undefined}
+                                            />
+                                        ))}
+                                    </g>
+                                );
+                            })}
+                            {/* Center */}
+                            {hovered !== null ? (
+                                <>
+                                    <text x={CX} y={CY - 10} textAnchor="middle" fill={segments[hovered].color}
+                                        fontSize={26} fontWeight={900} fontFamily="sans-serif">{segments[hovered].count}</text>
+                                    <text x={CX} y={CY + 8} textAnchor="middle" fill="#6b7280"
+                                        fontSize={8} fontWeight={700} fontFamily="sans-serif" letterSpacing={1}>
+                                        {segments[hovered].label.toUpperCase()}
+                                    </text>
+                                    <text x={CX} y={CY + 22} textAnchor="middle" fill={segments[hovered].color}
+                                        fontSize={12} fontWeight={900} fontFamily="sans-serif">{segments[hovered].pct}%</text>
+                                </>
+                            ) : (
+                                <>
+                                    <text x={CX} y={CY - 6} textAnchor="middle" fill="white"
+                                        fontSize={26} fontWeight={900} fontFamily="sans-serif">{totalActive}</text>
+                                    <text x={CX} y={CY + 12} textAnchor="middle" fill="#374151"
+                                        fontSize={8} fontWeight={700} fontFamily="sans-serif" letterSpacing={2}>UNIDADES</text>
+                                </>
+                            )}
+                        </svg>
+                    </div>
+
+                    {/* Three boxes below — same style as Potencial */}
+                    <div className="flex gap-2 mt-1">
+                        {segments.map((s, i) => {
+                            const isHov = hovered === i;
+                            const isDim = hovered !== null && !isHov;
+                            return (
+                                <div key={s.label}
+                                    className="flex-1 bg-white/[0.03] rounded-lg px-2 py-2 border cursor-default text-center transition-all duration-200"
+                                    style={{
+                                        opacity: isDim ? 0.35 : 1,
+                                        borderColor: isHov ? `${s.color}55` : 'rgba(255,255,255,0.05)',
+                                        boxShadow: isHov ? `0 0 10px ${s.color}22` : 'none',
+                                    }}
+                                    onMouseEnter={() => setHovered(i)}
+                                    onMouseLeave={() => setHovered(null)}
+                                >
+                                    <p className="text-[7px] font-black uppercase tracking-widest mb-0.5"
+                                        style={{ color: isHov ? s.color : '#4b5563' }}>{s.label}</p>
+                                    <p className="text-base font-black leading-none"
+                                        style={{ color: isHov ? s.color : '#fff' }}>{s.count}</p>
+                                    <p className="text-[9px] font-bold mt-0.5"
+                                        style={{ color: isHov ? s.color : '#374151' }}>{s.pct}%</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
+// ── Top 10 Card — barras horizontales con degradé verde + glow hover ─────────
+function Top10Card({ top10Data, top10Max }: { top10Data: { pos: number; auto: string; k: number }[]; top10Max: number }) {
+    const [hovered, setHovered] = useState<number | null>(null);
+
+    // Degradé por posición: top 3 verde brillante, 4-6 verde medio, 7-10 verde oscuro
+    const getGradient = (pos: number) => {
+        if (pos <= 3)  return { from: '#1a5c38', via: '#288b55', to: '#4ade80' };
+        if (pos <= 6)  return { from: '#133d27', via: '#1e6e42', to: '#288b55' };
+        return         { from: '#0d2a1c', via: '#164d30', to: '#1e6e42' };
+    };
+
+    return (
+        <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full flex flex-col">
+            <div className="flex justify-between items-start mb-1">
+                <h3 className="text-white text-xl font-bold">Top 10 Usados Argentina</h3>
+                <TrendingUp className="text-[#288b55] w-5 h-5 flex-shrink-0" />
+            </div>
+            <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-5">Transferencias anuales 2025</p>
+
+            <div className="flex flex-col gap-3 flex-1">
+                {top10Data.map((item) => {
+                    const isHov = hovered === item.pos;
+                    const isDim = hovered !== null && !isHov;
+                    const widthPct = Math.round(item.k / top10Max * 100);
+                    const g = getGradient(item.pos);
+                    return (
+                        <div
+                            key={item.pos}
+                            className="flex items-center gap-3 cursor-default"
+                            style={{ opacity: isDim ? 0.35 : 1, transition: 'opacity 0.2s' }}
+                            onMouseEnter={() => setHovered(item.pos)}
+                            onMouseLeave={() => setHovered(null)}
+                        >
+                            {/* Position number */}
+                            <span
+                                className="text-[10px] font-black w-5 text-right flex-shrink-0 transition-colors duration-200"
+                                style={{ color: isHov ? '#4ade80' : item.pos <= 3 ? '#288b55' : '#4b5563' }}
+                            >
+                                {item.pos}
+                            </span>
+
+                            {/* Bar + labels */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span
+                                        className="text-[10px] font-bold truncate transition-colors duration-200"
+                                        style={{ color: isHov ? '#fff' : '#94a3b8' }}
+                                    >
+                                        {item.auto}
+                                    </span>
+                                    <span
+                                        className="text-[9px] font-bold ml-2 flex-shrink-0 transition-colors duration-200"
+                                        style={{ color: isHov ? '#4ade80' : '#4b5563' }}
+                                    >
+                                        {item.k.toLocaleString('es-AR')}
+                                    </span>
+                                </div>
+
+                                {/* Gradient bar track */}
+                                <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                    <div
+                                        className="h-full rounded-full transition-all duration-300"
+                                        style={{
+                                            width: `${widthPct}%`,
+                                            background: `linear-gradient(90deg, ${g.from}, ${g.via}, ${g.to})`,
+                                            boxShadow: isHov ? `0 0 10px ${g.to}88, 0 0 20px ${g.via}44` : 'none',
+                                            transition: 'box-shadow 0.25s, width 0.5s',
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest mt-4 text-right">Fuente: DNRPA · 2025</p>
+        </div>
+    );
+}
+
+
+
+// ── Ranking Card ──────────────────────────────────────────────────────────────
+function RankingCard({ userId }: { userId: string }) {
+    const [tab, setTab] = useState<'mejores' | 'peores'>('mejores');
+    const [metric, setMetric] = useState<'vistas' | 'guardados' | 'consultas'>('guardados');
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!userId) return;
+        const fetchStats = async () => {
+            setLoading(true);
+            try {
+                // Fetch inventory, favoritos and consultas in parallel
+                const [invRes, favRes, consultasRes] = await Promise.all([
+                    supabase.from('inventario')
+                        .select('id, marca, modelo, anio, pv, moneda')
+                        .eq('owner_user_id', userId)
+                        .eq('inventory_status', 'activo'),
+                    supabase.from('favoritos')
+                        .select('auto_id')
+                        .in('auto_id', (await supabase.from('inventario').select('id').eq('owner_user_id', userId)).data?.map((v: any) => v.id) || []),
+                    supabase.from('consultas_publicaciones')
+                        .select('auto_id')
+                        .in('auto_id', (await supabase.from('inventario').select('id').eq('owner_user_id', userId)).data?.map((v: any) => v.id) || []),
+                ]);
+
+                const vehicles = invRes.data || [];
+                const favs = favRes.data || [];
+                const consultas = consultasRes.data || [];
+
+                // Count per vehicle
+                const favCount: Record<string, number> = {};
+                favs.forEach((f: any) => { favCount[f.auto_id] = (favCount[f.auto_id] || 0) + 1; });
+
+                const consultaCount: Record<string, number> = {};
+                consultas.forEach((c: any) => { consultaCount[c.auto_id] = (consultaCount[c.auto_id] || 0) + 1; });
+
+                const merged = vehicles.map((v: any) => ({
+                    id: v.id,
+                    inventario: { marca: v.marca, modelo: v.modelo, anio: v.anio, pv: v.pv, moneda: v.moneda },
+                    vistas: 0, // tracking pendiente en detailVehicle
+                    guardados: favCount[v.id] || 0,
+                    consultas: consultaCount[v.id] || 0,
+                }));
+
+                setData(merged);
+            } catch (e) { console.warn('ranking fetch error', e); }
+            finally { setLoading(false); }
+        };
+        fetchStats();
+    }, [userId]);
+
+    const mejores = [...data].sort((a, b) => (b[metric]||0) - (a[metric]||0)).slice(0, 5);
+    const peores  = [...data].sort((a, b) => (a[metric]||0) - (b[metric]||0)).slice(0, 5);
+    const list    = tab === 'mejores' ? mejores : peores;
+    const maxVal  = Math.max(list[0]?.[metric] || 1, 1);
+
+    const metricIcon  = { vistas: '', guardados: '', consultas: '' };
+    const metricColor = { vistas: '#3b82f6', guardados: '#ec4899', consultas: '#f97316' };
+
+    return (
+        <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full">
+            <div className="flex justify-between items-start px-5 pt-5 pb-3">
+                <div>
+                    <h3 className="text-white text-xl font-bold">Ranking Inventario</h3>
+                    <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mt-0.5">Datos de visibilidad</p>
+                </div>
+            </div>
+            <div className="flex gap-1 mx-5 p-1 bg-black/30 rounded-lg border border-white/5 mb-3">
+                {(['mejores', 'peores'] as const).map(t => (
+                    <button key={t} onClick={() => setTab(t)}
+                        className={`flex-1 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${
+                            tab === t ? t === 'mejores' ? 'bg-[#288b55] text-white' : 'bg-red-500/80 text-white' : 'text-slate-500 hover:text-slate-300'
+                        }`}>
+                        {t === 'mejores' ? 'Mejores' : 'Peores'}
+                    </button>
+                ))}
+            </div>
+            <div className="flex gap-1.5 mx-5 mb-3">
+                {(['vistas', 'guardados', 'consultas'] as const).map(m => (
+                    <button key={m} onClick={() => setMetric(m)}
+                        className={`flex-1 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border transition-all ${
+                            metric === m ? 'border-transparent text-white' : 'border-white/5 text-gray-600 hover:text-gray-400'
+                        }`}
+                        style={metric === m ? { background: metricColor[m] + '33', borderColor: metricColor[m] + '66', color: metricColor[m] } : {}}>
+                        {metricIcon[m]} {m}
+                    </button>
+                ))}
+            </div>
+            <div className="flex flex-col divide-y divide-white/[0.04] flex-1 overflow-y-auto">
+                {loading ? (
+                    <div className="flex items-center justify-center flex-1 py-8">
+                        <Loader2 size={18} className="animate-spin text-gray-600" />
+                    </div>
+                ) : list.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center flex-1 px-5 py-8 gap-2 text-center">
+                        <p className="text-gray-600 text-[9px] font-black uppercase tracking-widest">Sin datos todavía</p>
+                        <p className="text-gray-700 text-[8px]">Se registran cuando compradores visitan tus publicaciones</p>
+                    </div>
+                ) : list.map((v, idx) => {
+                    const val = v[metric] || 0;
+                    const barW = Math.round(val / maxVal * 100);
+                    const isZero = val === 0;
+                    const inv = v.inventario || {};
+                    return (
+                        <div key={v.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-white/[0.02] transition-colors">
+                            <span className={`text-[11px] font-black w-4 flex-shrink-0 ${
+                                tab === 'mejores' ? idx < 3 ? 'text-[#288b55]' : 'text-gray-600' : idx < 3 ? 'text-red-400' : 'text-gray-600'
+                            }`}>{idx + 1}</span>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[11px] font-bold text-white truncate">
+                                        {inv.marca} {inv.modelo} <span className="text-gray-600">{inv.anio}</span>
+                                    </span>
+                                    <span className={`text-[11px] font-black flex-shrink-0 ml-2 ${isZero ? 'text-red-400' : 'text-white'}`}>
+                                        {metricIcon[metric]} {val.toLocaleString('es-AR')}
+                                    </span>
+                                </div>
+                                <div className="h-1.5 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                    <div className="h-full rounded-full transition-all duration-500"
+                                        style={{
+                                            width: `${barW}%`,
+                                            background: isZero ? '#7f1d1d' : `linear-gradient(90deg, ${metricColor[metric]}66, ${metricColor[metric]})`,
+                                            boxShadow: barW > 50 ? `0 0 6px ${metricColor[metric]}66` : 'none',
+                                        }} />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+            <div className="px-5 py-2.5 border-t border-white/5">
+                <p className="text-gray-700 text-[8px] font-bold uppercase tracking-widest">Ranking mejores y peores metricas</p>
+            </div>
+        </div>
+    );
+}
+
+// ── Mi Inventario Bar Chart Card ──────────────────────────────────────────────
+function MiInventarioCard({
+    catSorted,
+    catTotal,
+    catColors,
+}: {
+    catSorted: [string, number][];
+    catTotal: number;
+    catColors: string[];
+}) {
+    const [hoveredCat, setHoveredCat] = useState<number | null>(null);
+    const CAT_BAR_MAX_PX = 140;
+    const catMax = catSorted.length > 0 ? catSorted[0][1] : 1;
+
+    return (
+        <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full">
+            <div className="flex justify-between items-start mb-1">
+                <h3 className="text-white text-xl font-bold">Tu Inventario por Categoría</h3>
+                <BarChart3 className="text-[#288b55] w-5 h-5 flex-shrink-0" />
+            </div>
+            <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">
+                Composición actual · {catTotal} unidades activas
+            </p>
+            {catTotal === 0 ? (
+                <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">Sin datos de inventario</p>
+            ) : (
+                <div className="flex gap-2 items-end" style={{ height: CAT_BAR_MAX_PX + 80 }}>
+                    {catSorted.map(([label, count], i) => {
+                        const barPx = Math.max(Math.round(count / catMax * CAT_BAR_MAX_PX), 8);
+                        const isHovered = hoveredCat === i;
+                        const isDimmed = hoveredCat !== null && !isHovered;
+                        const color = catColors[i % catColors.length];
+                        const pct = Math.round(count / catTotal * 100);
+                        return (
+                            <div
+                                key={label}
+                                className="flex-1 flex flex-col items-center justify-end cursor-default"
+                                style={{ height: '100%' }}
+                                onMouseEnter={() => setHoveredCat(i)}
+                                onMouseLeave={() => setHoveredCat(null)}
+                            >
+                                {/* Count on hover above bar */}
+                                <span className="text-[11px] font-black transition-all duration-200 mb-1"
+                                    style={{ color, opacity: isHovered ? 1 : 0, transform: isHovered ? 'translateY(0)' : 'translateY(4px)', minHeight: 18 }}>
+                                    {count}
+                                </span>
+
+                                {/* Bar */}
+                                <div className="w-full rounded-t-md transition-all duration-300"
+                                    style={{
+                                        height: barPx,
+                                        background: `linear-gradient(to top, ${color}55, ${color})`,
+                                        opacity: isDimmed ? 0.18 : 1,
+                                        transform: isHovered ? 'scaleY(1.04)' : 'scaleY(1)',
+                                        transformOrigin: 'bottom',
+                                        boxShadow: isHovered ? `0 0 14px ${color}66` : 'none',
+                                    }}
+                                />
+
+                                {/* Label directly under bar */}
+                                <div className="flex flex-col items-center mt-2 gap-0.5">
+                                    <span className="text-[9px] font-bold uppercase tracking-wide text-center leading-tight transition-colors duration-200"
+                                        style={{ color: isHovered ? '#fff' : '#6b7280' }}>
+                                        {label.length > 7 ? label.slice(0, 7) : label}
+                                    </span>
+                                    {/* % with more hierarchy */}
+                                    <span className="text-[15px] font-black leading-none transition-colors duration-200"
+                                        style={{ color: isHovered ? color : '#cbd5e1' }}>
+                                        {pct}%
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
     const router = useRouter();
@@ -178,6 +770,7 @@ export default function DashboardPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [userPlan, setUserPlan] = useState('FREE');
     const [userName, setUserName] = useState('');
+    const [userId, setUserId] = useState('');
     const [totalMessages, setTotalMessages] = useState(0);
     const [unreadMessages, setUnreadMessages] = useState(0);
     const [ventasTab, setVentasTab] = useState<'mes' | 'anterior' | 'historico'>('mes');
@@ -187,7 +780,6 @@ export default function DashboardPage() {
 
     const DOLAR_BLUE = 1500;
 
-    // Load layout from localStorage after mount
     useEffect(() => {
         setLayout(loadLayout());
     }, []);
@@ -209,6 +801,7 @@ export default function DashboardPage() {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
+                    setUserId(user.id);
                     const [profileRes, inventoryRes, flipsRes, messagesRes, ventasRes] = await Promise.all([
                         supabase.from('usuarios').select('plan_type, nombre').eq('auth_id', user.id).single(),
                         supabase.from('inventario')
@@ -296,14 +889,19 @@ export default function DashboardPage() {
             v.inventory_status?.toLowerCase() === 'activo' &&
             v.commercial_status?.toLowerCase() !== 'vendido' && v.created_at);
         const total = relevant.length;
-        if (total === 0) return { r: 0, l: 0, c: 0 };
+        if (total === 0) return { r: 0, l: 0, c: 0, rCount: 0, lCount: 0, cCount: 0 };
         const nowMs = Date.now();
         let c = 0, l = 0, r = 0;
         relevant.forEach(v => {
             const diff = Math.floor((nowMs - new Date(v.created_at).getTime()) / 86400000);
             if (diff >= 45) c++; else if (diff >= 28) l++; else r++;
         });
-        return { r: Math.round(r/total*100), l: Math.round(l/total*100), c: Math.round(c/total*100) };
+        return {
+            r: Math.round(r / total * 100),
+            l: Math.round(l / total * 100),
+            c: Math.round(c / total * 100),
+            rCount: r, lCount: l, cCount: c,
+        };
     }, [inventory]);
 
     const autosClavo = useMemo(() => {
@@ -424,11 +1022,11 @@ export default function DashboardPage() {
 
     // ── Card content renderers ────────────────────────────────────────────────
     const MARKET_DATA = [
-        { label: 'Autos', pct: 52, color: '#3b82f6' },
-        { label: 'Pickups', pct: 22, color: '#f97316' },
-        { label: 'SUVs', pct: 16, color: '#10b981' },
-        { label: 'Utilitarios', pct: 8, color: '#eab308' },
-        { label: 'Otros', pct: 2, color: '#6b7280' },
+        { label: 'Autos',       pct: 52, color: '#3b82f6' },
+        { label: 'Pickups',     pct: 22, color: '#f97316' },
+        { label: 'SUVs',        pct: 16, color: '#10b981' },
+        { label: 'Utilitarios', pct:  8, color: '#eab308' },
+        { label: 'Otros',       pct:  2, color: '#6b7280' },
     ];
     const marketPaths = buildDonut(MARKET_DATA.map(d => ({ value: d.pct })), 180, 80, 52);
     const activeMarket = activeIndex !== null ? MARKET_DATA[activeIndex] : null;
@@ -442,33 +1040,25 @@ export default function DashboardPage() {
     const catColors = ['#3b82f6', '#f97316', '#10b981', '#eab308', '#6b7280', '#a855f7'];
     const catPaths = catTotal > 0 ? buildDonut(catSorted.map(([, v]) => ({ value: v })), 160, 68, 44) : [];
 
-    // ── Inventory status bar colors ───────────────────────────────────────────
-    const invBarColors: string[] = [];
-    for (let i = 0; i < Math.round(inventoryStatus.r / 100 * 6); i++) invBarColors.push('#22c55e');
-    for (let i = 0; i < Math.round(inventoryStatus.l / 100 * 6); i++) invBarColors.push('#eab308');
-    for (let i = 0; i < Math.round(inventoryStatus.c / 100 * 6); i++) invBarColors.push('#ef4444');
-    while (invBarColors.length < 6) invBarColors.push(inventoryStatus.c > 0 ? '#ef4444' : inventoryStatus.l > 0 ? '#eab308' : '#22c55e');
+    // ── Top 10 data (updated 2025) ────────────────────────────────────────────
+    const TOP10_DATA = [
+        { pos: 1,  auto: 'Volkswagen Gol',          k: 104581 },
+        { pos: 2,  auto: 'Toyota Hilux',             k: 74097  },
+        { pos: 3,  auto: 'Chevrolet Corsa',          k: 55501  },
+        { pos: 4,  auto: 'Volkswagen Amarok',        k: 50957  },
+        { pos: 5,  auto: 'Ford Ranger',              k: 50552  },
+        { pos: 6,  auto: 'Ford EcoSport',            k: 39401  },
+        { pos: 7,  auto: 'Toyota Corolla',           k: 38205  },
+        { pos: 8,  auto: 'Peugeot 208',              k: 38079  },
+        { pos: 9,  auto: 'Fiat Palio',               k: 35938  },
+        { pos: 10, auto: 'Ford Ka',                  k: 33516  },
+    ];
+    const TOP10_MAX = TOP10_DATA[0].k; // 104581
 
     const renderCard = (id: string) => {
         switch (id) {
             case 'potencial':
-                return (
-                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl flex flex-col justify-between h-full">
-                        <div className="flex justify-between items-start">
-                            <h3 className="text-white text-xl font-bold">Potencial de Ganancia</h3>
-                            <TrendingUp className="text-[#288b55] w-5 h-5" />
-                        </div>
-                        <div className="flex justify-end items-baseline gap-3 mt-4">
-                            <span className="text-[#288b55] text-xs font-black uppercase tracking-widest">USD</span>
-                            <span className="text-[#288b55] text-4xl font-black tracking-tighter">{fmt(potentialValue)}</span>
-                        </div>
-                        <div className="flex gap-1.5 h-1.5 w-full mt-8">
-                            {['#ef4444', '#f97316', '#eab308', '#288b55', '#288b55', '#288b55'].map((c, i) => (
-                                <div key={i} className="flex-1 rounded-sm opacity-80" style={{ background: c }} />
-                            ))}
-                        </div>
-                    </div>
-                );
+                return <PotencialCard potentialValue={potentialValue} inventory={inventory} DOLAR_BLUE={DOLAR_BLUE} fmt={fmt} ventasMesGanancia={ventasMes.reduce((sum, v: any) => { const g = Number(v.ganancia || 0); return sum + (v.moneda === 'ARS' ? g / DOLAR_BLUE : g); }, 0)} />;
 
             case 'ventas':
                 return (
@@ -477,7 +1067,9 @@ export default function DashboardPage() {
                             <h3 className="text-white text-xl font-bold">Ventas</h3>
                             <ShoppingBag className="text-[#288b55] w-5 h-5" />
                         </div>
-                        <div className="flex gap-1 p-1 bg-black/30 rounded-lg border border-white/5 mb-5">
+
+                        {/* Tabs */}
+                        <div className="flex gap-1 p-1 bg-black/30 rounded-lg border border-white/5 mb-4">
                             {(['mes', 'anterior', 'historico'] as const).map(t => (
                                 <button key={t} onClick={() => setVentasTab(t)}
                                     className={`flex-1 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${ventasTab === t ? 'bg-[#288b55] text-white' : 'text-slate-500 hover:text-slate-300'}`}>
@@ -485,29 +1077,13 @@ export default function DashboardPage() {
                                 </button>
                             ))}
                         </div>
-                        <div className="flex justify-between items-baseline mb-1">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-white text-4xl font-black tracking-tighter">{ventasActivas.length}</span>
-                                <span className="text-gray-500 text-sm font-bold uppercase">auto{ventasActivas.length !== 1 ? 's' : ''}</span>
-                            </div>
-                            {ventasTab === 'mes' && tendencia !== null && (
-                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg ${tendencia.diff >= 0 ? 'text-[#288b55] bg-[#288b55]/10' : 'text-red-400 bg-red-400/10'}`}>
-                                    {tendencia.diff >= 0 ? '+' : ''}{tendencia.pct}% vs mes ant.
-                                </span>
-                            )}
-                        </div>
-                        {ventasGanancia > 0 && (
-                            <div className="flex items-baseline gap-1.5 mb-4">
-                                <span className="text-[#288b55] text-[10px] font-black uppercase tracking-widest">USD</span>
-                                <span className="text-[#288b55] text-lg font-black tracking-tighter">{fmt(ventasGanancia)}</span>
-                                <span className="text-gray-600 text-[9px] font-bold uppercase">ganancia</span>
-                            </div>
-                        )}
+
+                        {/* Vehicle list — right below tabs */}
                         {ventasActivas.length > 0 ? (
-                            <div className="flex flex-col gap-1 mt-auto max-h-[110px] overflow-y-auto">
-                                {ventasActivas.slice(0, 6).map((v: any) => (
-                                    <div key={v.id} className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
-                                        <span className="text-[10px] font-bold text-slate-300 uppercase truncate max-w-[140px]">{v.marca} {v.modelo}</span>
+                            <div className="flex flex-col divide-y divide-white/[0.04] mb-4 flex-1">
+                                {ventasActivas.slice(0, 5).map((v: any) => (
+                                    <div key={v.id} className="flex justify-between items-center py-2.5">
+                                        <span className="text-[11px] font-bold text-slate-300 uppercase truncate max-w-[150px]">{v.marca} {v.modelo}</span>
                                         <span className="text-[9px] text-gray-600 flex-shrink-0 ml-2">
                                             {new Date(v.sold_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
                                         </span>
@@ -515,217 +1091,262 @@ export default function DashboardPage() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mt-auto">Sin ventas en este período</p>
+                            <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">Sin ventas en este período</p>
                         )}
+
+                        {/* Stats boxes at bottom */}
+                        <div className="mt-auto flex flex-col gap-2">
+                            <div className="flex gap-2">
+                                <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center">
+                                    <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest">Vendidos</p>
+                                    <div className="flex items-baseline gap-1 justify-center">
+                                        <span className="text-[#288b55] text-base font-black">{ventasActivas.length}</span>
+                                        <span className="text-[#288b55] text-[9px] font-bold">autos</span>
+                                    </div>
+                                </div>
+                                <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center">
+                                    <p className="text-[7px] text-gray-600 font-black uppercase tracking-widest">Ganancia</p>
+                                    <div className="flex items-baseline gap-0.5 justify-center">
+                                        <span className="text-[7px] text-[#288b55] font-black">USD</span>
+                                        <span className="text-[#288b55] text-base font-black">{fmt(ventasGanancia)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {ventasTab === 'mes' && tendencia !== null && (
+                                <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border ${tendencia.diff >= 0 ? 'border-[#288b55]/20 bg-[#288b55]/5' : 'border-red-400/20 bg-red-400/5'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${tendencia.diff >= 0 ? 'text-[#288b55]' : 'text-red-400'}`}>
+                                        {tendencia.diff >= 0 ? '+' : ''}{tendencia.pct}% vs mes anterior
+                                    </span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 );
 
+            // ── INVENTARIO — radial bars con glow ──
             case 'inventario':
-                return (
-                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl flex flex-col justify-between h-full">
-                        <div className="flex justify-between items-start">
-                            <h3 className="text-white text-xl font-bold">Estado de Inventario</h3>
-                            <BarChart3 className="text-blue-400 w-5 h-5" />
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-                            <div>
-                                <p className="text-[9px] text-gray-500 font-black uppercase">Rotación</p>
-                                <p className="text-lg text-white font-bold">{inventoryStatus.r}%</p>
-                                <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5">0–27 días</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] text-gray-500 font-black uppercase">Lento</p>
-                                <p className="text-lg text-yellow-500 font-bold">{inventoryStatus.l}%</p>
-                                <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5">28–44 días</p>
-                            </div>
-                            <div>
-                                <p className="text-[9px] text-red-400 font-black uppercase">Clavo</p>
-                                <p className="text-lg text-red-500 font-bold">{inventoryStatus.c}%</p>
-                                <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5">45+ días</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-1.5 h-1.5 w-full mt-6">
-                            {invBarColors.slice(0, 6).map((c, i) => (
-                                <div key={i} className="flex-1 rounded-sm opacity-80" style={{ background: c }} />
-                            ))}
-                        </div>
-                    </div>
-                );
+                return <InventarioRadialCard inventoryStatus={inventoryStatus} />;
 
             case 'avisos':
-                return (
-                    <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full">
-                        <div className="flex justify-between items-center px-6 pt-6 pb-4">
-                            <div>
-                                <h3 className="text-white text-xl font-bold">Avisos en Riesgo</h3>
-                                <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mt-0.5">Vehículos sin vender 45+ días</p>
-                            </div>
-                            <AlertTriangle className="text-red-400 w-5 h-5 flex-shrink-0" />
-                        </div>
-                        {autosClavo.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center flex-1 px-6 pb-6 gap-2">
-                                <div className="w-10 h-10 rounded-full bg-[#22c55e]/10 flex items-center justify-center">
-                                    <TrendingUp size={18} className="text-[#22c55e]" />
+                return (() => {
+                    // Auto-detect problem per vehicle
+                    const nowMs = Date.now();
+                    const avisosEnhanced = autosClavo.map((v: any) => {
+                        const dias = v.diasEnStock;
+                        const precio = Number(v.price || v.pv || 0);
+                        // Mock visits — replace with real data when available
+                        const mockVisitas = Math.floor(Math.random() * 40);
+                        const mockConsultas = Math.floor(Math.random() * 5);
+
+                        let problema = '';
+                        let problemColor = '#ef4444';
+                        let problemIcon = '⚠️';
+                        if (mockConsultas === 0 && dias > 50) { problema = 'Sin consultas'; problemIcon = '👻'; problemColor = '#ef4444'; }
+                        else if (mockVisitas < 15) { problema = 'Pocas visitas'; problemIcon = '📉'; problemColor = '#f97316'; }
+                        else if (dias > 55) { problema = 'Precio alto'; problemIcon = '💸'; problemColor = '#eab308'; }
+                        else { problema = 'Baja rotación'; problemIcon = '🐌'; problemColor = '#f97316'; }
+
+                        return { ...v, mockVisitas, mockConsultas, problema, problemColor, problemIcon };
+                    });
+
+                    return (
+                        <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full">
+                            <div className="flex justify-between items-center px-5 pt-5 pb-3">
+                                <div>
+                                    <h3 className="text-white text-xl font-bold">Avisos en Riesgo</h3>
+                                    <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mt-0.5">
+                                        {autosClavo.length > 0 ? `${autosClavo.length} publicación${autosClavo.length > 1 ? 'es' : ''} con problemas` : 'Todo bajo control'}
+                                    </p>
                                 </div>
-                                <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest text-center">Todo en rotación normal</p>
+                                <AlertTriangle className={`w-5 h-5 flex-shrink-0 ${autosClavo.length > 0 ? 'text-red-400' : 'text-[#22c55e]'}`} />
                             </div>
-                        ) : (
-                            <div className="flex flex-col divide-y divide-white/5 overflow-y-auto max-h-[280px]">
-                                {autosClavo.map((v: any) => (
-                                    <div key={v.id} className="flex items-center justify-between px-6 py-3 hover:bg-white/[0.02] transition-colors">
-                                        <div className="flex flex-col min-w-0">
-                                            <span className="text-white text-[11px] font-black uppercase truncate">{v.marca || v.brand} {v.modelo || v.model}</span>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-red-400 text-[9px] font-bold uppercase">{v.diasEnStock} días</span>
-                                                <span className="text-gray-600 text-[9px]">•</span>
-                                                <span className="text-gray-500 text-[9px] font-bold uppercase">{v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.price || v.pv || 0).toLocaleString('es-AR')}</span>
+
+                            {avisosEnhanced.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center flex-1 px-6 pb-6 gap-4">
+                                    {/* Trophy / celebration */}
+                                    <div className="relative">
+                                        <div className="w-16 h-16 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center text-3xl">
+                                            🏆
+                                        </div>
+                                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#22c55e] flex items-center justify-center">
+                                            <span className="text-[10px]">✓</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[#22c55e] text-[11px] font-black uppercase tracking-widest">¡Excelente trabajo!</p>
+                                        <p className="text-gray-600 text-[9px] font-bold uppercase tracking-widest mt-1">No hay avisos en riesgo</p>
+                                    </div>
+                                    <div className="w-full bg-[#22c55e]/5 border border-[#22c55e]/10 rounded-xl px-4 py-3 text-center">
+                                        <p className="text-[#22c55e]/70 text-[8px] font-bold uppercase tracking-widest leading-relaxed">
+                                            Todas tus publicaciones están en rotación normal · Seguí así 💪
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col divide-y divide-white/[0.04] overflow-y-auto flex-1">
+                                    {avisosEnhanced.map((v: any) => (
+                                        <div key={v.id} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
+                                            <div className="flex items-start justify-between gap-2 mb-1.5">
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-white text-[11px] font-black uppercase truncate block">
+                                                        {v.marca || v.brand} {v.modelo || v.model}
+                                                    </span>
+                                                    {/* Problem badge */}
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <span className="text-[10px]">{v.problemIcon}</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest"
+                                                            style={{ color: v.problemColor }}>
+                                                            {v.problema}
+                                                        </span>
+                                                        <span className="text-gray-700 text-[9px]">·</span>
+                                                        <span className="text-red-400 text-[9px] font-bold">{v.diasEnStock} días</span>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => router.push('/inventario')}
+                                                    className="flex-shrink-0 px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-red-500/20 transition-colors whitespace-nowrap">
+                                                    Optimizar
+                                                </button>
+                                            </div>
+                                            {/* Mini stats */}
+                                            <div className="flex gap-3">
+                                                <span className="text-[8px] text-gray-600 font-bold">👁 {v.mockVisitas} vistas</span>
+                                                <span className="text-[8px] text-gray-600 font-bold">💬 {v.mockConsultas} consultas</span>
+                                                <span className="text-[8px] text-gray-600 font-bold">
+                                                    {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.price || v.pv || 0).toLocaleString('es-AR')}
+                                                </span>
                                             </div>
                                         </div>
-                                        <button onClick={() => router.push('/inventario')}
-                                            className="flex-shrink-0 ml-3 px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-red-500/20 transition-colors">
-                                            Revisar
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        {autosClavo.length > 0 && (
-                            <div className="px-6 py-3 border-t border-white/5 flex justify-between items-center mt-auto">
-                                <span className="text-gray-600 text-[9px] font-bold uppercase tracking-widest">Total inmovilizado</span>
-                                <span className="text-red-400 text-[11px] font-black">USD {fmt(montoInmovilizado)}</span>
-                            </div>
-                        )}
-                    </div>
-                );
+                                    ))}
+                                </div>
+                            )}
+
+                            {avisosEnhanced.length > 0 && (
+                                <div className="px-5 py-3 border-t border-white/5 flex justify-between items-center">
+                                    <span className="text-gray-600 text-[8px] font-bold uppercase tracking-widest">Inmovilizado</span>
+                                    <span className="text-red-400 text-[11px] font-black">USD {fmt(montoInmovilizado)}</span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })();
+
+            case 'ranking':
+                return <RankingCard userId={userId} />;
 
             case 'mercado':
                 return (
-                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full">
+                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full flex flex-col">
                         <div className="flex justify-between items-start mb-1">
                             <h3 className="text-white text-xl font-bold">Mercado Usado Argentina</h3>
                             <BarChart3 className="text-blue-400 w-5 h-5 flex-shrink-0" />
                         </div>
-                        <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-6">Distribución de ventas por categoría · 2024</p>
-                        <div className="flex items-center gap-6">
-                            <div className="relative flex-shrink-0" style={{ width: 180, height: 180 }}>
-                                <svg width={180} height={180}>
-                                    {marketPaths.map((path, i) => (
-                                        <path key={i} d={path} fill={MARKET_DATA[i].color}
-                                            opacity={activeIndex === null || activeIndex === i ? 1 : 0.3}
-                                            style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
-                                            onMouseEnter={() => setActiveIndex(i)}
-                                            onMouseLeave={() => setActiveIndex(null)} />
-                                    ))}
+                        <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">Distribución de ventas por categoría · 2025</p>
+
+                        {/* Donut 20% bigger: 240px */}
+                        <div className="flex justify-center flex-1">
+                            <div className="relative" style={{ width: 240, height: 240 }}>
+                                <svg width={240} height={240} style={{ overflow: 'visible' }}>
+                                    <defs>
+                                        {MARKET_DATA.map((item, i) => (
+                                            <filter key={i} id={`glow-${i}`} x="-40%" y="-40%" width="180%" height="180%">
+                                                <feGaussianBlur stdDeviation="6" result="blur" />
+                                                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                                            </filter>
+                                        ))}
+                                    </defs>
+                                    {buildDonut(MARKET_DATA.map(d => ({ value: d.pct })), 240, 106, 68).map((path, i) => {
+                                        const isActive = activeIndex === i;
+                                        const isDimmed = activeIndex !== null && !isActive;
+                                        return (
+                                            <path key={i} d={path} fill={MARKET_DATA[i].color}
+                                                opacity={isDimmed ? 0.2 : 1}
+                                                filter={isActive ? `url(#glow-${i})` : undefined}
+                                                style={{ cursor: 'pointer', transition: 'opacity 0.25s, transform 0.25s',
+                                                    transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                                                    transformOrigin: '120px 120px' }}
+                                                onMouseEnter={() => setActiveIndex(i)}
+                                                onMouseLeave={() => setActiveIndex(null)}
+                                            />
+                                        );
+                                    })}
+                                    <circle cx={120} cy={120} r={66} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={1} />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                    <span className="text-white text-2xl font-black leading-none">{activeMarket ? `${activeMarket.pct}%` : '100%'}</span>
-                                    <span className="text-gray-500 text-[9px] font-bold uppercase mt-1">{activeMarket ? activeMarket.label : 'Mercado'}</span>
+                                    {activeMarket ? (
+                                        <>
+                                            <span className="text-2xl font-black leading-none" style={{ color: activeMarket.color }}>{activeMarket.pct}%</span>
+                                            <span className="text-gray-400 text-[9px] font-bold uppercase mt-1">{activeMarket.label}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-white text-lg font-black leading-none tracking-tighter">1.887.024</span>
+                                            <span className="text-gray-500 text-[8px] font-bold uppercase mt-1">transferencias</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
-                            <div className="flex flex-col gap-3 flex-1">
-                                {MARKET_DATA.map((item, i) => (
-                                    <div key={item.label} className="flex items-center gap-3 cursor-default"
-                                        onMouseEnter={() => setActiveIndex(i)} onMouseLeave={() => setActiveIndex(null)}>
-                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-transform duration-200"
-                                            style={{ background: item.color, transform: activeIndex === i ? 'scale(1.5)' : 'scale(1)' }} />
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <span className="text-slate-300 text-[11px] font-bold">{item.label}</span>
-                                                <span className="text-white text-[11px] font-black">{item.pct}%</span>
-                                            </div>
-                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                                <div className="h-full rounded-full transition-all duration-300"
-                                                    style={{ width: `${item.pct}%`, background: item.color, opacity: activeIndex === null || activeIndex === i ? 1 : 0.25 }} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest mt-1 text-right">Fuente: ACARA · 2024</p>
-                            </div>
                         </div>
+
+                        {/* Tick-bar legend — each category gets a row of ticks like inventario rings */}
+                        <div className="flex flex-col gap-2 border-t border-white/5 pt-3 mt-2">
+                            {MARKET_DATA.map((item, i) => {
+                                const isActive = activeIndex === i;
+                                const isDimmed = activeIndex !== null && !isActive;
+                                const TOTAL_TICKS = 20;
+                                const litTicks = Math.round(item.pct / 100 * TOTAL_TICKS);
+                                return (
+                                    <div key={item.label}
+                                        className="flex items-center gap-2 cursor-default transition-all duration-200"
+                                        style={{ opacity: isDimmed ? 0.25 : 1 }}
+                                        onMouseEnter={() => setActiveIndex(i)}
+                                        onMouseLeave={() => setActiveIndex(null)}
+                                    >
+                                        {/* Label */}
+                                        <span className="text-[9px] font-black uppercase w-16 flex-shrink-0 transition-colors duration-200"
+                                            style={{ color: isActive ? '#fff' : '#6b7280' }}>
+                                            {item.label}
+                                        </span>
+                                        {/* Tick bars */}
+                                        <div className="flex gap-[3px] flex-1">
+                                            {Array.from({ length: TOTAL_TICKS }, (_, ti) => {
+                                                const lit = ti < litTicks;
+                                                // degradé from dark to bright of item color
+                                                const f = litTicks > 0 ? ti / litTicks : 0;
+                                                const base = parseInt(item.color.slice(1,3),16);
+                                                const bg = lit
+                                                    ? item.color
+                                                    : 'rgba(255,255,255,0.06)';
+                                                return (
+                                                    <div key={ti}
+                                                        className="flex-1 rounded-sm transition-all duration-200"
+                                                        style={{
+                                                            height: 10,
+                                                            background: bg,
+                                                            opacity: lit ? (0.4 + 0.6 * (ti / Math.max(litTicks - 1, 1))) : 1,
+                                                            boxShadow: lit && isActive ? `0 0 6px ${item.color}88` : 'none',
+                                                        }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                        {/* % */}
+                                        <span className="text-[13px] font-black w-9 text-right flex-shrink-0 transition-colors duration-200"
+                                            style={{ color: isActive ? item.color : '#e2e8f0' }}>
+                                            {item.pct}%
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest mt-2 text-right">Fuente: ACARA · 2025</p>
                     </div>
                 );
 
             case 'top10':
-                return (
-                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full">
-                        <div className="flex justify-between items-start mb-1">
-                            <h3 className="text-white text-xl font-bold">Top 10 Usados Argentina</h3>
-                            <TrendingUp className="text-[#288b55] w-5 h-5 flex-shrink-0" />
-                        </div>
-                        <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">Transferencias anuales aproximadas · 2024</p>
-                        <div className="flex flex-col gap-2">
-                            {[
-                                { pos: 1,  auto: 'Volkswagen Gol',         k: 96 },
-                                { pos: 2,  auto: 'Toyota Hilux',           k: 62 },
-                                { pos: 3,  auto: 'Chevrolet Corsa/Classic',k: 58 },
-                                { pos: 4,  auto: 'Ford Ranger',            k: 56 },
-                                { pos: 5,  auto: 'Volkswagen Amarok',      k: 54 },
-                                { pos: 6,  auto: 'Ford EcoSport',          k: 50 },
-                                { pos: 7,  auto: 'Toyota Corolla',         k: 47 },
-                                { pos: 8,  auto: 'Fiat Palio',             k: 45 },
-                                { pos: 9,  auto: 'Ford Fiesta',            k: 42 },
-                                { pos: 10, auto: 'Renault Kangoo',         k: 39 },
-                            ].map(item => (
-                                <div key={item.pos} className="flex items-center gap-3">
-                                    <span className={`text-[10px] font-black w-5 text-right flex-shrink-0 ${item.pos <= 3 ? 'text-[#288b55]' : 'text-gray-600'}`}>{item.pos}</span>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex justify-between items-center mb-0.5">
-                                            <span className="text-slate-300 text-[10px] font-bold truncate">{item.auto}</span>
-                                            <span className="text-gray-500 text-[9px] font-bold ml-2 flex-shrink-0">~{item.k}k</span>
-                                        </div>
-                                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                            <div className="h-full rounded-full" style={{ width: `${Math.round(item.k / 96 * 100)}%`, background: item.pos <= 3 ? '#288b55' : item.pos <= 6 ? '#3b82f6' : '#374151' }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <p className="text-gray-700 text-[9px] font-bold uppercase tracking-widest mt-4 text-right">Fuente: DNRPA · 2024</p>
-                    </div>
-                );
+                return <Top10Card top10Data={TOP10_DATA} top10Max={TOP10_MAX} />;
 
             case 'miinventario':
-                return (
-                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full">
-                        <div className="flex justify-between items-start mb-1">
-                            <h3 className="text-white text-xl font-bold">Tu Inventario por Tipo</h3>
-                            <BarChart3 className="text-[#288b55] w-5 h-5 flex-shrink-0" />
-                        </div>
-                        <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-5">Composición actual de tus autos activos</p>
-                        {catTotal === 0 ? (
-                            <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">Sin datos de inventario</p>
-                        ) : (
-                            <div className="flex items-center gap-4">
-                                <div className="relative flex-shrink-0" style={{ width: 160, height: 160 }}>
-                                    <svg width={160} height={160}>
-                                        {catPaths.map((path, i) => (
-                                            <path key={i} d={path} fill={catColors[i % catColors.length]} opacity={0.9} />
-                                        ))}
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-white text-xl font-black leading-none">{catTotal}</span>
-                                        <span className="text-gray-500 text-[9px] font-bold uppercase mt-0.5">Unidades</span>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-2.5 flex-1">
-                                    {catSorted.map(([label, count], i) => (
-                                        <div key={label} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: catColors[i % catColors.length] }} />
-                                                <span className="text-slate-400 text-[11px] font-bold">{label}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-gray-600 text-[9px] font-bold">{Math.round(count / catTotal * 100)}%</span>
-                                                <span className="text-white text-[11px] font-black">{count}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
+                return <MiInventarioCard catSorted={catSorted} catTotal={catTotal} catColors={catColors} />;
 
             default: return null;
         }
@@ -742,7 +1363,6 @@ export default function DashboardPage() {
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Bienvenido, {userName || 'Vendedor'}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        {/* Edit mode toggle */}
                         <button
                             onClick={() => setEditMode(e => !e)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${

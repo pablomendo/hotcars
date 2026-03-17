@@ -530,6 +530,11 @@ export default function VehicleDetailPage() {
       const currentUser = sessionRes.data.session?.user || null;
       setVehicle(cv); setUser(currentUser);
 
+      // ── TRACKING VISTAS ──────────────────────────────────────────────────
+      if (cv && currentUser?.id !== cv.owner_user_id) {
+        supabase.rpc('increment_vehicle_stat', { p_vehicle_id: cv.id, p_owner_user_id: cv.owner_user_id, p_field: 'vistas' }).catch(e => console.warn('stat vistas', e));
+      }
+
       if (cv) {
         fetchQuestions(cv.id);
         const slug = getSlug(cv);
@@ -592,7 +597,11 @@ export default function VehicleDetailPage() {
     const prev = isFavorite; setIsFavorite(!prev);
     try {
       if (prev) await supabase.from('favoritos').delete().eq('auto_id', vehicle.id).eq('user_id', user.id);
-      else await supabase.from('favoritos').insert({ user_id: user.id, auto_id: vehicle.id });
+      else {
+        await supabase.from('favoritos').insert({ user_id: user.id, auto_id: vehicle.id });
+        // ── TRACKING GUARDADOS ──────────────────────────────────────────────
+        supabase.rpc('increment_vehicle_stat', { p_vehicle_id: vehicle.id, p_owner_user_id: vehicle.owner_user_id, p_field: 'guardados' }).catch(e => console.warn('stat guardados', e));
+      }
     } catch { setIsFavorite(prev); }
     finally { setIsFavLoading(false); }
   };
@@ -632,6 +641,8 @@ export default function VehicleDetailPage() {
         auto_id: vehicle.id, user_id: user.id, owner_id: vehicle.owner_user_id, pregunta: directQuestionText.trim(),
       });
       if (error) throw error;
+      // ── TRACKING CONSULTAS ──────────────────────────────────────────────
+      supabase.rpc('increment_vehicle_stat', { p_vehicle_id: vehicle.id, p_owner_user_id: vehicle.owner_user_id, p_field: 'consultas' }).catch(e => console.warn('stat consultas', e));
       setDirectQuestionText(''); fetchQuestions(vehicle.id);
     } catch { alert('Error al enviar la pregunta'); }
     finally { setSendingDirect(false); }
