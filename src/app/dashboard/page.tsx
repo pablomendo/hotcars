@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { mockSearchTickets } from '@/data/mock';
 import SortableKPI from '@/components/ui/SortableKPI';
 import {
     DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -193,18 +192,13 @@ function PotencialCard({
     const goalPct     = Math.min(ventasMesGanancia / Math.max(goal, 1), 1);
     const pctLeft     = Math.max(0, Math.round((1 - goalPct) * 100));
 
-    // ── Semicircle speedometer ───────────────────────────────────────────────
-    // Pivot at bottom-center. Arc sweeps from 180° (left) → 360°/0° (right)
-    // passing through 270° (straight up) — classic speedometer orientation.
-    // ViewBox: 240×120, pivot at (120, 116). Ticks reach up to y≈12 (116-104).
     const VW = 240, VH = 120;
-    const CX = VW / 2, CY = 116; // pivot near bottom
+    const CX = VW / 2, CY = 116;
     const toRad = (d: number) => d * Math.PI / 180;
     const TICK_COUNT = 40;
 
     const ticks = Array.from({ length: TICK_COUNT }, (_, i) => {
         const frac   = i / (TICK_COUNT - 1);
-        // 180° = left side, 360° = right side, 270° = top (0% left → 100% right)
         const deg    = 180 + frac * 180;
         const rad    = toRad(deg);
         const lit    = frac <= goalPct;
@@ -223,7 +217,6 @@ function PotencialCard({
         };
     });
 
-    // Needle: 180° at 0%, 360° at 100%
     const needleRad = toRad(180 + goalPct * 180);
     const needleTip = { x: CX + 80 * Math.cos(needleRad), y: CY + 80 * Math.sin(needleRad) };
 
@@ -233,8 +226,6 @@ function PotencialCard({
                 <h3 className="text-white text-xl font-bold">Potencial de Ganancia</h3>
                 <TrendingUp className="text-[#288b55] w-5 h-5" />
             </div>
-
-            {/* Semicircle speedometer */}
             <div className="flex justify-center flex-1" style={{ marginBottom: -14 }}>
                 <svg width="100%" viewBox={`0 0 ${VW} ${VH}`} style={{ maxWidth: 280, overflow: 'visible' }}>
                     <defs>
@@ -270,8 +261,6 @@ function PotencialCard({
                     </text>
                 </svg>
             </div>
-
-            {/* 4 data boxes — pegados al fondo */}
             <div className="flex flex-col gap-2 mt-auto pt-2">
                 <div className="flex gap-2 items-stretch">
                     <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center flex flex-col justify-center">
@@ -371,12 +360,10 @@ function InventarioRadialCard({ inventoryStatus }: {
                 <h3 className="text-white text-xl font-bold">Estado de Inventario</h3>
                 <BarChart3 className="text-blue-400 w-5 h-5" />
             </div>
-
             {totalActive === 0 ? (
                 <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest mt-auto">Sin unidades activas</p>
             ) : (
                 <>
-                    {/* Three concentric rings — hero */}
                     <div className="flex justify-center flex-1">
                         <svg width={SIZE} height={SIZE}>
                             <defs>
@@ -407,7 +394,6 @@ function InventarioRadialCard({ inventoryStatus }: {
                                     </g>
                                 );
                             })}
-                            {/* Center */}
                             {hovered !== null ? (
                                 <>
                                     <text x={CX} y={CY - 10} textAnchor="middle" fill={segments[hovered].color}
@@ -429,8 +415,6 @@ function InventarioRadialCard({ inventoryStatus }: {
                             )}
                         </svg>
                     </div>
-
-                    {/* Three boxes below — same style as Potencial */}
                     <div className="flex gap-2 mt-1">
                         {segments.map((s, i) => {
                             const isHov = hovered === i;
@@ -462,11 +446,10 @@ function InventarioRadialCard({ inventoryStatus }: {
     );
 }
 
-// ── Top 10 Card — barras horizontales con degradé verde + glow hover ─────────
+// ── Top 10 Card ───────────────────────────────────────────────────────────────
 function Top10Card({ top10Data, top10Max }: { top10Data: { pos: number; auto: string; k: number }[]; top10Max: number }) {
     const [hovered, setHovered] = useState<number | null>(null);
 
-    // Degradé por posición: top 3 verde brillante, 4-6 verde medio, 7-10 verde oscuro
     const getGradient = (pos: number) => {
         if (pos <= 3)  return { from: '#1a5c38', via: '#288b55', to: '#4ade80' };
         if (pos <= 6)  return { from: '#133d27', via: '#1e6e42', to: '#288b55' };
@@ -480,7 +463,6 @@ function Top10Card({ top10Data, top10Max }: { top10Data: { pos: number; auto: st
                 <TrendingUp className="text-[#288b55] w-5 h-5 flex-shrink-0" />
             </div>
             <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-5">Transferencias anuales 2025</p>
-
             <div className="flex flex-col gap-3 flex-1">
                 {top10Data.map((item) => {
                     const isHov = hovered === item.pos;
@@ -488,42 +470,24 @@ function Top10Card({ top10Data, top10Max }: { top10Data: { pos: number; auto: st
                     const widthPct = Math.round(item.k / top10Max * 100);
                     const g = getGradient(item.pos);
                     return (
-                        <div
-                            key={item.pos}
-                            className="flex items-center gap-3 cursor-default"
+                        <div key={item.pos} className="flex items-center gap-3 cursor-default"
                             style={{ opacity: isDim ? 0.35 : 1, transition: 'opacity 0.2s' }}
                             onMouseEnter={() => setHovered(item.pos)}
                             onMouseLeave={() => setHovered(null)}
                         >
-                            {/* Position number */}
-                            <span
-                                className="text-[10px] font-black w-5 text-right flex-shrink-0 transition-colors duration-200"
-                                style={{ color: isHov ? '#4ade80' : item.pos <= 3 ? '#288b55' : '#4b5563' }}
-                            >
+                            <span className="text-[10px] font-black w-5 text-right flex-shrink-0 transition-colors duration-200"
+                                style={{ color: isHov ? '#4ade80' : item.pos <= 3 ? '#288b55' : '#4b5563' }}>
                                 {item.pos}
                             </span>
-
-                            {/* Bar + labels */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-center mb-1">
-                                    <span
-                                        className="text-[10px] font-bold truncate transition-colors duration-200"
-                                        style={{ color: isHov ? '#fff' : '#94a3b8' }}
-                                    >
-                                        {item.auto}
-                                    </span>
-                                    <span
-                                        className="text-[9px] font-bold ml-2 flex-shrink-0 transition-colors duration-200"
-                                        style={{ color: isHov ? '#4ade80' : '#4b5563' }}
-                                    >
-                                        {item.k.toLocaleString('es-AR')}
-                                    </span>
+                                    <span className="text-[10px] font-bold truncate transition-colors duration-200"
+                                        style={{ color: isHov ? '#fff' : '#94a3b8' }}>{item.auto}</span>
+                                    <span className="text-[9px] font-bold ml-2 flex-shrink-0 transition-colors duration-200"
+                                        style={{ color: isHov ? '#4ade80' : '#4b5563' }}>{item.k.toLocaleString('es-AR')}</span>
                                 </div>
-
-                                {/* Gradient bar track */}
                                 <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                                    <div
-                                        className="h-full rounded-full transition-all duration-300"
+                                    <div className="h-full rounded-full transition-all duration-300"
                                         style={{
                                             width: `${widthPct}%`,
                                             background: `linear-gradient(90deg, ${g.from}, ${g.via}, ${g.to})`,
@@ -542,8 +506,6 @@ function Top10Card({ top10Data, top10Max }: { top10Data: { pos: number; auto: st
     );
 }
 
-
-
 // ── Ranking Card ──────────────────────────────────────────────────────────────
 function RankingCard({ userId }: { userId: string }) {
     const [tab, setTab] = useState<'mejores' | 'peores'>('mejores');
@@ -556,7 +518,6 @@ function RankingCard({ userId }: { userId: string }) {
         const fetchStats = async () => {
             setLoading(true);
             try {
-                // Fetch inventory, favoritos and consultas in parallel
                 const [invRes, favRes, consultasRes] = await Promise.all([
                     supabase.from('inventario')
                         .select('id, marca, modelo, anio, pv, moneda')
@@ -569,26 +530,20 @@ function RankingCard({ userId }: { userId: string }) {
                         .select('auto_id')
                         .in('auto_id', (await supabase.from('inventario').select('id').eq('owner_user_id', userId)).data?.map((v: any) => v.id) || []),
                 ]);
-
                 const vehicles = invRes.data || [];
                 const favs = favRes.data || [];
                 const consultas = consultasRes.data || [];
-
-                // Count per vehicle
                 const favCount: Record<string, number> = {};
                 favs.forEach((f: any) => { favCount[f.auto_id] = (favCount[f.auto_id] || 0) + 1; });
-
                 const consultaCount: Record<string, number> = {};
                 consultas.forEach((c: any) => { consultaCount[c.auto_id] = (consultaCount[c.auto_id] || 0) + 1; });
-
                 const merged = vehicles.map((v: any) => ({
                     id: v.id,
                     inventario: { marca: v.marca, modelo: v.modelo, anio: v.anio, pv: v.pv, moneda: v.moneda },
-                    vistas: 0, // tracking pendiente en detailVehicle
+                    vistas: 0,
                     guardados: favCount[v.id] || 0,
                     consultas: consultaCount[v.id] || 0,
                 }));
-
                 setData(merged);
             } catch (e) { console.warn('ranking fetch error', e); }
             finally { setLoading(false); }
@@ -600,7 +555,6 @@ function RankingCard({ userId }: { userId: string }) {
     const peores  = [...data].sort((a, b) => (a[metric]||0) - (b[metric]||0)).slice(0, 5);
     const list    = tab === 'mejores' ? mejores : peores;
     const maxVal  = Math.max(list[0]?.[metric] || 1, 1);
-
     const metricIcon  = { vistas: '', guardados: '', consultas: '' };
     const metricColor = { vistas: '#3b82f6', guardados: '#ec4899', consultas: '#f97316' };
 
@@ -683,11 +637,7 @@ function RankingCard({ userId }: { userId: string }) {
 }
 
 // ── Mi Inventario Bar Chart Card ──────────────────────────────────────────────
-function MiInventarioCard({
-    catSorted,
-    catTotal,
-    catColors,
-}: {
+function MiInventarioCard({ catSorted, catTotal, catColors }: {
     catSorted: [string, number][];
     catTotal: number;
     catColors: string[];
@@ -716,20 +666,15 @@ function MiInventarioCard({
                         const color = catColors[i % catColors.length];
                         const pct = Math.round(count / catTotal * 100);
                         return (
-                            <div
-                                key={label}
-                                className="flex-1 flex flex-col items-center justify-end cursor-default"
+                            <div key={label} className="flex-1 flex flex-col items-center justify-end cursor-default"
                                 style={{ height: '100%' }}
                                 onMouseEnter={() => setHoveredCat(i)}
                                 onMouseLeave={() => setHoveredCat(null)}
                             >
-                                {/* Count on hover above bar */}
                                 <span className="text-[11px] font-black transition-all duration-200 mb-1"
                                     style={{ color, opacity: isHovered ? 1 : 0, transform: isHovered ? 'translateY(0)' : 'translateY(4px)', minHeight: 18 }}>
                                     {count}
                                 </span>
-
-                                {/* Bar */}
                                 <div className="w-full rounded-t-md transition-all duration-300"
                                     style={{
                                         height: barPx,
@@ -740,14 +685,11 @@ function MiInventarioCard({
                                         boxShadow: isHovered ? `0 0 14px ${color}66` : 'none',
                                     }}
                                 />
-
-                                {/* Label directly under bar */}
                                 <div className="flex flex-col items-center mt-2 gap-0.5">
                                     <span className="text-[9px] font-bold uppercase tracking-wide text-center leading-tight transition-colors duration-200"
                                         style={{ color: isHovered ? '#fff' : '#6b7280' }}>
                                         {label.length > 7 ? label.slice(0, 7) : label}
                                     </span>
-                                    {/* % with more hierarchy */}
                                     <span className="text-[15px] font-black leading-none transition-colors duration-200"
                                         style={{ color: isHovered ? color : '#cbd5e1' }}>
                                         {pct}%
@@ -761,6 +703,7 @@ function MiInventarioCard({
         </div>
     );
 }
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
     const router = useRouter();
@@ -773,6 +716,9 @@ export default function DashboardPage() {
     const [userId, setUserId] = useState('');
     const [totalMessages, setTotalMessages] = useState(0);
     const [unreadMessages, setUnreadMessages] = useState(0);
+    // ── NUEVO: pendientes de flip ──────────────────────────────────────────────
+    const [pendingFlips, setPendingFlips] = useState(0);
+    const [ticketsBuscados, setTicketsBuscados] = useState(0);
     const [ventasTab, setVentasTab] = useState<'mes' | 'anterior' | 'historico'>('mes');
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [editMode, setEditMode] = useState(false);
@@ -839,6 +785,24 @@ export default function DashboardPage() {
                         rawStatus: normalizeStatus(v.inventory_status, v.commercial_status),
                     })));
                     setVentas(ventasRes.data || []);
+
+                    // ── NUEVO: contar flips pendientes (recibidos + enviados) ──
+                    const propiosIds = (inventoryRes.data || []).map((v: any) => v.id);
+                    const [pendingReceivedRes, pendingSentRes] = await Promise.all([
+                        propiosIds.length > 0
+                            ? supabase.from('flip_compartido').select('id', { count: 'exact', head: true })
+                                .in('auto_id', propiosIds).eq('status', 'pending')
+                            : Promise.resolve({ count: 0 }),
+                        supabase.from('flip_compartido').select('id', { count: 'exact', head: true })
+                            .eq('vendedor_user_id', user.id).eq('status', 'pending'),
+                    ]);
+                    setPendingFlips((pendingReceivedRes.count || 0) + (pendingSentRes.count || 0));
+
+                    const { data: ticketsData } = await supabase
+                        .from('tickets_busqueda')
+                        .select('id')
+                        .eq('status', 'activo');
+                    setTicketsBuscados(ticketsData?.length ?? 0);
                 }
             } catch (err: any) {
                 console.error("Error HotCars:", err.message);
@@ -936,18 +900,30 @@ export default function DashboardPage() {
             { id: 'activos',    title: 'Autos Disponibles', value: availableVehicles.length, badge: 'En Stock', badgeType: 'up', subtext: 'Listos para vender' },
             { id: 'reservados', title: 'Autos Reservados', value: reservedVehicles.length, badge: 'Señados', badgeType: 'neutral', subtext: 'Reservas activas' },
             { id: 'mensajes',   title: 'Mensajes', value: totalMessages, badge: unreadMessages > 0 ? `${unreadMessages} sin leer` : 'Al día', badgeType: unreadMessages > 0 ? 'down' : 'up', subtext: unreadMessages > 0 ? `${unreadMessages} pendientes` : 'Sin pendientes' },
-            { id: 'buscados',   title: 'Modelos Buscados', value: mockSearchTickets.length, subtext: 'Pedidos comunidad' },
+            { id: 'buscados',   title: 'Vehículos Buscados', value: ticketsBuscados, badge: ticketsBuscados > 0 ? `${ticketsBuscados} activos` : 'Sin tickets', badgeType: ticketsBuscados > 0 ? 'up' : 'neutral', subtext: 'Tickets de la red' },
             { id: 'clavos',     title: 'Unidad Clavo', value: clavoCount, isCurrency: false, subtext: clavoCount > 0 ? `USD ${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(montoInmovilizado)} inmovilizado` : 'Sin clavos' },
-            { id: 'flips',      title: 'Flips Compartidos', value: activeFlips.length, badge: activeFlips.length > 0 ? `${activeFlips.length} activos` : 'Sin flips', badgeType: activeFlips.length > 0 ? 'up' : 'neutral', subtext: 'En tu inventario' },
+            // ── NUEVO: badge muestra pendientes si los hay ──
+            { id: 'flips', title: 'Flips Compartidos', value: activeFlips.length, badge: pendingFlips > 0 ? `${pendingFlips} pendientes` : activeFlips.length > 0 ? `${activeFlips.length} activos` : 'Sin flips', badgeType: pendingFlips > 0 ? 'down' : activeFlips.length > 0 ? 'up' : 'neutral', subtext: pendingFlips > 0 ? 'Requieren atención' : 'En tu inventario' },
         ];
-    }, [inventory, availableVehicles.length, reservedVehicles.length, activeFlips.length, totalMessages, unreadMessages, montoInmovilizado]);
+    }, [inventory, availableVehicles.length, reservedVehicles.length, activeFlips.length, totalMessages, unreadMessages, montoInmovilizado, pendingFlips]);
 
     const [kpiItems, setKpiItems] = useState<any[]>([]);
-    useEffect(() => { if (isMounted) setKpiItems(kpiData); }, [kpiData, isMounted]);
+    useEffect(() => { setKpiItems(kpiData); }, [kpiData]);
+
+    // Re-fetch tickets separately to avoid timing issues
+    useEffect(() => {
+        const fetchTickets = async () => {
+            const { data } = await supabase
+                .from('tickets_busqueda')
+                .select('id')
+                .eq('status', 'activo');
+            if (data) setTicketsBuscados(data.length);
+        };
+        fetchTickets();
+    }, []);
 
     const kpiSensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
-    // ── Card drag & drop ──────────────────────────────────────────────────────
     const cardSensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
         useSensor(KeyboardSensor)
@@ -987,7 +963,6 @@ export default function DashboardPage() {
         saveLayout(DEFAULT_LAYOUT);
     };
 
-    // ── SVG Donut helper ──────────────────────────────────────────────────────
     const buildDonut = (data: { value: number }[], size: number, rOuter: number, rInner: number) => {
         const cx = size / 2, cy = size / 2;
         const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -1011,7 +986,6 @@ export default function DashboardPage() {
         });
     };
 
-    // ── Formatters ────────────────────────────────────────────────────────────
     const fmt = (n: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n);
 
     if (isLoading) return (
@@ -1020,7 +994,6 @@ export default function DashboardPage() {
         </div>
     );
 
-    // ── Card content renderers ────────────────────────────────────────────────
     const MARKET_DATA = [
         { label: 'Autos',       pct: 52, color: '#3b82f6' },
         { label: 'Pickups',     pct: 22, color: '#f97316' },
@@ -1028,32 +1001,28 @@ export default function DashboardPage() {
         { label: 'Utilitarios', pct:  8, color: '#eab308' },
         { label: 'Otros',       pct:  2, color: '#6b7280' },
     ];
-    const marketPaths = buildDonut(MARKET_DATA.map(d => ({ value: d.pct })), 180, 80, 52);
     const activeMarket = activeIndex !== null ? MARKET_DATA[activeIndex] : null;
 
-    // Inventory by category
     const cats: Record<string, number> = {};
     inventory.filter(v => v.inventory_status?.toLowerCase() === 'activo' && v.commercial_status?.toLowerCase() !== 'vendido')
         .forEach(v => { const cat = v.categoria || 'Sin cat.'; cats[cat] = (cats[cat] || 0) + 1; });
     const catTotal = Object.values(cats).reduce((a, b) => a + b, 0);
     const catSorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
     const catColors = ['#3b82f6', '#f97316', '#10b981', '#eab308', '#6b7280', '#a855f7'];
-    const catPaths = catTotal > 0 ? buildDonut(catSorted.map(([, v]) => ({ value: v })), 160, 68, 44) : [];
 
-    // ── Top 10 data (updated 2025) ────────────────────────────────────────────
     const TOP10_DATA = [
-        { pos: 1,  auto: 'Volkswagen Gol',          k: 104581 },
-        { pos: 2,  auto: 'Toyota Hilux',             k: 74097  },
-        { pos: 3,  auto: 'Chevrolet Corsa',          k: 55501  },
-        { pos: 4,  auto: 'Volkswagen Amarok',        k: 50957  },
-        { pos: 5,  auto: 'Ford Ranger',              k: 50552  },
-        { pos: 6,  auto: 'Ford EcoSport',            k: 39401  },
-        { pos: 7,  auto: 'Toyota Corolla',           k: 38205  },
-        { pos: 8,  auto: 'Peugeot 208',              k: 38079  },
-        { pos: 9,  auto: 'Fiat Palio',               k: 35938  },
-        { pos: 10, auto: 'Ford Ka',                  k: 33516  },
+        { pos: 1,  auto: 'Volkswagen Gol',     k: 104581 },
+        { pos: 2,  auto: 'Toyota Hilux',        k: 74097  },
+        { pos: 3,  auto: 'Chevrolet Corsa',     k: 55501  },
+        { pos: 4,  auto: 'Volkswagen Amarok',   k: 50957  },
+        { pos: 5,  auto: 'Ford Ranger',         k: 50552  },
+        { pos: 6,  auto: 'Ford EcoSport',       k: 39401  },
+        { pos: 7,  auto: 'Toyota Corolla',      k: 38205  },
+        { pos: 8,  auto: 'Peugeot 208',         k: 38079  },
+        { pos: 9,  auto: 'Fiat Palio',          k: 35938  },
+        { pos: 10, auto: 'Ford Ka',             k: 33516  },
     ];
-    const TOP10_MAX = TOP10_DATA[0].k; // 104581
+    const TOP10_MAX = TOP10_DATA[0].k;
 
     const renderCard = (id: string) => {
         switch (id) {
@@ -1067,8 +1036,6 @@ export default function DashboardPage() {
                             <h3 className="text-white text-xl font-bold">Ventas</h3>
                             <ShoppingBag className="text-[#288b55] w-5 h-5" />
                         </div>
-
-                        {/* Tabs */}
                         <div className="flex gap-1 p-1 bg-black/30 rounded-lg border border-white/5 mb-4">
                             {(['mes', 'anterior', 'historico'] as const).map(t => (
                                 <button key={t} onClick={() => setVentasTab(t)}
@@ -1077,8 +1044,6 @@ export default function DashboardPage() {
                                 </button>
                             ))}
                         </div>
-
-                        {/* Vehicle list — right below tabs */}
                         {ventasActivas.length > 0 ? (
                             <div className="flex flex-col divide-y divide-white/[0.04] mb-4 flex-1">
                                 {ventasActivas.slice(0, 5).map((v: any) => (
@@ -1093,8 +1058,6 @@ export default function DashboardPage() {
                         ) : (
                             <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">Sin ventas en este período</p>
                         )}
-
-                        {/* Stats boxes at bottom */}
                         <div className="mt-auto flex flex-col gap-2">
                             <div className="flex gap-2">
                                 <div className="flex-1 bg-white/[0.03] rounded-lg px-2.5 py-2 border border-white/5 text-center">
@@ -1123,32 +1086,23 @@ export default function DashboardPage() {
                     </div>
                 );
 
-            // ── INVENTARIO — radial bars con glow ──
             case 'inventario':
                 return <InventarioRadialCard inventoryStatus={inventoryStatus} />;
 
             case 'avisos':
                 return (() => {
-                    // Auto-detect problem per vehicle
                     const nowMs = Date.now();
                     const avisosEnhanced = autosClavo.map((v: any) => {
                         const dias = v.diasEnStock;
-                        const precio = Number(v.price || v.pv || 0);
-                        // Mock visits — replace with real data when available
                         const mockVisitas = Math.floor(Math.random() * 40);
                         const mockConsultas = Math.floor(Math.random() * 5);
-
-                        let problema = '';
-                        let problemColor = '#ef4444';
-                        let problemIcon = '⚠️';
+                        let problema = '', problemColor = '#ef4444', problemIcon = '⚠️';
                         if (mockConsultas === 0 && dias > 50) { problema = 'Sin consultas'; problemIcon = '👻'; problemColor = '#ef4444'; }
                         else if (mockVisitas < 15) { problema = 'Pocas visitas'; problemIcon = '📉'; problemColor = '#f97316'; }
                         else if (dias > 55) { problema = 'Precio alto'; problemIcon = '💸'; problemColor = '#eab308'; }
                         else { problema = 'Baja rotación'; problemIcon = '🐌'; problemColor = '#f97316'; }
-
                         return { ...v, mockVisitas, mockConsultas, problema, problemColor, problemIcon };
                     });
-
                     return (
                         <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full">
                             <div className="flex justify-between items-center px-5 pt-5 pb-3">
@@ -1160,26 +1114,18 @@ export default function DashboardPage() {
                                 </div>
                                 <AlertTriangle className={`w-5 h-5 flex-shrink-0 ${autosClavo.length > 0 ? 'text-red-400' : 'text-[#22c55e]'}`} />
                             </div>
-
                             {avisosEnhanced.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center flex-1 px-6 pb-6 gap-4">
-                                    {/* Trophy / celebration */}
                                     <div className="relative">
-                                        <div className="w-16 h-16 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center text-3xl">
-                                            🏆
-                                        </div>
-                                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#22c55e] flex items-center justify-center">
-                                            <span className="text-[10px]">✓</span>
-                                        </div>
+                                        <div className="w-16 h-16 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center text-3xl">🏆</div>
+                                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#22c55e] flex items-center justify-center"><span className="text-[10px]">✓</span></div>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-[#22c55e] text-[11px] font-black uppercase tracking-widest">¡Excelente trabajo!</p>
                                         <p className="text-gray-600 text-[9px] font-bold uppercase tracking-widest mt-1">No hay avisos en riesgo</p>
                                     </div>
                                     <div className="w-full bg-[#22c55e]/5 border border-[#22c55e]/10 rounded-xl px-4 py-3 text-center">
-                                        <p className="text-[#22c55e]/70 text-[8px] font-bold uppercase tracking-widest leading-relaxed">
-                                            Todas tus publicaciones están en rotación normal · Seguí así 💪
-                                        </p>
+                                        <p className="text-[#22c55e]/70 text-[8px] font-bold uppercase tracking-widest leading-relaxed">Todas tus publicaciones están en rotación normal · Seguí así 💪</p>
                                     </div>
                                 </div>
                             ) : (
@@ -1188,16 +1134,10 @@ export default function DashboardPage() {
                                         <div key={v.id} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
                                             <div className="flex items-start justify-between gap-2 mb-1.5">
                                                 <div className="flex-1 min-w-0">
-                                                    <span className="text-white text-[11px] font-black uppercase truncate block">
-                                                        {v.marca || v.brand} {v.modelo || v.model}
-                                                    </span>
-                                                    {/* Problem badge */}
+                                                    <span className="text-white text-[11px] font-black uppercase truncate block">{v.marca || v.brand} {v.modelo || v.model}</span>
                                                     <div className="flex items-center gap-1.5 mt-1">
                                                         <span className="text-[10px]">{v.problemIcon}</span>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest"
-                                                            style={{ color: v.problemColor }}>
-                                                            {v.problema}
-                                                        </span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: v.problemColor }}>{v.problema}</span>
                                                         <span className="text-gray-700 text-[9px]">·</span>
                                                         <span className="text-red-400 text-[9px] font-bold">{v.diasEnStock} días</span>
                                                     </div>
@@ -1207,19 +1147,15 @@ export default function DashboardPage() {
                                                     Optimizar
                                                 </button>
                                             </div>
-                                            {/* Mini stats */}
                                             <div className="flex gap-3">
                                                 <span className="text-[8px] text-gray-600 font-bold">👁 {v.mockVisitas} vistas</span>
                                                 <span className="text-[8px] text-gray-600 font-bold">💬 {v.mockConsultas} consultas</span>
-                                                <span className="text-[8px] text-gray-600 font-bold">
-                                                    {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.price || v.pv || 0).toLocaleString('es-AR')}
-                                                </span>
+                                                <span className="text-[8px] text-gray-600 font-bold">{v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.price || v.pv || 0).toLocaleString('es-AR')}</span>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             )}
-
                             {avisosEnhanced.length > 0 && (
                                 <div className="px-5 py-3 border-t border-white/5 flex justify-between items-center">
                                     <span className="text-gray-600 text-[8px] font-bold uppercase tracking-widest">Inmovilizado</span>
@@ -1241,8 +1177,6 @@ export default function DashboardPage() {
                             <BarChart3 className="text-blue-400 w-5 h-5 flex-shrink-0" />
                         </div>
                         <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">Distribución de ventas por categoría · 2025</p>
-
-                        {/* Donut 20% bigger: 240px */}
                         <div className="flex justify-center flex-1">
                             <div className="relative" style={{ width: 240, height: 240 }}>
                                 <svg width={240} height={240} style={{ overflow: 'visible' }}>
@@ -1286,8 +1220,6 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Tick-bar legend — each category gets a row of ticks like inventario rings */}
                         <div className="flex flex-col gap-2 border-t border-white/5 pt-3 mt-2">
                             {MARKET_DATA.map((item, i) => {
                                 const isActive = activeIndex === i;
@@ -1301,27 +1233,16 @@ export default function DashboardPage() {
                                         onMouseEnter={() => setActiveIndex(i)}
                                         onMouseLeave={() => setActiveIndex(null)}
                                     >
-                                        {/* Label */}
                                         <span className="text-[9px] font-black uppercase w-16 flex-shrink-0 transition-colors duration-200"
-                                            style={{ color: isActive ? '#fff' : '#6b7280' }}>
-                                            {item.label}
-                                        </span>
-                                        {/* Tick bars */}
+                                            style={{ color: isActive ? '#fff' : '#6b7280' }}>{item.label}</span>
                                         <div className="flex gap-[3px] flex-1">
                                             {Array.from({ length: TOTAL_TICKS }, (_, ti) => {
                                                 const lit = ti < litTicks;
-                                                // degradé from dark to bright of item color
-                                                const f = litTicks > 0 ? ti / litTicks : 0;
-                                                const base = parseInt(item.color.slice(1,3),16);
-                                                const bg = lit
-                                                    ? item.color
-                                                    : 'rgba(255,255,255,0.06)';
                                                 return (
-                                                    <div key={ti}
-                                                        className="flex-1 rounded-sm transition-all duration-200"
+                                                    <div key={ti} className="flex-1 rounded-sm transition-all duration-200"
                                                         style={{
                                                             height: 10,
-                                                            background: bg,
+                                                            background: lit ? item.color : 'rgba(255,255,255,0.06)',
                                                             opacity: lit ? (0.4 + 0.6 * (ti / Math.max(litTicks - 1, 1))) : 1,
                                                             boxShadow: lit && isActive ? `0 0 6px ${item.color}88` : 'none',
                                                         }}
@@ -1329,11 +1250,8 @@ export default function DashboardPage() {
                                                 );
                                             })}
                                         </div>
-                                        {/* % */}
                                         <span className="text-[13px] font-black w-9 text-right flex-shrink-0 transition-colors duration-200"
-                                            style={{ color: isActive ? item.color : '#e2e8f0' }}>
-                                            {item.pct}%
-                                        </span>
+                                            style={{ color: isActive ? item.color : '#e2e8f0' }}>{item.pct}%</span>
                                     </div>
                                 );
                             })}
@@ -1353,44 +1271,60 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="bg-[#0b1114] min-h-screen w-full pt-32 pb-10 px-4 md:px-8 overflow-y-auto font-sans">
-            <div className="max-w-[1600px] mx-auto space-y-6">
+        <div className="bg-[#0b1114] min-h-screen w-full font-sans">
 
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div>
-                        <h2 className="text-white text-2xl font-black uppercase tracking-tighter">Panel de Control</h2>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Bienvenido, {userName || 'Vendedor'}</p>
+            {/* ── SUBHEADER FIJO ── */}
+            <style>{`@font-face { font-family: 'Genos'; src: url('/fonts/genos/Genos-VariableFont_wght.ttf') format('truetype'); }`}</style>
+            <div className="fixed top-[100px] lg:top-[80px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 px-4 py-3 lg:h-20 lg:py-0 flex items-center justify-center">
+                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-2">
+
+                    {/* Desktop: Dashboard + bienvenida | Mobile: fila Dashboard + bienvenida */}
+                    <div className="flex items-center justify-center gap-2">
+                        <span
+                            style={{ fontFamily: 'Genos', fontWeight: 300, letterSpacing: '4px', fontSize: '14px' }}
+                            className="text-white uppercase opacity-40 whitespace-nowrap"
+                        >
+                            Dashboard
+                        </span>
+                        <span className="text-white/40 text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+                            · {userName || 'Vendedor'}
+                        </span>
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    {/* Mobile: Editar + Plan en fila | Desktop: misma fila a la derecha */}
+                    <div className="flex items-center justify-center gap-2">
                         <button
                             onClick={() => setEditMode(e => !e)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
                                 editMode
                                     ? 'border-[#288b55]/40 bg-[#288b55]/10 text-[#288b55]'
                                     : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
                             }`}
                         >
-                            {editMode ? <><Check size={14} /> Listo</> : <><Settings size={14} /> Editar Dashboard</>}
+                            {editMode ? <><Check size={13} /> Listo</> : <><Settings size={13} /> Editar</>}
                         </button>
                         {editMode && (
                             <button onClick={resetLayout}
-                                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
-                                <X size={12} /> Resetear
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+                                <X size={11} /> Resetear
                             </button>
                         )}
-                        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${
                             userPlan === 'VIP' ? 'border-blue-400/20 bg-blue-400/5 text-blue-400' :
                             userPlan === 'PRO' ? 'border-yellow-500/20 bg-yellow-500/5 text-yellow-500' :
                             'border-white/10 bg-white/5 text-slate-400'
                         }`}>
-                            {userPlan === 'VIP' ? <Crown size={16} /> : userPlan === 'PRO' ? <Zap size={16} /> : <Shield size={16} />}
+                            {userPlan === 'VIP' ? <Crown size={14} /> : userPlan === 'PRO' ? <Zap size={14} /> : <Shield size={14} />}
                             <span className="text-[10px] font-black uppercase tracking-widest">Plan {userPlan}</span>
                         </div>
                     </div>
-                </div>
 
-                {/* KPIs drag & drop */}
+                </div>
+            </div>
+
+        <div className="pt-[200px] lg:pt-44 pb-10 px-4 md:px-8 overflow-y-auto">
+            <div className="max-w-[1600px] mx-auto space-y-6">
+
                 <DndContext sensors={kpiSensors} collisionDetection={closestCenter} onDragEnd={(e) => {
                     if (e.active.id !== e.over?.id) {
                         setKpiItems(prev => {
@@ -1407,7 +1341,6 @@ export default function DashboardPage() {
                     </SortableContext>
                 </DndContext>
 
-                {/* Edit mode hint */}
                 {editMode && (
                     <div className="flex items-center gap-2 px-4 py-2 bg-[#288b55]/10 border border-[#288b55]/20 rounded-xl">
                         <GripVertical size={14} className="text-[#288b55]" />
@@ -1417,7 +1350,6 @@ export default function DashboardPage() {
                     </div>
                 )}
 
-                {/* Draggable cards grid */}
                 <DndContext sensors={cardSensors} collisionDetection={rectIntersection} onDragEnd={handleCardDragEnd}>
                     <SortableContext items={layout.map(c => c.id)} strategy={rectSortingStrategy}>
                         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 auto-rows-auto">
@@ -1429,8 +1361,8 @@ export default function DashboardPage() {
                         </div>
                     </SortableContext>
                 </DndContext>
-
             </div>
+        </div>
         </div>
     );
 }

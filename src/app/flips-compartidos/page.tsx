@@ -208,8 +208,31 @@ export default function FlipsCompartidosPage() {
     const receivedPaged = paginate(receivedFlips, receivedPage);
     const sentPaged = paginate(sentFlips, sentPage);
 
+    // Pendientes: recibidas sin responder + enviadas pendientes
+    const pendingCount = receivedFlips.filter(f => f.status === 'pending').length + sentFlips.filter(f => f.status === 'pending').length;
+
     return (
-        <div className="min-h-screen bg-[#f8fafc] pb-28 pt-28 font-sans text-slate-800 text-left">
+        <div className="min-h-screen bg-[#f8fafc] pb-[200px] pt-44 font-sans text-slate-800 text-left">
+
+            {/* ── SUBHEADER FIJO ── */}
+            <style>{`@font-face { font-family: 'Genos'; src: url('/fonts/genos/Genos-VariableFont_wght.ttf') format('truetype'); }`}</style>
+            <div className="fixed top-[90px] lg:top-[80px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-3 py-5 lg:h-20 lg:pt-2">
+                <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-1.9">
+                    <div className="flex items-center gap-3">
+                        <span
+                            style={{ fontFamily: 'Genos', fontWeight: 300, letterSpacing: '4px', fontSize: '14px' }}
+                            className="text-white uppercase opacity-40"
+                        >
+                            Flips Compartidos
+                        </span>
+                        {pendingCount > 0 && (
+                            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black bg-[#f59e0b] text-white">
+                                {pendingCount}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             {/* Modal detalle vehículo */}
             {selectedVehicle && (() => {

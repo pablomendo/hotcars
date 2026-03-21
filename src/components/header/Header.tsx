@@ -85,6 +85,8 @@ export default function Header() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
     const [unreadMessages, setUnreadMessages] = useState(0);
+    const [unreadQuestions, setUnreadQuestions] = useState(0);
+    const [ticketsBuscados, setTicketsBuscados] = useState(0);
     const [activeCategory, setActiveCategory] = useState('todas');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
@@ -139,40 +141,47 @@ export default function Header() {
     };
 
     const fetchNotifications = useCallback(async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-        const { count } = await supabase
+        const { data: unreadData } = await supabase
             .from('notifications')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', session.user.id)
-            .eq('is_read', false);
-        setUnreadCount(count || 0);
-
-        const { data: allUnread } = await supabase
-            .from('notifications')
-            .select('category')
-            .eq('user_id', session.user.id)
+            .select('id, category')
+            .eq('user_id', user.id)
             .eq('is_read', false);
 
-        if (allUnread) {
-            const counts: Record<string, number> = {};
-            allUnread.forEach((n: any) => { counts[n.category] = (counts[n.category] || 0) + 1; });
-            setCategoryCounts(counts);
-        }
+        const unreadList = unreadData || [];
+        setUnreadCount(unreadList.length);
 
-        let query = supabase.from('notifications').select('*').eq('user_id', session.user.id);
+        const counts: Record<string, number> = {};
+        unreadList.forEach((n: any) => { counts[n.category] = (counts[n.category] || 0) + 1; });
+        setCategoryCounts(counts);
+
+        let query = supabase.from('notifications').select('*').eq('user_id', user.id);
         const cat = activeCategoryRef.current;
         if (cat !== 'todas') query = query.eq('category', cat);
         const { data } = await query.order('created_at', { ascending: false });
         setNotifications(data || []);
 
-        const { count: msgCount } = await supabase
+        const { data: msgData } = await supabase
             .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('receiver_user_id', session.user.id)
+            .select('id')
+            .eq('receiver_user_id', user.id)
             .eq('is_read', false);
-        setUnreadMessages(msgCount || 0);
+        setUnreadMessages(msgData?.length || 0);
+
+        const { data: qData } = await supabase
+            .from('consultas_publicaciones')
+            .select('id')
+            .eq('owner_id', user.id)
+            .is('respuesta', null);
+        setUnreadQuestions(qData?.length || 0);
+
+        const { data: tData } = await supabase
+            .from('tickets_busqueda')
+            .select('id')
+            .eq('status', 'activo');
+        setTicketsBuscados(tData?.length ?? 0);
     }, []);
 
     useEffect(() => { fetchNotifications(); }, [activeCategory, fetchNotifications]);
@@ -212,10 +221,45 @@ export default function Header() {
             })
             .subscribe();
 
+        const questionsChannel = supabase.channel('questions_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'consultas_publicaciones' }, fetchNotifications)
+            .subscribe();
+
         const interval = setInterval(fetchNotifications, 15000);
 
-        return () => { subscription.unsubscribe(); supabase.removeChannel(channel); supabase.removeChannel(favChannel); clearInterval(interval); };
+        return () => {
+            subscription.unsubscribe();
+            supabase.removeChannel(channel);
+            supabase.removeChannel(favChannel);
+            supabase.removeChannel(questionsChannel);
+            clearInterval(interval);
+        };
     }, [pathname, fetchNotifications, fetchFavorites]);
+
+    // ── Marca como leídas todas las notificaciones de una categoría ───────────
+    const handleMarkCategoryAsRead = useCallback(async (categoryId: string) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        let query = supabase
+            .from('notifications')
+            .update({ is_read: true, read_at: new Date().toISOString() })
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+
+        if (categoryId !== 'todas') {
+            query = query.eq('category', categoryId);
+        }
+
+        await query;
+        await fetchNotifications();
+    }, [fetchNotifications]);
+
+    // ── Cambia pestaña y marca como leídas las de esa categoría ──────────────
+    const handleCategoryChange = useCallback((categoryId: string) => {
+        setActiveCategory(categoryId);
+        handleMarkCategoryAsRead(categoryId);
+    }, [handleMarkCategoryAsRead]);
 
     const handleNotificationClick = async (notification: any) => {
         if (!notification.is_read) {
@@ -244,16 +288,17 @@ export default function Header() {
     };
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false);
-            if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) setIsNotificationsOpen(false);
-            if (favoritesRef.current && !favoritesRef.current.contains(event.target as Node) &&
-                favoritesRefMobile.current && !favoritesRefMobile.current.contains(event.target as Node)) {
+        const handleOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (userMenuRef.current && !userMenuRef.current.contains(target)) setIsUserMenuOpen(false);
+            if (notificationsRef.current && !notificationsRef.current.contains(target)) setIsNotificationsOpen(false);
+            if (favoritesRef.current && !favoritesRef.current.contains(target) &&
+                favoritesRefMobile.current && !favoritesRefMobile.current.contains(target)) {
                 setIsFavoritesOpen(false);
             }
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('mousedown', handleOutside);
+        return () => document.removeEventListener('mousedown', handleOutside);
     }, []);
 
     return (
@@ -296,15 +341,24 @@ export default function Header() {
                                 {unreadCount > 0 && <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">{unreadCount > 9 ? '+9' : unreadCount}</span>}
                             </button>
                             {isNotificationsOpen && (
-                                <NotificationsPanel
-                                    notifications={notifications}
-                                    unreadCount={unreadCount}
-                                    activeCategory={activeCategory}
-                                    categoryCounts={categoryCounts}
-                                    onCategoryChange={setActiveCategory}
-                                    onNotificationClick={handleNotificationClick}
-                                    formatRelativeDate={formatRelativeDate}
-                                />
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-[105]"
+                                        onTouchStart={() => setIsNotificationsOpen(false)}
+                                        onClick={() => setIsNotificationsOpen(false)}
+                                    />
+                                    <div className="relative z-[110]">
+                                        <NotificationsPanel
+                                            notifications={notifications}
+                                            unreadCount={unreadCount}
+                                            activeCategory={activeCategory}
+                                            categoryCounts={categoryCounts}
+                                            onCategoryChange={handleCategoryChange}
+                                            onNotificationClick={handleNotificationClick}
+                                            formatRelativeDate={formatRelativeDate}
+                                        />
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>
@@ -322,7 +376,8 @@ export default function Header() {
                                 <NavLink href="/dashboard/web">Mi Web</NavLink>
                                 <NavLink href="/flips-compartidos" badge={categoryCounts['inventory']}>Flips Compartidos</NavLink>
                                 <NavLink href="/mensajes" badge={unreadMessages}>Mensajes</NavLink>
-                                <NavLink href="/searched">Vehículos Buscados</NavLink>
+                                <NavLink href="/preguntas" badge={unreadQuestions}>Preguntas</NavLink>
+                                <NavLink href="/searched" badge={ticketsBuscados}>Vehículos Buscados</NavLink>
                                 <NavLink href="/potencial-hotcars">FAQ</NavLink>
                             </>
                         ) : (
@@ -367,7 +422,7 @@ export default function Header() {
                                             unreadCount={unreadCount}
                                             activeCategory={activeCategory}
                                             categoryCounts={categoryCounts}
-                                            onCategoryChange={setActiveCategory}
+                                            onCategoryChange={handleCategoryChange}
                                             onNotificationClick={handleNotificationClick}
                                             formatRelativeDate={formatRelativeDate}
                                         />
@@ -396,7 +451,7 @@ export default function Header() {
             </header>
 
             {isMounted && isMobileMenuOpen && (
-                <MobilePanelMenu isLoggedIn={isLoggedIn} userData={userData} onClose={() => setIsMobileMenuOpen(false)} onLogout={handleLogout} />
+                <MobilePanelMenu isLoggedIn={isLoggedIn} userData={userData} onClose={() => setIsMobileMenuOpen(false)} onLogout={handleLogout} ticketsBuscados={ticketsBuscados} />
             )}
 
             {isMounted && (

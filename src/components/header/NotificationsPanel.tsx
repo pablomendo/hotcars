@@ -6,6 +6,7 @@ const CATEGORIES = [
     { id: 'todas', label: 'Todas' },
     { id: 'inventory', label: 'Flips' },
     { id: 'message', label: 'Mensajes' },
+    { id: 'question', label: 'Preguntas' },
     { id: 'system', label: 'Sistema' },
 ];
 
@@ -20,8 +21,18 @@ type Props = {
 };
 
 export default function NotificationsPanel({ notifications, unreadCount, activeCategory, categoryCounts = {}, onCategoryChange, onNotificationClick, formatRelativeDate }: Props) {
+    const stopAll = (e: React.SyntheticEvent) => {
+        e.stopPropagation();
+        e.nativeEvent.stopImmediatePropagation();
+    };
+
     return (
-        <div className="absolute right-0 mt-2 w-80 bg-[#1a2e38] border border-white/10 rounded-xl shadow-xl z-[110] animate-in fade-in zoom-in duration-200 overflow-hidden">
+        <div
+            className="absolute right-0 mt-2 w-80 bg-[#1a2e38] border border-white/10 rounded-xl shadow-xl z-[110] animate-in fade-in zoom-in duration-200 overflow-hidden"
+            onPointerDown={stopAll}
+            onTouchStart={stopAll}
+            onClick={stopAll}
+        >
             <div className="px-4 py-3 border-b border-white/5 flex flex-col gap-2 bg-black/20">
                 <div className="flex justify-between items-center">
                     <h3 className="text-sm font-bold">Notificaciones</h3>
@@ -34,7 +45,9 @@ export default function NotificationsPanel({ notifications, unreadCount, activeC
                         return (
                             <button
                                 key={cat.id}
-                                onClick={(e) => { e.stopPropagation(); onCategoryChange(cat.id); }}
+                                onPointerDown={stopAll}
+                                onTouchStart={stopAll}
+                                onClick={(e) => { stopAll(e); onCategoryChange(cat.id); }}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[9px] font-bold transition-all whitespace-nowrap cursor-pointer ${isActive ? 'bg-[#00984a] text-white shadow-lg shadow-[#00984a]/20' : 'bg-white/5 text-slate-400 hover:text-white'}`}
                             >
                                 {cat.label}
@@ -53,13 +66,23 @@ export default function NotificationsPanel({ notifications, unreadCount, activeC
                     notifications.map((n, index) => (
                         <button
                             key={n.id}
-                            onClick={(e) => { e.stopPropagation(); onNotificationClick(n); }}
+                            onPointerDown={stopAll}
+                            onTouchStart={stopAll}
+                            onClick={(e) => { stopAll(e); onNotificationClick(n); }}
                             style={{ animationDelay: `${index * 75}ms` }}
                             className={`w-full text-left p-3 rounded-lg border border-white/5 cursor-pointer hover:border-[#00984a]/30 hover:bg-[#134e4d]/10 transition-all relative animate-in slide-in-from-top-2 duration-300 fill-mode-both ${!n.is_read ? 'bg-white/[0.04] shadow-sm' : 'bg-transparent opacity-80'}`}
                         >
                             <div className="flex justify-between items-start mb-1">
-                                <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded ${n.category === 'inventory' ? 'bg-blue-500/20 text-blue-400' : n.category === 'message' ? 'bg-[#00984a]/20 text-[#00984a]' : 'bg-slate-500/20 text-slate-400'}`}>
-                                    {n.category === 'inventory' ? 'Flip' : n.category === 'message' ? 'Mensaje' : 'Sistema'}
+                                <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                                    n.category === 'inventory' ? 'bg-blue-500/20 text-blue-400' :
+                                    n.category === 'message' ? 'bg-[#00984a]/20 text-[#00984a]' :
+                                    n.category === 'question' ? 'bg-purple-500/20 text-purple-400' :
+                                    'bg-slate-500/20 text-slate-400'
+                                }`}>
+                                    {n.category === 'inventory' ? 'Flip' :
+                                     n.category === 'message' ? 'Mensaje' :
+                                     n.category === 'question' ? 'Pregunta' :
+                                     'Sistema'}
                                 </span>
                                 <p className="text-[9px] text-slate-500 font-medium">{formatRelativeDate(n.created_at)}</p>
                             </div>
@@ -72,7 +95,13 @@ export default function NotificationsPanel({ notifications, unreadCount, activeC
                     <div className="px-4 py-8 text-center text-slate-500 text-xs">No hay notificaciones en esta categoría</div>
                 )}
             </div>
-            <Link href="/notifications" className="block w-full py-3 text-center text-[10px] font-bold text-[#00984a] hover:bg-white/5 border-t border-white/5 transition-colors uppercase tracking-wider">
+            <Link
+                href="/notifications"
+                onPointerDown={stopAll}
+                onTouchStart={stopAll}
+                onClick={stopAll}
+                className="block w-full py-3 text-center text-[10px] font-bold text-[#00984a] hover:bg-white/5 border-t border-white/5 transition-colors uppercase tracking-wider"
+            >
                 Ver todas
             </Link>
         </div>

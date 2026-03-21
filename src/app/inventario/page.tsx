@@ -263,6 +263,32 @@ export default function InventoryPage() {
         }
     };
 
+    // ── Helper notificaciones de sistema ─────────────────────────────────────
+    const insertNotification = async (
+        targetUserId: string,
+        type: string,
+        title: string,
+        body: string,
+        entityId: string,
+        actionUrl: string = '/inventario'
+    ) => {
+        try {
+            await supabase.from('notifications').insert({
+                user_id: targetUserId,
+                type,
+                category: 'system',
+                title,
+                body,
+                related_entity_type: 'inventario',
+                related_entity_id: entityId,
+                action_url: actionUrl,
+                is_read: false,
+            });
+        } catch (e) {
+            console.warn('notif insert error', e);
+        }
+    };
+
     const handleSaveCliente = async () => {
         if (!selectedAuto?.id) return;
         setIsSavingCliente(true);
@@ -452,6 +478,14 @@ export default function InventoryPage() {
                 if (!data.ok) {
                     if (data.error === 'limite_alcanzado') {
                         setShowLimitModal(true);
+                        await insertNotification(
+                            userId!,
+                            'limite_alcanzado',
+                            'Límite de plan alcanzado',
+                            `Tu plan ${userPlan} permite ${data.maximo} unidades activas. Liberá cupo o mejorá tu plan.`,
+                            id,
+                            '/planes'
+                        );
                     }
                     return;
                 }
@@ -463,10 +497,27 @@ export default function InventoryPage() {
                 setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
                 if (selectedAuto?.id === id) setSelectedAuto((prev: any) => ({ ...prev, ...updateData }));
 
+                if (action === 'RENEW') {
+                    await insertNotification(
+                        userId!,
+                        'publicacion_renovada',
+                        'Publicación renovada',
+                        `Tu ${item.brand} ${item.model} fue renovado por 30 días más.`,
+                        id
+                    );
+                }
+
                 setTimeout(() => fetchInventory(userId || undefined), 500);
                 return;
             } else if (action === 'PAUSE') {
                 updateData = { inventory_status: 'pausado', show_on_web: false };
+                await insertNotification(
+                    userId!,
+                    'publicacion_pausada',
+                    'Publicación pausada',
+                    `Tu ${item.brand} ${item.model} fue pausado y ya no aparece en la web.`,
+                    id
+                );
             } else if (action === 'RESERVE') {
                 updateData = { commercial_status: 'reservado' };
             } else if (action === 'SELL') {
@@ -489,6 +540,13 @@ export default function InventoryPage() {
                     ganancia: item.prices?.myProfit || 0,
                     sold_at: soldAt,
                 });
+                await insertNotification(
+                    userId!,
+                    'venta_registrada',
+                    'Venta registrada',
+                    `¡Felicitaciones! Tu ${item.brand} ${item.model} fue marcado como vendido.`,
+                    id
+                );
             } else if (action === 'SET_AVAILABLE') {
                 // ── Valida límite de plan antes de reactivar ──
                 const { data: rpcData, error: rpcError } = await supabase.rpc('activar_vehiculo_inventario', {
@@ -502,6 +560,14 @@ export default function InventoryPage() {
                 if (!rpcData.ok) {
                     if (rpcData.error === 'limite_alcanzado') {
                         setShowLimitModal(true);
+                        await insertNotification(
+                            userId!,
+                            'limite_alcanzado',
+                            'Límite de plan alcanzado',
+                            `Tu plan ${userPlan} permite ${rpcData.maximo} unidades activas.`,
+                            id,
+                            '/planes'
+                        );
                     }
                     return;
                 }
@@ -766,6 +832,7 @@ export default function InventoryPage() {
                         {filtered.map((v) => {
                             const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
                             const isProcessing = processingId === v.id;
+                            const isVendido = v.commercial_status === 'vendido';
                             return (
                                 <div key={v.id} onClick={() => !isProcessing && handleOpenModal(v)} className={`bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden flex flex-col group transition-all hover:border-white/20 cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
                                     <div className="relative w-full aspect-[16/10] bg-slate-900 overflow-hidden">
@@ -784,13 +851,13 @@ export default function InventoryPage() {
                                                 <Zap size={8} fill="currentColor" /> Flip Compartido
                                             </div>
                                         )}
-                                        {v.isProprio && isExpired && (
+                                        {v.isProprio && isExpired && !isVendido && (
                                             <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 rounded text-[9px] font-bold text-white z-10">VENCIDA</div>
                                         )}
                                         {v.commercial_status === 'reservado' && (
                                             <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-600 rounded text-[9px] font-bold text-white z-10">RESERVADO</div>
                                         )}
-                                        {v.commercial_status === 'vendido' && (
+                                        {isVendido && (
                                             <div className="absolute top-2 right-2 px-2 py-0.5 bg-green-600 rounded text-[9px] font-bold text-white z-10">VENDIDO</div>
                                         )}
                                     </div>
@@ -839,8 +906,9 @@ export default function InventoryPage() {
                                         >
                                             <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
                                         </button>
-                                        
-                                        {isExpired ? (
+
+                                        {/* ── FIX: ocultar Renovar/Activar/Pausar si está vendido ── */}
+                                        {!isVendido && (isExpired ? (
                                             <button 
                                                 disabled={!v.isProprio}
                                                 onClick={() => handleAction(v, 'RENEW')} 
@@ -849,26 +917,24 @@ export default function InventoryPage() {
                                                 <RefreshCcw size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Renovar</span>
                                             </button>
                                         ) : (
-                                            <>
-                                                {v.inventory_status === 'pausado' ? (
-                                                    <button 
-                                                        disabled={!v.isProprio}
-                                                        onClick={() => handleAction(v, 'ACTIVATE')} 
-                                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-green-500 bg-green-500/5'}`}
-                                                    >
-                                                        <Play size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Activar</span>
-                                                    </button>
-                                                ) : (
-                                                    <button 
-                                                        disabled={!v.isProprio}
-                                                        onClick={() => handleAction(v, 'PAUSE')} 
-                                                        className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-yellow-500'}`}
-                                                    >
-                                                        <PauseCircle size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
-                                                    </button>
-                                                )}
-                                            </>
-                                        )}
+                                            v.inventory_status === 'pausado' ? (
+                                                <button 
+                                                    disabled={!v.isProprio}
+                                                    onClick={() => handleAction(v, 'ACTIVATE')} 
+                                                    className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-green-500 bg-green-500/5'}`}
+                                                >
+                                                    <Play size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Activar</span>
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    disabled={!v.isProprio}
+                                                    onClick={() => handleAction(v, 'PAUSE')} 
+                                                    className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-yellow-500'}`}
+                                                >
+                                                    <PauseCircle size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
+                                                </button>
+                                            )
+                                        ))}
 
                                         <button 
                                             disabled={!v.isProprio}
@@ -880,8 +946,8 @@ export default function InventoryPage() {
 
                                         <button 
                                             disabled={!v.isProprio}
-                                            onClick={() => handleAction(v, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} 
-                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : (v.commercial_status === 'vendido' ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]')}`}
+                                            onClick={() => handleAction(v, isVendido ? 'SET_AVAILABLE' : 'SELL')} 
+                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : (isVendido ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]')}`}
                                         >
                                             <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
                                         </button>
@@ -913,6 +979,7 @@ export default function InventoryPage() {
                                 {filtered.map((v) => {
                                     const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
                                     const isProcessing = processingId === v.id;
+                                    const isVendido = v.commercial_status === 'vendido';
                                     return (
                                         <tr key={v.id} onClick={() => !isProcessing && handleOpenModal(v)} className={`hover:bg-white/[0.02] transition-colors group cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
                                             <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2 text-left">
@@ -923,7 +990,7 @@ export default function InventoryPage() {
                                                         <Zap size={7} fill="currentColor"/> FLIP
                                                     </span>
                                                 )}
-                                                {v.isProprio && isExpired && <span className="text-[8px] bg-red-600 px-1 rounded text-white">VENCIDA</span>}
+                                                {v.isProprio && isExpired && !isVendido && <span className="text-[8px] bg-red-600 px-1 rounded text-white">VENCIDA</span>}
                                             </td>
                                             <td className="p-4 text-right font-mono opacity-50 text-[10px] uppercase">
                                                 {v.isProprio ? 'MÍO' : 'TERCERO'}
@@ -933,7 +1000,8 @@ export default function InventoryPage() {
                                             </td>
                                             <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-end gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
-                                                    {isExpired ? (
+                                                    {/* ── FIX: ocultar Renovar/Activar/Pausar si está vendido ── */}
+                                                    {!isVendido && (isExpired ? (
                                                         <button 
                                                             disabled={!v.isProprio}
                                                             onClick={() => handleAction(v, 'RENEW')} 
@@ -942,26 +1010,24 @@ export default function InventoryPage() {
                                                             <RefreshCcw size={14}/>
                                                         </button>
                                                     ) : (
-                                                        <>
-                                                            {v.inventory_status === 'pausado' ? (
-                                                                <button 
-                                                                    disabled={!v.isProprio}
-                                                                    onClick={() => handleAction(v, 'ACTIVATE')} 
-                                                                    className={`text-green-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
-                                                                >
-                                                                    <Play size={14}/>
-                                                                </button>
-                                                            ) : (
-                                                                <button 
-                                                                    disabled={!v.isProprio}
-                                                                    onClick={() => handleAction(v, 'PAUSE')} 
-                                                                    className={`text-yellow-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
-                                                                >
-                                                                    <PauseCircle size={14}/>
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    )}
+                                                        v.inventory_status === 'pausado' ? (
+                                                            <button 
+                                                                disabled={!v.isProprio}
+                                                                onClick={() => handleAction(v, 'ACTIVATE')} 
+                                                                className={`text-green-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                            >
+                                                                <Play size={14}/>
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                disabled={!v.isProprio}
+                                                                onClick={() => handleAction(v, 'PAUSE')} 
+                                                                className={`text-yellow-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                            >
+                                                                <PauseCircle size={14}/>
+                                                            </button>
+                                                        )
+                                                    ))}
                                                     <button 
                                                         disabled={!v.isProprio}
                                                         onClick={() => handleAction(v, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} 
@@ -971,8 +1037,8 @@ export default function InventoryPage() {
                                                     </button>
                                                     <button 
                                                         disabled={!v.isProprio}
-                                                        onClick={() => handleAction(v, v.commercial_status === 'vendido' ? 'SET_AVAILABLE' : 'SELL')} 
-                                                        className={`${v.commercial_status === 'vendido' ? 'text-green-500' : 'hover:text-[#22c55e]'} ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                        onClick={() => handleAction(v, isVendido ? 'SET_AVAILABLE' : 'SELL')} 
+                                                        className={`${isVendido ? 'text-green-500' : 'hover:text-[#22c55e]'} ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
                                                     >
                                                         <Check size={14}/>
                                                     </button>

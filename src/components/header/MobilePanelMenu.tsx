@@ -12,19 +12,25 @@ type Props = {
     userData: UserData;
     onClose: () => void;
     onLogout: () => void;
+    ticketsBuscados?: number;
 };
 
-function MobileNavLink({ href, children, onClose }: { href: string; children: React.ReactNode; onClose: () => void }) {
+function MobileNavLink({ href, children, onClose, badge }: { href: string; children: React.ReactNode; onClose: () => void; badge?: number }) {
     const pathname = usePathname();
     const isActive = pathname === href;
     return (
-        <Link href={href} onClick={onClose} className={`text-sm font-semibold px-4 py-2.5 rounded-lg transition-all ${isActive ? 'bg-[#134e4d] text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
-            {children}
+        <Link href={href} onClick={onClose} className={`flex items-center justify-between text-sm font-semibold px-4 py-2.5 rounded-lg transition-all ${isActive ? 'bg-[#134e4d] text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+            <span>{children}</span>
+            {badge && badge > 0 ? (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black bg-[#00984a] text-white">
+                    {badge > 99 ? '99+' : badge}
+                </span>
+            ) : null}
         </Link>
     );
 }
 
-export default function MobilePanelMenu({ isLoggedIn, userData, onClose, onLogout }: Props) {
+export default function MobilePanelMenu({ isLoggedIn, userData, onClose, onLogout, ticketsBuscados = 0 }: Props) {
     const router = useRouter();
     return (
         <div className="lg:hidden fixed inset-0 top-0 bg-[#12242e] z-[90] p-6 flex flex-col animate-in slide-in-from-left duration-300 pt-24 pb-24 overflow-y-auto">
@@ -45,7 +51,8 @@ export default function MobilePanelMenu({ isLoggedIn, userData, onClose, onLogou
                         <MobileNavLink href="/dashboard/web" onClose={onClose}>Mi Web</MobileNavLink>
                         <MobileNavLink href="/flips-compartidos" onClose={onClose}>Flips Compartidos</MobileNavLink>
                         <MobileNavLink href="/mensajes" onClose={onClose}>Mensajes</MobileNavLink>
-                        <MobileNavLink href="/searched" onClose={onClose}>Vehículos Buscados</MobileNavLink>
+                        <MobileNavLink href="/preguntas" onClose={onClose}>Preguntas</MobileNavLink>
+                        <MobileNavLink href="/searched" onClose={onClose} badge={ticketsBuscados}>Vehículos Buscados</MobileNavLink>
                         <MobileNavLink href="/perfil" onClose={onClose}>Configuración</MobileNavLink>
                         <button onClick={() => { onClose(); router.push('/potencial-hotcars'); }} className="text-sm font-semibold px-4 py-2.5 rounded-lg text-left text-slate-300 hover:text-white hover:bg-white/5 transition-all">✦ Potencial HotCars</button>
                     </div>
