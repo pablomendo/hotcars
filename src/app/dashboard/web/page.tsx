@@ -145,6 +145,20 @@ export default function MiWebPage() {
                 .maybeSingle();
 
             const isSubdomainChanging = current && current.subdomain !== config.subdomain;
+            
+            if (isSubdomainChanging) {
+                const { data: existing } = await supabase
+                    .from('web_configs')
+                    .select('user_id')
+                    .eq('subdomain', config.subdomain)
+                    .maybeSingle();
+
+                if (existing) {
+                    showFeedback('error', 'Subdominio no disponible', 'El nombre que elegiste ya está siendo usado por otra agencia. Probá con uno diferente.');
+                    return;
+                }
+            }
+
             let newChangeCount = current?.change_count || 0;
             const now = new Date();
             let subdomainToSave = config.subdomain;
@@ -865,7 +879,6 @@ export default function MiWebPage() {
                                     <button onClick={() => handleAction(v.id, { is_featured: !v.featured })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.featured ? 'text-yellow-500 bg-yellow-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}><Star size={13} className={v.featured && v.show ? "fill-yellow-500" : ""} /><span className="text-[7px] font-black uppercase tracking-tighter">Destacar</span></button>
                                     <button onClick={() => handleAction(v.id, { is_new: !v.isNew })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${v.show ? (v.isNew ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-white') : 'text-slate-600'}`}><Zap size={13} className={v.isNew && v.show ? "fill-blue-500" : ""} /><span className="text-[7px] font-black uppercase tracking-tighter">Nuevo</span></button>
                                     <button onClick={() => handleMoveUp(v.id)} disabled={index === 0} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === 0 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}><ChevronUp size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Subir</span></button>
-                                    <button onClick={() => handleMoveDown(v.id)} disabled={index === filtered.length - 1} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${index === filtered.length - 1 ? 'text-slate-700 cursor-not-allowed' : 'text-slate-500 hover:text-[#22c55e]'}`}><ChevronDown size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Bajar</span></button>
                                     <button onClick={() => handleAction(v.id, { show_on_web: !v.show })} className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.show ? 'text-blue-500 bg-blue-500/5' : 'text-slate-500 hover:text-[#22c55e]'}`}>{v.show ? <Eye size={13} /> : <EyeOff size={13} />}<span className="text-[7px] font-black uppercase tracking-tighter">{v.show ? 'Ocultar' : 'Mostrar'}</span></button>
                                 </div>
                             </div>
