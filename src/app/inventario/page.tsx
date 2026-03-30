@@ -26,21 +26,16 @@ export default function InventoryPage() {
     const [showLimitModal, setShowLimitModal] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
-    // --- modales confirm personalizados ---
     const [confirmDeletePropio, setConfirmDeletePropio] = useState<any>(null);
     const [confirmDeleteFlip, setConfirmDeleteFlip] = useState<any>(null);
-    // --------------------------------------
 
-    // --- mensaje al dueño (flip terceros) ---
     const [flipMessage, setFlipMessage] = useState('');
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [messageSent, setMessageSent] = useState(false);
-    // ----------------------------------------
 
     const clienteOriginalRef = useRef<any>(null);
     const consignatarioOriginalRef = useRef<any>(null);
 
-    // --- estado cliente_comprador ---
     const [clienteData, setClienteData] = useState<any>({
         nombre: '',
         dni: '',
@@ -53,9 +48,7 @@ export default function InventoryPage() {
     });
     const [isSavingCliente, setIsSavingCliente] = useState(false);
     const [clienteSaved, setClienteSaved] = useState(false);
-    // --------------------------------
 
-    // --- estado cliente_consignatario ---
     const [consignatarioData, setConsignatarioData] = useState<any>({
         nombre: '',
         dni: '',
@@ -68,7 +61,22 @@ export default function InventoryPage() {
     });
     const [isSavingConsignatario, setIsSavingConsignatario] = useState(false);
     const [consignatarioSaved, setConsignatarioSaved] = useState(false);
-    // ------------------------------------
+
+    // ── helpers de vencimiento ─────────────────────────────────────────────
+    const getExpiryStatus = (v: any) => {
+        if (!v.expires_at || !v.isProprio || v.commercial_status === 'vendido') {
+            return null;
+        }
+        const now = new Date();
+        const expiresAt = new Date(v.expires_at);
+        const msLeft = expiresAt.getTime() - now.getTime();
+        const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+
+        if (msLeft < 0) return { type: 'vencida', daysLeft: 0 };
+        if (daysLeft <= 7) return { type: 'por_vencer', daysLeft };
+        return null;
+    };
+    // ──────────────────────────────────────────────────────────────────────
 
     const hasUnsavedChanges = () => {
         const clienteChanged = clienteOriginalRef.current &&
@@ -134,7 +142,7 @@ export default function InventoryPage() {
                     await fetchInventory(user.id);
                 }
             } catch (err: any) {
-                console.error("Error en inicialización:", err.message);
+                console.error("Error en inicializacion:", err.message);
             } finally {
                 setIsLoading(false);
             }
@@ -144,8 +152,7 @@ export default function InventoryPage() {
 
         const channel = supabase
             .channel('inventory-db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {
-            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, () => {})
             .subscribe();
 
         return () => {
@@ -263,7 +270,6 @@ export default function InventoryPage() {
         }
     };
 
-    // ── Helper notificaciones de sistema ─────────────────────────────────────
     const insertNotification = async (
         targetUserId: string,
         type: string,
@@ -347,7 +353,6 @@ export default function InventoryPage() {
         }
     };
 
-    // NUEVO: enviar mensaje al dueño del flip
     const handleSendFlipMessage = async () => {
         if (!flipMessage.trim() || !selectedAuto || !userId) return;
         setIsSendingMessage(true);
@@ -367,7 +372,7 @@ export default function InventoryPage() {
                 type: 'mensaje_flip',
                 category: 'message',
                 title: 'Nuevo mensaje sobre un Flip',
-                body: `Tenés un mensaje sobre tu ${selectedAuto.brand} ${selectedAuto.model}.`,
+                body: `Tenes un mensaje sobre tu ${selectedAuto.brand} ${selectedAuto.model}.`,
                 related_entity_type: 'inventario',
                 related_entity_id: selectedAuto.id,
                 action_url: '/mensajes'
@@ -388,9 +393,8 @@ export default function InventoryPage() {
         setOpenSection(null);
         setClienteSaved(false);
         setConsignatarioSaved(false);
-        // NUEVO: reset estados mensaje
         setMessageSent(false);
-        setFlipMessage(`Hola, tengo un interesado en tu ${v.brand} ${v.model}. ¿Podemos coordinar una visita?`);
+        setFlipMessage(`Hola, tengo un interesado en tu ${v.brand} ${v.model}. Podemos coordinar una visita?`);
         clienteOriginalRef.current = null;
         consignatarioOriginalRef.current = null;
         if (v.isProprio) {
@@ -458,7 +462,7 @@ export default function InventoryPage() {
         }
 
         if (!item.isProprio) {
-            alert("Acceso denegado: Solo el dueño de la unidad puede modificar su estado comercial o de inventario.");
+            alert("Acceso denegado: Solo el dueno de la unidad puede modificar su estado comercial o de inventario.");
             return;
         }
 
@@ -481,8 +485,8 @@ export default function InventoryPage() {
                         await insertNotification(
                             userId!,
                             'limite_alcanzado',
-                            'Límite de plan alcanzado',
-                            `Tu plan ${userPlan} permite ${data.maximo} unidades activas. Liberá cupo o mejorá tu plan.`,
+                            'Limite de plan alcanzado',
+                            `Tu plan ${userPlan} permite ${data.maximo} unidades activas. Libera cupo o mejora tu plan.`,
                             id,
                             '/planes'
                         );
@@ -501,8 +505,8 @@ export default function InventoryPage() {
                     await insertNotification(
                         userId!,
                         'publicacion_renovada',
-                        'Publicación renovada',
-                        `Tu ${item.brand} ${item.model} fue renovado por 30 días más.`,
+                        'Publicacion renovada',
+                        `Tu ${item.brand} ${item.model} fue renovado por 30 dias mas.`,
                         id
                     );
                 }
@@ -514,14 +518,13 @@ export default function InventoryPage() {
                 await insertNotification(
                     userId!,
                     'publicacion_pausada',
-                    'Publicación pausada',
+                    'Publicacion pausada',
                     `Tu ${item.brand} ${item.model} fue pausado y ya no aparece en la web.`,
                     id
                 );
             } else if (action === 'RESERVE') {
                 updateData = { commercial_status: 'reservado' };
             } else if (action === 'SELL') {
-                // ── FIX: registra inventory_status, sold_at e inserta en ventas ──
                 const soldAt = new Date().toISOString();
                 updateData = {
                     commercial_status: 'vendido',
@@ -544,11 +547,10 @@ export default function InventoryPage() {
                     userId!,
                     'venta_registrada',
                     'Venta registrada',
-                    `¡Felicitaciones! Tu ${item.brand} ${item.model} fue marcado como vendido.`,
+                    `Felicitaciones! Tu ${item.brand} ${item.model} fue marcado como vendido.`,
                     id
                 );
             } else if (action === 'SET_AVAILABLE') {
-                // ── Valida límite de plan antes de reactivar ──
                 const { data: rpcData, error: rpcError } = await supabase.rpc('activar_vehiculo_inventario', {
                     p_auto_id: id,
                     p_user_id: userId,
@@ -563,7 +565,7 @@ export default function InventoryPage() {
                         await insertNotification(
                             userId!,
                             'limite_alcanzado',
-                            'Límite de plan alcanzado',
+                            'Limite de plan alcanzado',
                             `Tu plan ${userPlan} permite ${rpcData.maximo} unidades activas.`,
                             id,
                             '/planes'
@@ -634,6 +636,43 @@ export default function InventoryPage() {
 
     if (isLoading) return <div className="flex h-screen w-full items-center justify-center bg-[#0b1114]"><Loader2 className="h-10 w-10 animate-spin text-[#22c55e]" /></div>;
 
+    // ── Badge de vencimiento reutilizable ──────────────────────────────────
+    const ExpiryBadge = ({ v }: { v: any }) => {
+        const expiry = getExpiryStatus(v);
+        if (!expiry) return null;
+
+        if (expiry.type === 'vencida') {
+            return (
+                <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 rounded text-[9px] font-bold text-white z-10">
+                    VENCIDA
+                </div>
+            );
+        }
+        if (expiry.type === 'por_vencer') {
+            return (
+                <div className="absolute top-2 left-2 px-2 py-0.5 bg-yellow-500 rounded text-[9px] font-bold text-white z-10">
+                    VENCE EN {expiry.daysLeft}D
+                </div>
+            );
+        }
+        return null;
+    };
+
+    // Badge inline para vista lista
+    const ExpiryBadgeInline = ({ v }: { v: any }) => {
+        const expiry = getExpiryStatus(v);
+        if (!expiry) return null;
+
+        if (expiry.type === 'vencida') {
+            return <span className="text-[8px] bg-red-600 px-1 rounded text-white">VENCIDA</span>;
+        }
+        if (expiry.type === 'por_vencer') {
+            return <span className="text-[8px] bg-yellow-500 px-1 rounded text-white">VENCE {expiry.daysLeft}D</span>;
+        }
+        return null;
+    };
+    // ──────────────────────────────────────────────────────────────────────
+
     return (
         <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans text-left">
             <style jsx global>{`
@@ -644,16 +683,16 @@ export default function InventoryPage() {
                 button { cursor: pointer; }
             `}</style>
 
-            {/* Modal límite de plan */}
+            {/* Modal limite de plan */}
             {showLimitModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-center">
                     <div className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
                         <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-8 text-orange-600 border border-orange-100">
                             <AlertCircle size={48} strokeWidth={2.5} />
                         </div>
-                        <h3 className="text-2xl font-black uppercase text-[#1e293b] mb-4">Límite alcanzado</h3>
+                        <h3 className="text-2xl font-black uppercase text-[#1e293b] mb-4">Limite alcanzado</h3>
                         <p className="text-gray-500 text-[15px] leading-relaxed mb-10 font-medium text-center">
-                            Tu plan actual no permite sumar más unidades activas. <br/> Liberá cupo o actualizá tu suscripción ahora.
+                            Tu plan actual no permite sumar mas unidades activas. <br/> Libera cupo o actualiza tu suscripcion ahora.
                         </p>
                         <button 
                             onClick={() => router.push('/planes')} 
@@ -666,7 +705,7 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            {/* Modal confirmación cierre con cambios sin guardar */}
+            {/* Modal confirmacion cierre con cambios sin guardar */}
             {showCloseConfirm && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 text-center">
                     <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
@@ -675,7 +714,7 @@ export default function InventoryPage() {
                         </div>
                         <h3 className="text-lg font-black uppercase text-[#1e293b] mb-3">Cambios sin guardar</h3>
                         <p className="text-gray-500 text-[13px] leading-relaxed mb-8 font-medium text-center">
-                            Tenés cambios que no fueron guardados. ¿Qué querés hacer?
+                            Tenes cambios que no fueron guardados. Que queres hacer?
                         </p>
                         <button
                             onClick={handleForceClose}
@@ -702,7 +741,7 @@ export default function InventoryPage() {
                         </div>
                         <h3 className="text-lg font-black uppercase text-[#1e293b] mb-3">Eliminar unidad</h3>
                         <p className="text-gray-500 text-[13px] leading-relaxed mb-2 font-medium text-center">
-                            Estás por eliminar permanentemente
+                            Estas por eliminar permanentemente
                         </p>
                         <p className="text-[#1e293b] text-[14px] font-black uppercase mb-8">
                             {confirmDeletePropio.brand} {confirmDeletePropio.model}
@@ -711,7 +750,7 @@ export default function InventoryPage() {
                             onClick={() => executeDeletePropio(confirmDeletePropio)}
                             className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-red-700 transition-all active:scale-95 mb-3"
                         >
-                            Sí, eliminar
+                            Si, eliminar
                         </button>
                         <button
                             onClick={() => setConfirmDeletePropio(null)}
@@ -732,7 +771,7 @@ export default function InventoryPage() {
                         </div>
                         <h3 className="text-lg font-black uppercase text-[#1e293b] mb-3">Quitar Flip Compartido</h3>
                         <p className="text-gray-500 text-[13px] leading-relaxed mb-2 font-medium text-center">
-                            Esta unidad es un Flip compartido. ¿Deseas quitarla de tu inventario?
+                            Esta unidad es un Flip compartido. Deseas quitarla de tu inventario?
                         </p>
                         <p className="text-[#1e293b] text-[14px] font-black uppercase mb-8">
                             {confirmDeleteFlip.brand} {confirmDeleteFlip.model}
@@ -741,7 +780,7 @@ export default function InventoryPage() {
                             onClick={() => executeDeleteFlip(confirmDeleteFlip)}
                             className="w-full py-4 bg-red-600 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-red-700 transition-all active:scale-95 mb-3"
                         >
-                            Sí, quitar
+                            Si, quitar
                         </button>
                         <button
                             onClick={() => setConfirmDeleteFlip(null)}
@@ -753,11 +792,9 @@ export default function InventoryPage() {
                 </div>
             )}
 
-            {/* ── SUBHEADER FIJO ── */}
+            {/* SUBHEADER FIJO */}
             <div className="fixed top-[80px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-start px-3 py-5 lg:h-20 lg:pt-2">
                 <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-1.9">
-
-                    {/* Chips de tabs */}
                     <div className="grid grid-cols-4 lg:flex items-center gap-1 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
                         {[
                             { id: 'ACTIVOS', label: 'Activos' },
@@ -784,7 +821,6 @@ export default function InventoryPage() {
                         ))}
                     </div>
 
-                    {/* Fila inferior: INVENTARIO + plan */}
                     <div className="flex items-center gap-3">
                         <span
                             style={{ fontFamily: 'Genos', fontWeight: 300, letterSpacing: '4px' }}
@@ -795,15 +831,14 @@ export default function InventoryPage() {
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black bg-[#22c55e]/10 text-[#22c55e] px-2 py-0.5 rounded uppercase tracking-widest">Plan {userPlan}</span>
                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                {counts.ACTIVOS} / {userPlan.toUpperCase() === 'VIP' ? '∞' : (userPlan.toUpperCase() === 'PRO' ? 25 : 12)} Unidades
+                                {counts.ACTIVOS} / {userPlan.toUpperCase() === 'VIP' ? '' : (userPlan.toUpperCase() === 'PRO' ? 25 : 12)} Unidades
                             </span>
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            {/* ── CONTENIDO ── */}
+            {/* CONTENIDO */}
             <div className="max-w-[1600px] mx-auto px-6 pt-[225px] pb-20 lg:pt-44">
                 <div className="flex flex-wrap items-center gap-3 mb-8">
                     <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
@@ -830,7 +865,8 @@ export default function InventoryPage() {
                 {viewMode === 'grid' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {filtered.map((v) => {
-                            const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
+                            const expiry = getExpiryStatus(v);
+                            const isExpired = expiry?.type === 'vencida';
                             const isProcessing = processingId === v.id;
                             const isVendido = v.commercial_status === 'vendido';
                             return (
@@ -851,8 +887,9 @@ export default function InventoryPage() {
                                                 <Zap size={8} fill="currentColor" /> Flip Compartido
                                             </div>
                                         )}
-                                        {v.isProprio && isExpired && !isVendido && (
-                                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 rounded text-[9px] font-bold text-white z-10">VENCIDA</div>
+                                        {/* ── Badge de vencimiento corregido ── */}
+                                        {v.isProprio && !isVendido && (
+                                            <ExpiryBadge v={v} />
                                         )}
                                         {v.commercial_status === 'reservado' && (
                                             <div className="absolute top-2 right-2 px-2 py-0.5 bg-yellow-600 rounded text-[9px] font-bold text-white z-10">RESERVADO</div>
@@ -907,7 +944,6 @@ export default function InventoryPage() {
                                             <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
                                         </button>
 
-                                        {/* ── FIX: ocultar Renovar/Activar/Pausar si está vendido ── */}
                                         {!isVendido && (isExpired ? (
                                             <button 
                                                 disabled={!v.isProprio}
@@ -970,14 +1006,15 @@ export default function InventoryPage() {
                             <thead className="bg-black/40 text-slate-500 uppercase font-black border-b border-white/5 tracking-widest">
                                 <tr>
                                     <th className="p-4">Unidad</th>
-                                    <th className="p-4 text-right">Relación</th>
+                                    <th className="p-4 text-right">Relacion</th>
                                     <th className="p-4 text-right text-[#22c55e]">Venta (PV)</th>
                                     <th className="p-4 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {filtered.map((v) => {
-                                    const isExpired = v.expires_at && new Date(v.expires_at) < new Date();
+                                    const expiry = getExpiryStatus(v);
+                                    const isExpired = expiry?.type === 'vencida';
                                     const isProcessing = processingId === v.id;
                                     const isVendido = v.commercial_status === 'vendido';
                                     return (
@@ -990,17 +1027,17 @@ export default function InventoryPage() {
                                                         <Zap size={7} fill="currentColor"/> FLIP
                                                     </span>
                                                 )}
-                                                {v.isProprio && isExpired && !isVendido && <span className="text-[8px] bg-red-600 px-1 rounded text-white">VENCIDA</span>}
+                                                {/* ── Badge inline corregido ── */}
+                                                <ExpiryBadgeInline v={v} />
                                             </td>
                                             <td className="p-4 text-right font-mono opacity-50 text-[10px] uppercase">
-                                                {v.isProprio ? 'MÍO' : 'TERCERO'}
+                                                {v.isProprio ? 'MIO' : 'TERCERO'}
                                             </td>
                                             <td className="p-4 text-right font-mono font-black text-[#22c55e] text-sm" suppressHydrationWarning>
                                                 {v.prices.currency}{isMounted ? v.prices.salePrice.toLocaleString('es-AR') : '--'}
                                             </td>
                                             <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-end gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
-                                                    {/* ── FIX: ocultar Renovar/Activar/Pausar si está vendido ── */}
                                                     {!isVendido && (isExpired ? (
                                                         <button 
                                                             disabled={!v.isProprio}
@@ -1074,7 +1111,7 @@ export default function InventoryPage() {
                                             {selectedAuto.brand} {selectedAuto.model}
                                         </span>
                                         <span className="text-white text-[11px] font-black uppercase tracking-widest leading-none">
-                                            {selectedAuto.isProprio ? 'Gestión de clientes y señas' : 'Contactar al dueño'}
+                                            {selectedAuto.isProprio ? 'Gestion de clientes y senas' : 'Contactar al dueno'}
                                         </span>
                                     </div>
                                 </div>
@@ -1085,23 +1122,23 @@ export default function InventoryPage() {
 
                             <div className={`p-4 space-y-2 bg-white text-left ${isProcessingModal ? 'opacity-50 pointer-events-none' : ''}`}>
 
-                                {/* Flip de terceros — formulario de mensaje al dueño */}
+                                {/* Flip de terceros */}
                                 {!selectedAuto.isProprio && (
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-3 p-4 bg-[#2596be]/10 rounded-xl border border-[#2596be]/20">
                                             <Zap size={16} className="text-[#2596be] flex-shrink-0" fill="currentColor"/>
                                             <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                                                Este auto es un <strong>Flip Compartido</strong>. Podés enviarle un mensaje directo al dueño sobre esta unidad.
+                                                Este auto es un <strong>Flip Compartido</strong>. Podes enviarle un mensaje directo al dueno sobre esta unidad.
                                             </p>
                                         </div>
 
                                         <div className="flex flex-col gap-1">
-                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Mensaje al dueño</label>
+                                            <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Mensaje al dueno</label>
                                             <textarea
                                                 value={flipMessage}
                                                 onChange={(e) => setFlipMessage(e.target.value)}
                                                 rows={4}
-                                                placeholder="Escribí tu mensaje..."
+                                                placeholder="Escribi tu mensaje..."
                                                 className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"
                                             />
                                         </div>
@@ -1128,7 +1165,7 @@ export default function InventoryPage() {
                                     </div>
                                 )}
 
-                                {/* Sección: Cliente Consignatario — solo para propios */}
+                                {/* Cliente Consignatario */}
                                 {selectedAuto.isProprio && (
                                     <div className="border border-slate-200 rounded-xl overflow-hidden">
                                         <button onClick={() => setOpenSection(openSection === 'consignatario' ? null : 'consignatario')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
@@ -1140,32 +1177,29 @@ export default function InventoryPage() {
                                         </button>
                                         {openSection === 'consignatario' && (
                                             <div className="p-4 border-t border-slate-100 animate-in slide-in-from-top duration-200 space-y-3">
-
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Nombre</label>
-                                                        <input type="text" value={consignatarioData.nombre} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Juan Pérez" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                        <input type="text" value={consignatarioData.nombre} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Juan Perez" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">DNI</label>
                                                         <input type="text" value={consignatarioData.dni} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, dni: e.target.value }))} placeholder="Ej: 30123456" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                 </div>
-
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Teléfono</label>
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Telefono</label>
                                                         <input type="text" value={consignatarioData.telefono} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, telefono: e.target.value }))} placeholder="Tel / WhatsApp" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Comisión %</label>
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Comision %</label>
                                                         <input type="number" value={consignatarioData.comision_porcentaje} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, comision_porcentaje: e.target.value }))} placeholder="Ej: 5" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                 </div>
-
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Precio mínimo</label>
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Precio minimo</label>
                                                         <input type="number" value={consignatarioData.precio_minimo} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, precio_minimo: e.target.value }))} placeholder="0" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
@@ -1176,17 +1210,14 @@ export default function InventoryPage() {
                                                         </select>
                                                     </div>
                                                 </div>
-
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vigencia hasta</label>
                                                     <input type="date" value={consignatarioData.vigencia_hasta} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, vigencia_hasta: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                 </div>
-
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Notas</label>
                                                     <textarea value={consignatarioData.notas} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, notas: e.target.value }))} placeholder="Condiciones del acuerdo, observaciones, etc." rows={3} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"/>
                                                 </div>
-
                                                 <button onClick={handleSaveConsignatario} disabled={isSavingConsignatario} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-[#22c55e] text-white hover:bg-[#16a34a]">
                                                     {isSavingConsignatario ? <Loader2 size={13} className="animate-spin"/> : consignatarioSaved ? <><Check size={13}/> Guardado</> : <><Save size={13}/> Guardar consignatario</>}
                                                 </button>
@@ -1195,30 +1226,28 @@ export default function InventoryPage() {
                                     </div>
                                 )}
 
-                                {/* Sección: Comprador / Seña — solo para propios */}
+                                {/* Comprador / Sena */}
                                 {selectedAuto.isProprio && (
                                     <div className="border border-slate-200 rounded-xl overflow-hidden">
                                         <button onClick={() => setOpenSection(openSection === 'cliente' ? null : 'cliente')} className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-all">
                                             <div className="flex items-center gap-2">
                                                 <User size={14} className="text-slate-400"/>
-                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Comprador / Seña</span>
+                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Comprador / Sena</span>
                                             </div>
                                             {openSection === 'cliente' ? <ChevronDown size={18} className="text-[#22c55e]"/> : <ChevronRight size={18}/>}
                                         </button>
                                         {openSection === 'cliente' && (
                                             <div className="p-4 border-t border-slate-100 animate-in slide-in-from-top duration-200 space-y-3">
-
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Nombre</label>
-                                                        <input type="text" value={clienteData.nombre} onChange={(e) => setClienteData((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Juan Pérez" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                        <input type="text" value={clienteData.nombre} onChange={(e) => setClienteData((p: any) => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Juan Perez" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">DNI</label>
                                                         <input type="text" value={clienteData.dni} onChange={(e) => setClienteData((p: any) => ({ ...p, dni: e.target.value }))} placeholder="Ej: 30123456" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                 </div>
-
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Contacto</label>
@@ -1236,10 +1265,9 @@ export default function InventoryPage() {
                                                         </select>
                                                     </div>
                                                 </div>
-
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Seña</label>
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Sena</label>
                                                         <input type="number" value={clienteData.senia_reserva} onChange={(e) => setClienteData((p: any) => ({ ...p, senia_reserva: e.target.value }))} placeholder="0" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
@@ -1250,17 +1278,14 @@ export default function InventoryPage() {
                                                         </select>
                                                     </div>
                                                 </div>
-
                                                 <div className="flex flex-col gap-1">
-                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vencimiento de Seña</label>
+                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vencimiento de Sena</label>
                                                     <input type="date" value={clienteData.fecha_vencimiento} onChange={(e) => setClienteData((p: any) => ({ ...p, fecha_vencimiento: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                 </div>
-
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Notas</label>
                                                     <textarea value={clienteData.notas} onChange={(e) => setClienteData((p: any) => ({ ...p, notas: e.target.value }))} placeholder="Observaciones del trato, condiciones, etc." rows={3} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white resize-none"/>
                                                 </div>
-
                                                 <button onClick={handleSaveCliente} disabled={isSavingCliente} className="w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-[#22c55e] text-white hover:bg-[#16a34a]">
                                                     {isSavingCliente ? <Loader2 size={13} className="animate-spin"/> : clienteSaved ? <><Check size={13}/> Guardado</> : <><Save size={13}/> Guardar comprador</>}
                                                 </button>
@@ -1269,7 +1294,6 @@ export default function InventoryPage() {
                                     </div>
                                 )}
 
-                                {/* Botón cerrar panel — solo para propios */}
                                 {selectedAuto.isProprio && (
                                     <div className="pt-4">
                                         <button onClick={handleRequestClose} className="w-full py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 bg-slate-900 text-white hover:bg-slate-700 transition-all">

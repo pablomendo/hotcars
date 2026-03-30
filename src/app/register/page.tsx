@@ -11,28 +11,29 @@ export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [plan, setPlan] = useState('PRO'); 
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [plan, setPlan] = useState('PRO');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'quarterly' | 'yearly'>('quarterly');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [founderCode, setFounderCode] = useState('');
 
   const prices = {
-    FREE: { monthly: 0, yearly: 0 },
-    PRO: { monthly: 15000, yearly: 15000 * 0.7 }, 
-    VIP: { monthly: 18000, yearly: 18000 * 0.7 }  
+    FREE: { monthly: 45000, quarterly: 45000 * 3 * 0.75, yearly: 45000 * 12 * 0.7 },
+    PRO: { monthly: 60000, quarterly: 60000 * 3 * 0.75, yearly: 60000 * 12 * 0.7 },
+    VIP: { monthly: 80000, quarterly: 80000 * 3 * 0.75, yearly: 80000 * 12 * 0.7 }
   };
 
   const plans = [
-    { 
-      id: 'FREE', 
-      name: 'Plan Free', 
-      icon: <Shield size={32} className="text-slate-400 stroke-[1.5px]"/>, 
+    {
+      id: 'FREE',
+      name: 'Plan Starter',
+      icon: <Shield size={32} className="text-slate-400 stroke-[1.5px]" />,
       features: ['Pagina Web (10 unidades)', 'Dashboard de gestión', 'Gestión de inventario (12 unidades)', 'Soporte Básico']
     },
-    { 
-      id: 'PRO', 
-      name: 'Plan Pro', 
-      icon: <Star size={32} className="text-yellow-500 stroke-[1.5px]"/>, 
+    {
+      id: 'PRO',
+      name: 'Plan Pro',
+      icon: <Star size={32} className="text-yellow-500 stroke-[1.5px]" />,
       features: [
         'Pagina Web (20 unidades)',
         'Gestión de unidades destacadas en web',
@@ -45,10 +46,10 @@ export default function RegisterPage() {
       ],
       popular: true
     },
-    { 
-      id: 'VIP', 
-      name: 'Plan VIP', 
-      icon: <Crown size={32} className="text-[#288b55] stroke-[1.5px]"/>, 
+    {
+      id: 'VIP',
+      name: 'Plan VIP',
+      icon: <Crown size={32} className="text-[#288b55] stroke-[1.5px]" />,
       features: [
         'Pagina Web (ilimitada)',
         'dominio propio (provisto por usuario)',
@@ -64,6 +65,17 @@ export default function RegisterPage() {
     }
   ];
 
+  const getMonthlyEquivalent = (planId: string) => {
+    const p = prices[planId as keyof typeof prices];
+    if (billingCycle === 'monthly') return p.monthly;
+    if (billingCycle === 'quarterly') return p.quarterly / 3;
+    return p.yearly / 12;
+  };
+
+  const getDisplayPrice = (planId: string) => {
+    return getMonthlyEquivalent(planId);
+  };
+
   const handlePlanSelect = (id: string) => {
     setPlan(id);
     document.getElementById('auth-form')?.scrollIntoView({ behavior: 'smooth' });
@@ -73,26 +85,62 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
     try {
+      let codeData: any = null;
+
+      const { data: fetchedCode, error: codeError } = await supabase
+        .from('founder_codes')
+        .select('*')
+        .eq('code', founderCode.trim().toUpperCase())
+        .eq('used', false)
+        .single();
+
+      if (codeError || !fetchedCode) {
+        setError('El código de acceso es inválido o ya fue utilizado.');
+        setLoading(false);
+        return;
+      }
+
+      const now = new Date();
+      if (fetchedCode.expires_at && new Date(fetchedCode.expires_at) < now) {
+        setError('El código de acceso ha vencido.');
+        setLoading(false);
+        return;
+      }
+
+      codeData = fetchedCode;
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
+
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('Error al crear usuario.');
 
-      // Se cambió 'nombre' por 'full_name' para coincidir con la tabla 'usuarios'
-      const { error: profileError } = await supabase.from('usuarios').insert([{ 
-        auth_id: authData.user.id, 
+      const accessDays = codeData.access_days ?? 60;
+      const founderExpiresAt = new Date();
+      founderExpiresAt.setDate(founderExpiresAt.getDate() + accessDays);
+
+      const { error: profileError } = await supabase.from('usuarios').insert([{
+        auth_id: authData.user.id,
         email: email,
-        full_name: email.split('@')[0], 
-        plan_type: plan,
-        plan_status: 'activo', 
-        billing_cycle: billingCycle
+        full_name: email.split('@')[0],
+        plan_type: 'PRO',
+        plan_status: 'fundador',
+        billing_cycle: 'founder',
+        founder_expires_at: founderExpiresAt.toISOString()
       }]);
 
       if (profileError) throw profileError;
+
+      await supabase
+        .from('founder_codes')
+        .update({ used: true, used_by: authData.user.id, used_at: new Date().toISOString() })
+        .eq('code', founderCode.trim().toUpperCase());
+
       router.push('/register/confirm');
 
     } catch (err: any) {
@@ -109,16 +157,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[#0b1114] flex flex-col items-center justify-start p-4 md:pt-[40px] pb-20 font-sans overflow-y-auto scroll-smooth">
       <div className="max-w-5xl w-full text-center flex flex-col items-center">
-        
+
         {/* HEADER */}
         <div className="flex flex-col items-center justify-center mb-8 md:mb-10">
           <h1 className="text-white text-[27px] md:text-[27px] font-black uppercase tracking-tighter flex flex-col md:flex-row items-center gap-4 md:gap-6">
-            Elegí tu plan 
-            <Image 
-              src="/logo_hotcars_blanco.png" 
-              alt="HotCars ISO" 
-              width={160} 
-              height={160} 
+            Elegí tu plan
+            <Image
+              src="/logo_hotcars_blanco.png"
+              alt="HotCars ISO"
+              width={160}
+              height={160}
               className="object-contain md:w-[190px]"
             />
           </h1>
@@ -130,23 +178,33 @@ export default function RegisterPage() {
         {/* SELECTOR DE FACTURACIÓN */}
         <div className="flex justify-center mb-10 md:mb-12 w-full max-w-xs md:max-w-none px-4">
           <div className="bg-[#141b1f] p-1.5 rounded-xl border border-white/5 flex items-center shadow-xl w-full md:w-auto">
-            <button 
+            <button
               type="button"
               onClick={() => setBillingCycle('monthly')}
-              className={`flex-1 md:flex-none px-4 md:px-9 py-3 rounded-lg text-[10px] font-black uppercase transition-all ${
+              className={`flex-1 md:flex-none px-4 md:px-7 py-3 rounded-lg text-[10px] font-black uppercase transition-all ${
                 billingCycle === 'monthly' ? 'bg-[#288b55] text-white shadow-lg' : 'text-slate-500'
               }`}
             >
               Mensual
             </button>
-            <button 
+            <button
+              type="button"
+              onClick={() => setBillingCycle('quarterly')}
+              className={`flex-1 md:flex-none px-4 md:px-7 py-3 rounded-lg text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${
+                billingCycle === 'quarterly' ? 'bg-[#288b55] text-white shadow-lg' : 'text-slate-500'
+              }`}
+            >
+              Trimestral
+              <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-25%</span>
+            </button>
+            <button
               type="button"
               onClick={() => setBillingCycle('yearly')}
-              className={`flex-1 md:flex-none px-4 md:px-9 py-3 rounded-lg text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 md:flex-none px-4 md:px-7 py-3 rounded-lg text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${
                 billingCycle === 'yearly' ? 'bg-[#288b55] text-white shadow-lg' : 'text-slate-500'
               }`}
             >
-              Anual 
+              Anual
               <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-30%</span>
             </button>
           </div>
@@ -156,36 +214,52 @@ export default function RegisterPage() {
         <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-8 mb-16 md:mb-24 px-2 md:px-4 w-full md:scale-[0.80] md:origin-top">
           {plans.map((p) => {
             const priceMonthly = prices[p.id as keyof typeof prices].monthly;
-            const priceYearly = prices[p.id as keyof typeof prices].yearly;
+            const displayPrice = getDisplayPrice(p.id);
 
             return (
-              <div 
+              <div
                 key={p.id}
                 onClick={() => handlePlanSelect(p.id)}
                 className={`relative flex flex-col p-8 md:p-10 rounded-[2rem] border transition-all duration-500 cursor-pointer text-left ${
-                  plan === p.id 
-                    ? 'border-[#288b55] bg-[#288b55]/10 shadow-[0_20px_60px_rgba(40,139,85,0.15)] scale-[1.02] md:scale-105 z-10' 
+                  plan === p.id
+                    ? 'border-[#288b55] bg-[#288b55]/10 shadow-[0_20px_60px_rgba(40,139,85,0.15)] scale-[1.02] md:scale-105 z-10'
                     : 'border-white/5 bg-[#141b1f]'
                 }`}
               >
                 {p.popular && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#288b55] text-white text-[11px] font-black px-6 py-1.5 rounded-full uppercase tracking-widest shadow-lg whitespace-nowrap">Recomendado</span>
                 )}
-                
+
                 <div className="flex justify-center items-center mb-8 text-[#288b55]">
                   {p.icon}
                 </div>
 
                 <h3 className="text-white text-xl md:text-2xl font-black uppercase mb-2 text-center tracking-tight">{p.name}</h3>
-                
+
                 <div className="flex flex-col mb-8 min-h-[60px] md:min-h-[70px] justify-center items-center">
-                  <div className="flex items-baseline gap-2 justify-center">
-                    <span className={`font-black tracking-tighter ${billingCycle === 'yearly' ? 'text-4xl md:text-5xl text-[#288b55]' : 'text-3xl md:text-4xl text-white'}`}>
-                      $ {p.id === 'FREE' ? '0' : (billingCycle === 'yearly' ? priceYearly.toLocaleString('es-AR') : priceMonthly.toLocaleString('es-AR'))}
+                  <div className="flex items-baseline gap-2 justify-center blur-sm select-none opacity-50">
+                    <span className={`font-black tracking-tighter ${billingCycle !== 'monthly' ? 'text-4xl md:text-5xl text-[#288b55]' : 'text-3xl md:text-4xl text-white'}`}>
+                      $ {displayPrice.toLocaleString('es-AR')}
                     </span>
                   </div>
-                  {billingCycle === 'yearly' && p.id !== 'FREE' && (
-                    <span className="text-slate-500 text-[10px] font-bold line-through uppercase mt-1">Antes $ {priceMonthly.toLocaleString('es-AR')}</span>
+                  <span className="text-slate-500 text-[10px] font-bold uppercase mt-1 blur-[2px] select-none opacity-50">
+                    {billingCycle === 'monthly' && 'por mes'}
+                    {billingCycle === 'quarterly' && (
+                      <>/mes · <span className="line-through">$ {priceMonthly.toLocaleString('es-AR')}</span></>
+                    )}
+                    {billingCycle === 'yearly' && (
+                      <>/mes · <span className="line-through">$ {priceMonthly.toLocaleString('es-AR')}</span></>
+                    )}
+                  </span>
+                  {billingCycle === 'quarterly' && (
+                    <span className="text-slate-600 text-[9px] font-bold uppercase mt-1 blur-[2px] select-none opacity-50">
+                      Total trimestre: $ {prices[p.id as keyof typeof prices].quarterly.toLocaleString('es-AR')}
+                    </span>
+                  )}
+                  {billingCycle === 'yearly' && (
+                    <span className="text-slate-600 text-[9px] font-bold uppercase mt-1 blur-[2px] select-none opacity-50">
+                      Total anual: $ {prices[p.id as keyof typeof prices].yearly.toLocaleString('es-AR')}
+                    </span>
                   )}
                 </div>
 
@@ -207,12 +281,12 @@ export default function RegisterPage() {
           <div className="relative z-10">
             <div className="flex flex-col items-center mb-10">
               <h2 className="text-white text-xl md:text-2xl font-black uppercase tracking-tighter text-center flex items-center gap-4">
-                Crea tu acceso 
-                <Image 
-                  src="/logo_hotcars_allwhite_iso_suelto.png" 
-                  alt="HotCars ISO" 
-                  width={100} 
-                  height={100} 
+                Crea tu acceso
+                <Image
+                  src="/logo_hotcars_allwhite_iso_suelto.png"
+                  alt="HotCars ISO"
+                  width={100}
+                  height={100}
                   className="object-contain md:w-[125px]"
                 />
               </h2>
@@ -220,29 +294,39 @@ export default function RegisterPage() {
                 Seleccionaste: <span className="text-[#288b55] font-black">{plan}</span>
               </p>
             </div>
-            
+
             <form onSubmit={handleRegister} className="space-y-6">
               <div className="space-y-5">
                 <div>
                   <label className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2 ml-1">Email de la Agencia / Vendedor</label>
-                  <input 
-                    type="email" 
-                    required 
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-bold text-sm" 
+                  <input
+                    type="email"
+                    required
+                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-bold text-sm"
                     placeholder="vendedor@hotmail.com"
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div>
                   <label className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2 ml-1">Contraseña de acceso</label>
-                  <input 
-                    type="password" 
-                    required 
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all text-sm" 
+                  <input
+                    type="password"
+                    required
+                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all text-sm"
                     placeholder="••••••••"
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2 ml-1">Código de acceso</label>
+                  <input
+                    type="text"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-mono font-bold text-sm tracking-widest uppercase"
+                    placeholder="FOUNDER-XXXXXX"
+                    value={founderCode}
+                    onChange={(e) => setFounderCode(e.target.value.toUpperCase())}
                   />
                 </div>
               </div>
@@ -253,10 +337,10 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              <button 
-                type="submit" 
-                disabled={loading} 
-                className="w-full py-5 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-2xl hover:bg-[#2ecc71] transition-all disabled:opacity-50 shadow-[0_10px_30px_rgba(40,139,85,0.3)] hover:scale-[1.02] active:scale-95 text-xs md:text-sm"
+              <button
+                type="submit"
+                disabled={loading || founderCode.trim() === ''}
+                className="w-full py-5 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-2xl hover:bg-[#2ecc71] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_10px_30px_rgba(40,139,85,0.3)] hover:scale-[1.02] active:scale-95 text-xs md:text-sm"
               >
                 {loading ? 'Sincronizando...' : 'Comenzar ahora'}
               </button>

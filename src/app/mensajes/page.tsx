@@ -379,7 +379,7 @@ function MensajesContent() {
             <div className="flex flex-1 pt-[140px] lg:pt-[127px] h-[100vh] overflow-hidden">
 
                 {/* ── LISTA ── */}
-                <div className={`w-full lg:w-[480px] flex-shrink-0 border-r border-white/5 flex flex-col bg-[#111b21] ${showMobileThread ? 'hidden lg:flex' : 'flex'}`}>
+                <div className={`w-full lg:w-[560px] flex-shrink-0 border-r border-white/5 flex flex-col bg-[#111b21] ${showMobileThread ? 'hidden lg:flex' : 'flex'}`}>
 
                     {/* Pestañas */}
                     <div className="flex border-b border-white/5">
