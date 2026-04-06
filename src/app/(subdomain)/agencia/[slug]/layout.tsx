@@ -1,16 +1,17 @@
 // app/(subdomain)/agencia/[slug]/layout.tsx
 //
-// El paréntesis en (subdomain) es un Route Group de Next.js App Router.
-// IMPORTANTE: Estos grupos SÍ heredan el layout raíz, por eso eliminamos 
-// las etiquetas duplicadas para frenar el error de hidratación.
+// CRÍTICO: Para suprimir el HeaderWrapper del app/layout.tsx raíz,
+// este route group DEBE tener su propio <html> y <body>.
+// Next.js App Router permite layouts anidados con html+body
+// dentro de route groups — esto rompe la herencia del layout raíz.
 
 export default function SubdomainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      {/* Mantenemos el estilo exactamente como lo tenías, pero en un contenedor válido */}
-      <div style={{ margin: 0, padding: 0, overflowX: 'hidden', minHeight: '100vh' }}>
+    <html lang="es">
+      <head />
+      <body style={{ margin: 0, padding: 0, overflowX: 'hidden' }}>
         {children}
-      </div>
-    </>
+      </body>
+    </html>
   );
 }

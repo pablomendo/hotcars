@@ -115,16 +115,9 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
   const [venderForm, setVenderForm] = useState({ marca: '', modelo: '', anio: '', descripcion: '' });
   const [buscarForm, setBuscarForm] = useState({ marca: '', modelo: '', anio: '', presupuesto: '' });
 
-  // ── AOS init ──
   useEffect(() => {
     import('aos').then(AOS => {
-      AOS.default.init({
-        duration: 500,
-        easing: 'ease-out-cubic',
-        once: true,
-        offset: 60,
-        delay: 0,
-      });
+      AOS.default.init({ duration: 500, easing: 'ease-out-cubic', once: true, offset: 60 });
     });
   }, []);
 
@@ -179,15 +172,11 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
 
   return (
     <div className="min-h-screen bg-[#e2e8f0]" style={{ fontFamily: "'Inter', sans-serif" }}>
-
-      {/* ── AOS CSS + fuentes + estilos globales ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Genos:wght@300;400;500;600;700;900&family=Libre+Franklin:wght@400;500;700;900&display=swap');
 
-        /* AOS override — quitar cualquier transform residual */
         [data-aos] { backface-visibility: hidden; }
 
-        /* Header buttons */
         .hdr-btn {
           display: flex; align-items: center; justify-content: center;
           color: rgba(255,255,255,0.75);
@@ -207,7 +196,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           box-shadow: 0 0 16px 2px rgba(40,139,85,0.45), inset 0 0 8px rgba(40,139,85,0.15);
         }
 
-        /* Vehicle card hover */
         .vehicle-card {
           transition: transform 0.28s ease-in-out, box-shadow 0.28s ease-in-out;
         }
@@ -216,14 +204,12 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           box-shadow: 0 16px 40px rgba(0,0,0,0.14);
         }
 
-        /* Banner buttons */
         .banner-btn {
           display: inline-flex; align-items: center; gap: 6px;
-          font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px;
-          padding: 10px 22px; border-radius: 4px;
-          cursor: pointer; border: none;
-          transition: all 0.18s ease;
-          text-decoration: none;
+          font-weight: 900; text-transform: uppercase; letter-spacing: 1.2px;
+          border-radius: 4px; cursor: pointer;
+          transition: all 0.18s ease; text-decoration: none;
+          white-space: nowrap;
         }
         .banner-btn:hover {
           transform: translateY(-2px) scale(1.03);
@@ -231,39 +217,62 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         }
         .banner-btn-outline {
           background: transparent;
-          border: 1.5px solid rgba(255,255,255,0.6) !important;
+          border: 1.5px solid rgba(255,255,255,0.7) !important;
           color: white;
         }
-        .banner-btn-outline:hover { background: rgba(255,255,255,0.1); }
-        .banner-btn-solid {
-          background: white; color: #1a1a1a;
-        }
+        .banner-btn-outline:hover { background: rgba(255,255,255,0.12); }
+        .banner-btn-solid { background: white; color: #1a1a1a; border: none !important; }
         .banner-btn-solid:hover { background: #f0f0f0; }
 
-        /* Fuentes con efecto Condensed y SOMBRA */
-        .franklin-left { 
-          font-family: 'Libre Franklin', sans-serif; 
+        /* ── FRANKLIN: sin text-shadow, tipografía limpia ── */
+        .franklin {
+          font-family: 'Libre Franklin', 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
           font-weight: 900;
-          display: inline-block;
-          transform: scaleX(0.85);
-          transform-origin: left;
-          letter-spacing: -0.02em;
-          line-height: 1.15;
-          text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+          letter-spacing: -0.01em;
+          line-height: 1.1;
+          text-shadow: none;
         }
-        .franklin-right { 
-          font-family: 'Libre Franklin', sans-serif; 
-          font-weight: 900;
-          display: inline-block;
-          transform: scaleX(0.85);
-          transform-origin: right;
-          letter-spacing: -0.02em;
-          line-height: 1.15;
-          text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        .genos {
+          font-family: 'Genos', sans-serif;
+          font-weight: 400;
+          line-height: 1.3;
         }
-        .genos { 
-          font-family: 'Genos', sans-serif; 
-          font-weight: 500; 
+
+        .banner-wrap { position: relative; width: 100%; overflow: hidden; }
+
+        /* Mobile: texto debajo de la imagen sobre fondo verde */
+        .banner-overlay {
+          background: #1a5c38;
+          padding: 20px 20px 24px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: left;
+        }
+        .banner-overlay-right {
+          align-items: flex-end;
+          text-align: right;
+        }
+
+        /* Desktop: overlay absoluto transparente sobre la imagen */
+        @media (min-width: 640px) {
+          .banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: transparent;
+            padding: 0 6%;
+            justify-content: center;
+          }
+          .banner-overlay-right {
+            padding: 0 6% 0 44%;
+          }
+        }
+
+        .banner-title { font-size: clamp(15px, 3.2vw, 44px); }
+        .banner-sub   { font-size: clamp(12px, 1.6vw, 20px); }
+        .banner-btn-size {
+          font-size: clamp(9px, 0.85vw, 11px);
+          padding: clamp(7px, 0.7vw, 10px) clamp(12px, 1.4vw, 20px);
         }
       `}</style>
 
@@ -359,36 +368,31 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════
-          BANNER 1 — IZQUIERDA
-      ══════════════════════════════════════════════ */}
-      <div className="relative w-full overflow-hidden" data-aos="fade-up">
-        <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
-        <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
-          <h2 className="franklin-left text-white mb-[1%]" 
-              style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
-            Vende tu auto más fácil<br />
-            ¡Aceptamos financiación!
-          </h2>
-          <h2 className="franklin-left text-white uppercase mb-[1%]" 
-              style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
-            VOS COBRÁS AL CONTADO!
-          </h2>
-          <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
-            Nos encargamos de todo el proceso y acercamos<br />
-            compradores reales listos para cerrar
+      {/* ══ BANNER 1 ══ */}
+      <div className="banner-wrap" data-aos="fade-up">
+        <img src="/Banner_subdomain_1.png" alt="Vende tu auto" className="block w-full h-auto" />
+        <div className="banner-overlay">
+          <p className="genos banner-sub text-white/80 mb-1">Vende tu auto más fácil</p>
+          <h2 className="franklin banner-title text-white mb-1 uppercase">¡Aceptamos financiación!</h2>
+          <h2 className="franklin banner-title text-white uppercase mb-2">VOS COBRÁS AL CONTADO.</h2>
+          <p className="genos banner-sub text-white/75 mb-4 max-w-xl">
+            Nos encargamos de todo el proceso y acercamos compradores reales listos para cerrar
           </p>
-          <div className="flex gap-3 mt-1">
-            <button onClick={() => setShowVenderModal(true)} className="banner-btn banner-btn-solid">Vender mi auto</button>
-            <button onClick={() => document.getElementById('inventario')?.scrollIntoView({ behavior: 'smooth' })} className="banner-btn banner-btn-outline">Ver autos disponibles</button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setShowVenderModal(true)} className="banner-btn banner-btn-solid banner-btn-size">
+              Vender mi auto
+            </button>
+            <button
+              onClick={() => document.getElementById('inventario')?.scrollIntoView({ behavior: 'smooth' })}
+              className="banner-btn banner-btn-outline banner-btn-size"
+            >
+              Ver autos disponibles
+            </button>
           </div>
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════
-          NUEVOS INGRESOS (ENTRE AMBAS FRANJAS)
-      ══════════════════════════════════════════════ */}
+      {/* ══ NUEVOS INGRESOS ══ */}
       {newVehicles.length > 0 && (
         <section className="pt-10 pb-2 max-w-7xl mx-auto px-4 sm:px-6" data-aos="fade-up">
           <SectionHeader title="Nuevos Ingresos" accent="#2596be" />
@@ -396,24 +400,26 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════
-          BANNER 2 — DERECHA
-      ══════════════════════════════════════════════ */}
-      <div className="relative w-full overflow-hidden" data-aos="fade-up">
-        <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
-        <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
-          <h2 className="franklin-right text-white mb-[1.5%]" 
-              style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
-            Tenemos más opciones para ayudarte a<br className="hidden sm:block" /> encontrar tu próximo vehículo.
+      {/* ══ BANNER 2 ══ */}
+      <div className="banner-wrap" data-aos="fade-up">
+        <img src="/Banner_subdomain_2.png" alt="Buscar auto" className="block w-full h-auto" />
+        <div className="banner-overlay banner-overlay-right">
+          <h2 className="franklin banner-title text-white mb-2">
+            Tenemos más opciones para ayudarte a encontrar tu próximo vehículo.
           </h2>
-          <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
-            Si no ves lo que buscas, dejanos los detalles y nos encargamos<br />
-            de encontrar opciones a tu medida, sin compromiso.
+          <p className="genos banner-sub text-white/75 mb-4 max-w-lg">
+            Si no ves lo que buscas, dejanos los detalles y nos encargamos de encontrar opciones a tu medida, sin compromiso.
           </p>
-          <div className="flex justify-end gap-3 mt-1">
-            <button onClick={() => setShowBuscarModal(true)} className="banner-btn banner-btn-solid">Buscar mi próximo auto</button>
-            <button onClick={() => document.getElementById('inventario')?.scrollIntoView({ behavior: 'smooth' })} className="banner-btn banner-btn-outline">Ver autos disponibles</button>
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button onClick={() => setShowBuscarModal(true)} className="banner-btn banner-btn-solid banner-btn-size">
+              Buscar mi próximo auto
+            </button>
+            <button
+              onClick={() => document.getElementById('inventario')?.scrollIntoView({ behavior: 'smooth' })}
+              className="banner-btn banner-btn-outline banner-btn-size"
+            >
+              Ver autos disponibles
+            </button>
           </div>
         </div>
       </div>
@@ -542,17 +548,17 @@ function VehicleCard({ vehicle: v, onSelect }: { vehicle: Vehicle; onSelect: (v:
     >
       <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden shrink-0">
         {mainPhoto ? (
-          <img
-            src={mainPhoto}
-            alt={v.modelo}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          <img src={mainPhoto} alt={v.modelo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300">
             <Car className="w-10 h-10" />
           </div>
         )}
-        {/* Flags eliminados por instrucción */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {v.is_featured && <span className="bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Destacado</span>}
+          {v.is_new      && <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Nuevo ingreso</span>}
+          {v.inventory_status === 'reservado' && <span className="bg-orange-600 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase">Reservado</span>}
+        </div>
       </div>
       <div className="p-3 sm:p-4 flex flex-col flex-grow">
         <h3 className="font-black uppercase text-[12px] sm:text-[14px] text-[#0f172a] truncate leading-tight mb-0.5">{v.marca} {v.modelo}</h3>
@@ -627,7 +633,6 @@ function VenderModal({ whatsapp, form, setForm, onClose }: {
     window.open(waVenderLink(whatsapp, form), '_blank');
     onClose();
   };
-
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-[#0b1114] rounded-xl w-full max-w-md p-8 shadow-2xl border border-white/10" onClick={e => e.stopPropagation()}>
@@ -661,11 +666,8 @@ function VenderModal({ whatsapp, form, setForm, onClose }: {
               onChange={e => setForm({ ...form, descripcion: e.target.value })}
             />
           </div>
-          <button
-            onClick={send}
-            disabled={!valid || !whatsapp}
-            className="w-full bg-[#288b55] py-4 rounded-lg font-black uppercase text-[11px] text-white tracking-[2px] transition-all hover:bg-[#1e6e42] disabled:opacity-40 disabled:pointer-events-none shadow-lg shadow-[#288b55]/20 mt-4 flex items-center justify-center gap-2"
-          >
+          <button onClick={send} disabled={!valid || !whatsapp}
+            className="w-full bg-[#288b55] py-4 rounded-lg font-black uppercase text-[11px] text-white tracking-[2px] transition-all hover:bg-[#1e6e42] disabled:opacity-40 disabled:pointer-events-none shadow-lg mt-4 flex items-center justify-center gap-2">
             <MessageCircle className="w-4 h-4" /> Enviar por WhatsApp
           </button>
         </div>
@@ -687,7 +689,6 @@ function BuscarModal({ whatsapp, form, setForm, onClose }: {
     window.open(waBuscarLink(whatsapp, form), '_blank');
     onClose();
   };
-
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-[#0b1114] rounded-xl w-full max-w-md p-8 shadow-2xl border border-white/10" onClick={e => e.stopPropagation()}>
@@ -700,7 +701,7 @@ function BuscarModal({ whatsapp, form, setForm, onClose }: {
             { label: 'Marca *', key: 'marca', placeholder: 'Ej: Toyota' },
             { label: 'Modelo *', key: 'modelo', placeholder: 'Ej: Corolla' },
             { label: 'Año *', key: 'anio', placeholder: 'Ej: 2022' },
-            { label: 'Presupuesto *', key: 'presupuesto', placeholder: 'Ej: U$S 15.000' },
+            { label: 'Presupuesto', key: 'presupuesto', placeholder: 'Ej: U$S 15.000' },
           ].map(({ label, key, placeholder }) => (
             <div key={key} className="flex flex-col gap-1.5">
               <label className="text-[9px] font-black uppercase text-gray-500 tracking-widest px-1">{label}</label>
@@ -712,11 +713,8 @@ function BuscarModal({ whatsapp, form, setForm, onClose }: {
               />
             </div>
           ))}
-          <button
-            onClick={send}
-            disabled={!valid || !whatsapp}
-            className="w-full bg-[#288b55] py-4 rounded-lg font-black uppercase text-[11px] text-white tracking-[2px] transition-all hover:bg-[#1e6e42] disabled:opacity-40 disabled:pointer-events-none shadow-lg shadow-[#288b55]/20 mt-4 flex items-center justify-center gap-2"
-          >
+          <button onClick={send} disabled={!valid || !whatsapp}
+            className="w-full bg-[#288b55] py-4 rounded-lg font-black uppercase text-[11px] text-white tracking-[2px] transition-all hover:bg-[#1e6e42] disabled:opacity-40 disabled:pointer-events-none shadow-lg mt-4 flex items-center justify-center gap-2">
             <MessageCircle className="w-4 h-4" /> Enviar por WhatsApp
           </button>
         </div>
