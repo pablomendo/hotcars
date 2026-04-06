@@ -1,18 +1,24 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const SKIP = ['/_next', '/api', '/favicon', '/fonts', '/images', '/slider_front', '/logo', '/portada', '/hero', '/auth'];
+const SKIP_PREFIXES = ['/_next', '/api', '/favicon', '/fonts', '/images', '/slider_front', '/logo', '/portada', '/hero', '/auth'];
 
 export function middleware(request: NextRequest) {
-  const url      = request.nextUrl.clone();
+  const url = request.nextUrl.clone();
   const pathname = url.pathname;
   const hostname = (request.headers.get('host') || '').split(':')[0];
 
-  if (SKIP.some(p => pathname.startsWith(p))) return NextResponse.next();
+  // 1. Si tiene un punto (archivo) o está en la lista de SKIP, que pase directo a /public
+  if (pathname.includes('.') || SKIP_PREFIXES.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // 2. Si ya viene con el path de agencia, no tocamos nada
   if (pathname.startsWith('/agencia/')) return NextResponse.next();
 
   let slug: string | null = null;
 
+  // Lógica de detección de subdominio
   if (hostname.endsWith('.localhost')) {
     slug = hostname.slice(0, hostname.lastIndexOf('.localhost')) || null;
   } else if (hostname.endsWith('.hotcars.com.ar')) {
@@ -27,7 +33,9 @@ export function middleware(request: NextRequest) {
   }
 
   if (slug) {
-    url.pathname = `/agencia/${slug}`;
+    // REWRITE LIMPIO: Si es la raíz, solo mandamos al slug. 
+    // Esto evita que Next.js se maree con los layouts.
+    url.pathname = `/agencia/${slug}${pathname === '/' ? '' : pathname}`;
     return NextResponse.rewrite(url);
   }
 
@@ -35,5 +43,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Excluimos explícitamente archivos con extensión (.png, .jpg, etc.) 
+     * para que el middleware ni se entere que existen.
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*$).*)',
+  ],
 };

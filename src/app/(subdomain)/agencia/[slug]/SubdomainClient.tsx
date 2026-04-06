@@ -184,7 +184,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Genos:wght@300;400;500;600;700;900&family=Libre+Franklin:wght@400;500;700;900&display=swap');
 
-        /* AOS override — quitar cualquier transform residual */
+        /* AOS override */
         [data-aos] { backface-visibility: hidden; }
 
         /* Header buttons */
@@ -240,7 +240,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         }
         .banner-btn-solid:hover { background: #f0f0f0; }
 
-        /* Fuentes con efecto Condensed y SOMBRA */
         .franklin-left { 
           font-family: 'Libre Franklin', sans-serif; 
           font-weight: 900;
@@ -286,12 +285,12 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         )}
       </AnimatePresence>
 
-      {/* ══ HEADER ══ */}
+      {/* ══ HEADER (Z-INDEX FORZADO) ══ */}
       <motion.header
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-[9999] transition-all duration-500 ${
           scrolled
             ? 'bg-[#0b1114]/95 backdrop-blur-md border-b border-white/5 shadow-lg'
             : 'bg-black/40 backdrop-blur-sm'
@@ -360,12 +359,12 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       )}
 
       {/* ══════════════════════════════════════════════
-          BANNER 1 — IZQUIERDA
+          BANNER 1 — ADAPTATIVO
       ══════════════════════════════════════════════ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
-          <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
+          <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" style={{ width: '100%' }} />
         </picture>
         <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
           <h2 className="franklin-left text-white mb-[1%]" 
@@ -390,7 +389,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       </div>
 
       {/* ══════════════════════════════════════════════
-          NUEVOS INGRESOS (ENTRE AMBAS FRANJAS)
+          NUEVOS INGRESOS
       ══════════════════════════════════════════════ */}
       {newVehicles.length > 0 && (
         <section className="pt-10 pb-2 max-w-7xl mx-auto px-4 sm:px-6" data-aos="fade-up">
@@ -400,12 +399,12 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       )}
 
       {/* ══════════════════════════════════════════════
-          BANNER 2 — DERECHA
+          BANNER 2 — ADAPTATIVO
       ══════════════════════════════════════════════ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
-          <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
+          <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" style={{ width: '100%' }} />
         </picture>
         <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
           <h2 className="franklin-right text-white mb-[1.5%]" 
@@ -558,7 +557,6 @@ function VehicleCard({ vehicle: v, onSelect }: { vehicle: Vehicle; onSelect: (v:
             <Car className="w-10 h-10" />
           </div>
         )}
-        {/* Flags eliminados por instrucción */}
       </div>
       <div className="p-3 sm:p-4 flex flex-col flex-grow">
         <h3 className="font-black uppercase text-[12px] sm:text-[14px] text-[#0f172a] truncate leading-tight mb-0.5">{v.marca} {v.modelo}</h3>
