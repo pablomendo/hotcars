@@ -7,9 +7,12 @@
 
 export default function SubdomainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head />
-      <body style={{ margin: 0, padding: 0, overflowX: 'hidden' }}>
+      <body 
+        style={{ margin: 0, padding: 0, overflowX: 'hidden' }} 
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

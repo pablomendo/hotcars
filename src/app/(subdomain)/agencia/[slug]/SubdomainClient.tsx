@@ -285,7 +285,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         )}
       </AnimatePresence>
 
-      {/* ══ HEADER (Z-INDEX FORZADO) ══ */}
+      {/* ══ HEADER ══ */}
       <motion.header
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -297,13 +297,21 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         }`}
       >
         <div className="h-16 flex items-center justify-between px-4 sm:px-8 relative">
-          <a href="#top" className="flex items-center shrink-0">
+          
+          {/* Botón Home: Solo visible en mobile */}
+          <a href="#top" className="flex sm:hidden items-center justify-center w-10 h-10 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
+            <Car className="w-5 h-5 text-white" />
+          </a>
+
+          {/* Logo: OCULTO en mobile (hidden), visible desde sm en adelante */}
+          <a href="#top" className="hidden sm:flex items-center shrink-0">
             {config.logo_url ? (
               <img src={config.logo_url} alt="Logo" className="h-9 w-auto object-contain" style={{ maxWidth: '140px' }} />
             ) : (
               <span className="text-white/70 text-[11px] font-black uppercase tracking-[3px]">{config.subdomain}</span>
             )}
           </a>
+
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
             <button onClick={() => setShowVenderModal(true)} className="hdr-btn">Vender mi auto</button>
             <a href={waLink(config.whatsapp)} target="_blank" rel="noopener noreferrer" className="hdr-btn">Contacto</a>
@@ -358,9 +366,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════
-          BANNER 1 — ADAPTATIVO
-      ══════════════════════════════════════════════ */}
+      {/* BANNER 1 — ADAPTATIVO */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
@@ -388,9 +394,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════════
-          NUEVOS INGRESOS
-      ══════════════════════════════════════════════ */}
+      {/* NUEVOS INGRESOS */}
       {newVehicles.length > 0 && (
         <section className="pt-10 pb-2 max-w-7xl mx-auto px-4 sm:px-6" data-aos="fade-up">
           <SectionHeader title="Nuevos Ingresos" accent="#2596be" />
@@ -398,9 +402,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* ══════════════════════════════════════════════
-          BANNER 2 — ADAPTATIVO
-      ══════════════════════════════════════════════ */}
+      {/* BANNER 2 — ADAPTATIVO */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
@@ -423,7 +425,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </div>
       </div>
 
-      {/* ══ INVENTARIO ══ */}
+      {/* INVENTARIO */}
       <section id="inventario" className="pt-12 pb-24 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-end justify-between mb-8" data-aos="fade-up">
           <div>
@@ -455,7 +457,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </div>
       </section>
 
-      {/* ══ FOOTER ══ */}
+      {/* FOOTER */}
       <footer className="bg-[#0b1114] text-white py-14" data-aos="fade-up">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
@@ -513,12 +515,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
                       <Share2 className="w-4 h-4" />
                     </a>
                   )}
-                  {config.whatsapp && (
-                    <a href={waLink(config.whatsapp)} target="_blank" rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full border border-[#288b55]/40 flex items-center justify-center text-[#288b55] hover:bg-[#288b55]/10 transition-all">
-                      <MessageCircle className="w-4 h-4" />
-                    </a>
-                  )}
                 </div>
               </div>
             )}
@@ -535,7 +531,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
   );
 }
 
-/* ══ VEHICLE CARD ══ */
 function VehicleCard({ vehicle: v, onSelect }: { vehicle: Vehicle; onSelect: (v: Vehicle) => void }) {
   const fotos = normalizeFotosClient(v.fotos);
   const mainPhoto = fotos[0] || null;
@@ -577,7 +572,6 @@ function VehicleCard({ vehicle: v, onSelect }: { vehicle: Vehicle; onSelect: (v:
   );
 }
 
-/* ══ SECTION HEADER ══ */
 function SectionHeader({ title, accent }: { title: string; accent: string }) {
   return (
     <div className="flex items-center gap-3 mb-6">
@@ -587,7 +581,6 @@ function SectionHeader({ title, accent }: { title: string; accent: string }) {
   );
 }
 
-/* ══ HORIZONTAL SLIDER ══ */
 function HorizontalSlider({ vehicles, onSelect }: { vehicles: Vehicle[]; onSelect: (v: Vehicle) => void }) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const scroll = (direction: 'left' | 'right') => {
@@ -618,7 +611,6 @@ function HorizontalSlider({ vehicles, onSelect }: { vehicles: Vehicle[]; onSelec
   );
 }
 
-/* ══ VENDER MODAL ══ */
 function VenderModal({ whatsapp, form, setForm, onClose }: {
   whatsapp: string | null;
   form: { marca: string; modelo: string; anio: string; descripcion: string };
@@ -678,7 +670,6 @@ function VenderModal({ whatsapp, form, setForm, onClose }: {
   );
 }
 
-/* ══ BUSCAR MODAL ══ */
 function BuscarModal({ whatsapp, form, setForm, onClose }: {
   whatsapp: string | null;
   form: { marca: string; modelo: string; anio: string; presupuesto: string };

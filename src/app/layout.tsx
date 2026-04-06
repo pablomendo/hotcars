@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Inter_Tight } from "next/font/google"; 
 import "./globals.css";
 import HeaderWrapper from "@/components/ui/HeaderWrapper";
+import { headers } from "next/headers";
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -20,16 +21,24 @@ export const metadata: Metadata = {
   description: "Compra, venta y consignación de vehículos.",
 };
 
-export default function RootLayout({
+// Agregamos el async aquí
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Ahora sí, esperamos los headers correctamente
+  const headersList = await headers();
+  const host = headersList.get('host') || "";
+
+  const isSubdomain = host.includes('.hotcars.com.ar') || 
+                      (host.includes('.localhost') && host !== 'localhost:3000');
+
   return (
     <html lang="es" className={`${bebasNeue.variable} ${googleSans.variable}`}>
       <body className="antialiased font-sans bg-[#f0f2f5] text-text-main">
         <div className="min-h-screen flex flex-col">
-          <HeaderWrapper />
+          {!isSubdomain && <HeaderWrapper />}
           <main className="flex-1 w-full pb-20 lg:pb-0">
             {children}
           </main>
