@@ -363,7 +363,10 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           BANNER 1 — IZQUIERDA
       ══════════════════════════════════════════════ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
-        <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
+        <picture>
+          <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
+          <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
+        </picture>
         <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
           <h2 className="franklin-left text-white mb-[1%]" 
               style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
@@ -400,7 +403,10 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           BANNER 2 — DERECHA
       ══════════════════════════════════════════════ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
-        <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
+        <picture>
+          <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
+          <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
+        </picture>
         <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
           <h2 className="franklin-right text-white mb-[1.5%]" 
               style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
