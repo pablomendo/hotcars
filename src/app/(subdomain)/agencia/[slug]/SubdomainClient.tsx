@@ -386,7 +386,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
             Vende tu auto más fácil<br />
             ¡Aceptamos financiación!
           </h2>
-          <h2 className="franklin-left text-white uppercase mb-[1%]" 
+          <h2 className="franklin-left text-white mb-[1%]" 
               style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
             Vos cobrás al contado!
           </h2>
@@ -419,12 +419,11 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
           <h2 className="franklin-right text-white mb-[1.5%]" 
               style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
-            Tenemos más opciones para ayudarte a<br className="hidden sm:block" /> encontrar tu próximo vehículo.
+            Tenemos más opciones para ayudarte a encontrar tu próximo vehículo.
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
              style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
-            Si no ves lo que buscas, dejanos los detalles y nos encargamos<br />
-            de encontrar opciones a tu medida, sin compromiso.
+            Si no ves lo que buscas, dejanos los detalles y nos encargamos de encontrar opciones a tu medida, sin compromiso.
           </p>
           <div className="flex justify-end gap-3 mt-1">
             <button onClick={() => setShowBuscarModal(true)} className="banner-btn banner-btn-solid">Buscar mi próximo auto</button>
