@@ -225,6 +225,9 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           transition: all 0.18s ease;
           text-decoration: none;
         }
+        @media (max-width: 640px) {
+          .banner-btn { padding: 6px 18px; }
+        }
         .banner-btn:hover {
           transform: translateY(-2px) scale(1.03);
           box-shadow: 0 6px 20px rgba(0,0,0,0.22);
@@ -293,17 +296,19 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         className={`fixed top-0 left-0 right-0 z-[9999] transition-all duration-500 ${
           scrolled
             ? 'bg-[#0b1114]/95 backdrop-blur-md border-b border-white/5 shadow-lg'
-            : 'bg-black/40 backdrop-blur-sm'
+            : 'bg-black sm:bg-black/40 backdrop-blur-sm'
         }`}
       >
         <div className="h-16 flex items-center justify-between px-4 sm:px-8 relative">
           
-          {/* Botón Home: Solo visible en mobile */}
-          <a href="#top" className="flex sm:hidden items-center justify-center w-10 h-10 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
-            <Car className="w-5 h-5 text-white" />
-          </a>
+          {/* Botón HOME: Solo en mobile a la izquierda */}
+          <div className="flex sm:hidden">
+            <a href="#top" className="hdr-btn !rounded-md !border-none">
+              HOME
+            </a>
+          </div>
 
-          {/* Logo: OCULTO en mobile (hidden), visible desde sm en adelante */}
+          {/* Logo: OCULTO en mobile, visible desde sm */}
           <a href="#top" className="hidden sm:flex items-center shrink-0">
             {config.logo_url ? (
               <img src={config.logo_url} alt="Logo" className="h-9 w-auto object-contain" style={{ maxWidth: '140px' }} />
@@ -312,16 +317,19 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
             )}
           </a>
 
+          {/* Botones centrales: Siempre centrados */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
             <button onClick={() => setShowVenderModal(true)} className="hdr-btn">Vender mi auto</button>
             <a href={waLink(config.whatsapp)} target="_blank" rel="noopener noreferrer" className="hdr-btn">Contacto</a>
           </div>
+          
+          {/* Spacer para mantener balance en desktop */}
           <div className="w-[130px] hidden sm:block" />
         </div>
       </motion.header>
 
       {/* ══ HERO ══ */}
-      <section id="top" style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
+      <section id="top" className="pt-16 sm:pt-0" style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
         <img src={heroImage} alt="Portada" style={{ display: 'block', width: '100%', height: 'auto' }} />
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px',
@@ -380,7 +388,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           </h2>
           <h2 className="franklin-left text-white uppercase mb-[1%]" 
               style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
-            VOS COBRÁS AL CONTADO!
+            Vos cobrás al contado!
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
              style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
