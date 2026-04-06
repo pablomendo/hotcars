@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Loader2, MapPin, X, Bell, Eye, Check } from 'lucide-react';
+import SubdomainClient from './[subdomain]/SubdomainClient';
 
 export default function MarketplaceDashboard() {
   return (

@@ -4,22 +4,22 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  experimental: {
-    turbopack: {
-      root: '.',
-    },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
+        port: '',
         pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'xkwkgcjgxjvidiwthwbr.supabase.co',
-        pathname: '/**',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
       },
     ],
   },

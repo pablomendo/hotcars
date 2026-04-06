@@ -5,14 +5,17 @@ import Header from "@/components/header/Header";
 
 export default function HeaderWrapper() {
   const pathname = usePathname();
-  
-  // Rutas donde NO queremos que aparezca el Header global con menús
-  const authRoutes = ["/login", "/register", "/reset-password"];
-  
-  // Si estamos en una de esas rutas, no renderizamos nada (permitiendo que la page use su propio header)
-  if (authRoutes.includes(pathname)) {
-    return null;
-  }
+
+  const hiddenRoutes = [
+    "/login",
+    "/register",
+    "/reset-password",
+  ];
+
+  // Ocultar en rutas de agencia (subdominios reescritos por el middleware)
+  if (pathname.startsWith("/agencia/")) return null;
+
+  if (hiddenRoutes.includes(pathname)) return null;
 
   return <Header />;
 }
