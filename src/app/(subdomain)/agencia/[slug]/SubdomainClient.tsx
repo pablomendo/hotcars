@@ -377,8 +377,8 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       {/* BANNER 1 — ADAPTATIVO (DANDOSE LA MANO) */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
-          <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
-          <img src="/Banner_subdomain_2.png" alt="Banner vender auto" className="w-full h-auto block" />
+          <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
+          <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
         </picture>
         <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
           <h2 className="franklin-left text-white mb-[1%]" 
@@ -413,8 +413,8 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       {/* BANNER 2 — ADAPTATIVO (TRES PERSONAS) */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
-          <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
-          <img src="/Banner_subdomain_1.png" alt="Banner buscar auto" className="w-full h-auto block" />
+          <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
+          <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
         </picture>
         <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
           <h2 className="franklin-right text-white mb-[1.5%]" 
@@ -424,8 +424,9 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
              style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
-            Si no ves lo que buscas, dejanos los detalles y nos encargamos<br />
-            de encontrar opciones a tu medida, sin compromiso.
+            Si no ves lo que buscas, dejanos los detalles<br /> 
+            y nos encargamos de encontrar opciones<br />
+            a tu medida, sin compromiso.
           </p>
           <div className="flex justify-end gap-3 mt-1">
             <button onClick={() => setShowBuscarModal(true)} className="banner-btn banner-btn-solid">Buscar mi próximo auto</button>
@@ -513,7 +514,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
             {/* Bloque 2: Gestión HotCars */}
             <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
               <div className="flex flex-col gap-2">
-                <h4 className="text-[17px] font-semibold text-gray-200">Publicación gestionada a través de HotCars</h4>
+                <h4 className="text-[17px] font-semibold text-gray-200">Web gestionada a través de HotCars</h4>
                 <p className="text-sm text-gray-500 font-medium">Plataforma digital para la publicación y gestión de vehículos.</p>
               </div>
               <div className="flex flex-col gap-5 mt-2">
