@@ -226,7 +226,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           text-decoration: none;
         }
         @media (max-width: 640px) {
-          .banner-btn { padding: 6px 18px; }
+          .banner-btn { padding: 5px 14px; font-size: 10px; gap: 4px; }
         }
         .banner-btn:hover {
           transform: translateY(-2px) scale(1.03);
@@ -251,7 +251,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           transform-origin: left;
           letter-spacing: -0.02em;
           line-height: 1.15;
-          text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+          text-shadow: none;
         }
         .franklin-right { 
           font-family: 'Libre Franklin', sans-serif; 
@@ -261,7 +261,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           transform-origin: right;
           letter-spacing: -0.02em;
           line-height: 1.15;
-          text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+          text-shadow: none;
         }
         .genos { 
           font-family: 'Genos', sans-serif; 
@@ -331,9 +331,16 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       {/* ══ HERO ══ */}
       <section id="top" className="pt-16 sm:pt-0" style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
         <img src={heroImage} alt="Portada" style={{ display: 'block', width: '100%', height: 'auto' }} />
-        <div style={{
+        {/* Desktop: degradado */}
+        <div className="hidden sm:block" style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '60px',
-          background: 'linear-gradient(to bottom, transparent, #0b1114)',
+          background: 'linear-gradient(to bottom, transparent, #288b55)',
+          pointerEvents: 'none',
+        }} />
+        {/* Mobile: degradado igual que desktop */}
+        <div className="block sm:hidden" style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: '60px',
+          background: 'linear-gradient(to bottom, transparent, #288b55)',
           pointerEvents: 'none',
         }} />
       </section>
@@ -374,28 +381,26 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* BANNER 1 — ADAPTATIVO (DANDOSE LA MANO) */}
+      {/* BANNER 1 */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
-          <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
+          <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
           <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
         </picture>
         <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
-          <h2 className="franklin-left text-white mb-[1%]" 
-              style={{ fontSize: 'clamp(21px, 4.5vw, 53px)' }}>
+          <h2 className="franklin-left text-white leading-tight" 
+              style={{ fontSize: 'clamp(24px, 4.5vw, 53px)', marginBottom: 0 }}>
             Vende tu auto más fácil<br />
-            ¡Aceptamos financiación!
-          </h2>
-          <h2 className="franklin-left text-white mb-[1%]" 
-              style={{ fontSize: 'clamp(21px, 4.5vw, 53px)' }}>
+            ¡Aceptamos financiación!<br />
             Vos cobrás al contado!
           </h2>
-          <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
-            Nos encargamos de todo el proceso y acercamos<br />
-            compradores reales listos para cerrar
+          <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[1%]" 
+             style={{ fontSize: 'clamp(20px, 2.1vw, 26px)' }}>
+            Nos encargamos de todo el proceso<br />
+            y acercamos compradores<br />
+            reales listos para cerrar.
           </p>
-          <div className="flex gap-3 mt-1">
+          <div className="flex gap-3 mt-1 sm:mt-0">
             <button onClick={() => setShowVenderModal(true)} className="banner-btn banner-btn-solid">Vender mi auto</button>
             <button onClick={() => document.getElementById('inventario')?.scrollIntoView({ behavior: 'smooth' })} className="banner-btn banner-btn-outline">Ver autos disponibles</button>
           </div>
@@ -410,21 +415,21 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* BANNER 2 — ADAPTATIVO (TRES PERSONAS) */}
+      {/* BANNER 2 */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
-          <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
+          <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
           <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
         </picture>
         <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
           <h2 className="franklin-right text-white mb-[1.5%]" 
-              style={{ fontSize: 'clamp(21px, 4.5vw, 53px)' }}>
+              style={{ fontSize: 'clamp(24px, 4.5vw, 53px)' }}>
             Tenemos más opciones para ayudarte<br />
             a encontrar tu próximo vehículo.
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
-            Si no ves lo que buscas, dejanos los detalles<br /> 
+             style={{ fontSize: 'clamp(20px, 2.1vw, 26px)' }}>
+            Si no ves lo que buscas, dejanos los detalles<br />
             y nos encargamos de encontrar opciones<br />
             a tu medida, sin compromiso.
           </p>
@@ -467,10 +472,10 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </div>
       </section>
 
-      {/* FOOTER DISEÑO ADAPTADO REAL DESKTOP */}
+      {/* FOOTER */}
       <footer className="bg-[#0b1114] text-white pt-16 pb-12 border-t border-white/5" data-aos="fade-up">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-sans text-left">
             
             {/* Bloque 1: Información de Agencia */}
             <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
@@ -534,7 +539,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
             </div>
 
             {/* Bloque 3: Call to Action + Branding */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3">
               <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-8 items-center text-center h-full justify-center">
                 <h4 className="text-xl font-bold text-white tracking-tight">¿Querés publicar tus vehículos en HotCars?</h4>
                 <a 
@@ -554,7 +559,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
 
           </div>
           
-          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[2px]">© 2026 {config.subdomain} - Todos los derechos reservados</p>
              <a href="https://hotcars.com.ar" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-[3px] text-gray-700 hover:text-[#288b55] transition-colors">Powered by HotCars</a>
           </div>
@@ -586,7 +591,7 @@ function VehicleCard({ vehicle: v, onSelect }: { vehicle: Vehicle; onSelect: (v:
           </div>
         )}
       </div>
-      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+      <div className="p-3 sm:p-4 flex flex-col flex-grow text-left">
         <h3 className="font-black uppercase text-[12px] sm:text-[14px] text-[#0f172a] truncate leading-tight mb-0.5">{v.marca} {v.modelo}</h3>
         {v.version && <p className="text-[9px] sm:text-[10px] font-bold text-[#3483fa] uppercase tracking-wide truncate mb-1">{v.version}</p>}
         <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-tight mb-2">{v.anio} • {v.km?.toLocaleString('de-DE')} KM</p>
@@ -658,7 +663,7 @@ function VenderModal({ whatsapp, form, setForm, onClose }: {
           <h3 className="font-black uppercase tracking-widest text-white">Vender mi auto</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><X size={24} /></button>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 text-left">
           {[
             { label: 'Marca *', key: 'marca', placeholder: 'Ej: Toyota' },
             { label: 'Modelo *', key: 'modelo', placeholder: 'Ej: Corolla' },
@@ -717,7 +722,7 @@ function BuscarModal({ whatsapp, form, setForm, onClose }: {
           <h3 className="font-black uppercase tracking-widest text-white">Buscar mi nuevo auto</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><X size={24} /></button>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 text-left">
           {[
             { label: 'Marca *', key: 'marca', placeholder: 'Ej: Toyota' },
             { label: 'Modelo *', key: 'modelo', placeholder: 'Ej: Corolla' },
