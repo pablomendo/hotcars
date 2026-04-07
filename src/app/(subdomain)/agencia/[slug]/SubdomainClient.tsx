@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import {
   MessageCircle, MapPin, Clock, Phone,
   Instagram, Facebook, Share2, ChevronLeft, ChevronRight,
-  X, Car,
+  X, Car, CheckCircle2,
 } from 'lucide-react';
 
 const supabase = createClient(
@@ -378,20 +378,20 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
-          <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" style={{ width: '100%' }} />
+          <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
         </picture>
         <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
           <h2 className="franklin-left text-white mb-[1%]" 
-              style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
+              style={{ fontSize: 'clamp(18px, 4.5vw, 53px)' }}>
             Vende tu auto más fácil<br />
             ¡Aceptamos financiación!
           </h2>
           <h2 className="franklin-left text-white mb-[1%]" 
-              style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
+              style={{ fontSize: 'clamp(18px, 4.5vw, 53px)' }}>
             Vos cobrás al contado!
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
+             style={{ fontSize: 'clamp(14px, 2.1vw, 26px)' }}>
             Nos encargamos de todo el proceso y acercamos<br />
             compradores reales listos para cerrar
           </p>
@@ -410,20 +410,22 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* BANNER 2 — ADAPTATIVO */}
+      {/* BANNER 2 — ADAPTATIVO CORREGIDO */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
-          <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" style={{ width: '100%' }} />
+          <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
         </picture>
         <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
           <h2 className="franklin-right text-white mb-[1.5%]" 
-              style={{ fontSize: 'clamp(22px, 4.5vw, 53px)' }}>
-            Tenemos más opciones para ayudarte a encontrar tu próximo vehículo.
+              style={{ fontSize: 'clamp(18px, 4.5vw, 53px)' }}>
+            Tenemos más opciones para ayudarte<br />
+            a encontrar tu próximo vehículo.
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(17px, 2.1vw, 26px)' }}>
-            Si no ves lo que buscas, dejanos los detalles y nos encargamos de encontrar opciones a tu medida, sin compromiso.
+             style={{ fontSize: 'clamp(14px, 2.1vw, 26px)' }}>
+            Si no ves lo que buscas, dejanos los detalles y nos encargamos<br />
+            de encontrar opciones a tu medida, sin compromiso.
           </p>
           <div className="flex justify-end gap-3 mt-1">
             <button onClick={() => setShowBuscarModal(true)} className="banner-btn banner-btn-solid">Buscar mi próximo auto</button>
@@ -464,73 +466,96 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-[#0b1114] text-white py-14" data-aos="fade-up">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-500 mb-5">Contacto</p>
-            <div className="text-sm text-gray-300 flex flex-col gap-3 font-medium">
-              {config.direccion && (
-                <div className="flex gap-2 items-start">
-                  <MapPin className="w-4 h-4 text-[#288b55] shrink-0 mt-0.5" />
-                  <span>{config.direccion}</span>
-                </div>
-              )}
-              {config.telefono && (
-                <div className="flex gap-2 items-center">
-                  <Phone className="w-4 h-4 text-[#288b55] shrink-0" />
-                  <span>{config.telefono}</span>
-                </div>
-              )}
-              {config.horarios && (
-                <div className="flex gap-2 items-center">
-                  <Clock className="w-4 h-4 text-[#288b55] shrink-0" />
-                  <span>{config.horarios}</span>
-                </div>
-              )}
-              {config.whatsapp && (
-                <a
-                  href={waLink(config.whatsapp)}
-                  target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-2 bg-[#288b55] hover:bg-[#1e6e42] text-white font-black uppercase text-[10px] tracking-widest px-5 py-2.5 rounded-sm w-fit transition-all"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-                </a>
-              )}
+      {/* FOOTER DISEÑO ADAPTADO REAL DESKTOP */}
+      <footer className="bg-[#0b1114] text-white pt-16 pb-12 border-t border-white/5" data-aos="fade-up">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 font-sans">
+            
+            {/* Bloque 1: Información de Agencia */}
+            <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
+              <h3 className="text-2xl font-bold text-white mb-2">{config.title || 'Agencia Automotriz'}</h3>
+              <div className="flex flex-col gap-5">
+                {config.direccion && (
+                  <div className="flex items-start gap-4">
+                    <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <span className="text-gray-300 text-[15px] pt-1">{config.direccion}</span>
+                  </div>
+                )}
+                {config.telefono && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <span className="text-gray-300 text-[15px]">{config.telefono}</span>
+                  </div>
+                )}
+                {config.horarios && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <span className="text-gray-300 text-[15px]">{config.horarios}</span>
+                  </div>
+                )}
+                {config.instagram && (
+                  <div className="flex items-center gap-4 group">
+                    <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 group-hover:bg-[#288b55]/20 border border-white/5 transition-all">
+                      <Instagram className="w-4 h-4 text-gray-400 group-hover:text-[#288b55]" />
+                    </div>
+                    <a href={`https://instagram.com/${config.instagram}`} className="text-gray-300 text-[15px] hover:text-[#288b55]">@{config.instagram}</a>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col justify-between gap-8">
-            {config.show_socials_footer && (
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-500 mb-4">Seguinos</p>
-                <div className="flex gap-3">
-                  {config.instagram && (
-                    <a href={`https://instagram.com/${config.instagram}`} target="_blank" rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 transition-all">
-                      <Instagram className="w-4 h-4" />
-                    </a>
-                  )}
-                  {config.facebook && (
-                    <a href={`https://facebook.com/${config.facebook}`} target="_blank" rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 transition-all">
-                      <Facebook className="w-4 h-4" />
-                    </a>
-                  )}
-                  {config.tiktok && (
-                    <a href={`https://tiktok.com/@${config.tiktok}`} target="_blank" rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 transition-all">
-                      <Share2 className="w-4 h-4" />
-                    </a>
-                  )}
+
+            {/* Bloque 2: Gestión HotCars */}
+            <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
+              <div className="flex flex-col gap-2">
+                <h4 className="text-[17px] font-semibold text-gray-200">Publicación gestionada a través de HotCars</h4>
+                <p className="text-sm text-gray-500 font-medium">Plataforma digital para la publicación y gestión de vehículos.</p>
+              </div>
+              <div className="flex flex-col gap-5 mt-2">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#288b55] shrink-0" />
+                  <span className="text-gray-300 text-sm">Publicación automatizada de tus vehículos en HotCars.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#288b55] shrink-0" />
+                  <span className="text-gray-300 text-sm">Gestión multicanal de inventario de vehículos.</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#288b55] shrink-0" />
+                  <span className="text-gray-300 text-sm">Reportes detallados de rendimiento de vehículos.</span>
                 </div>
               </div>
-            )}
-            <p className="text-[10px] font-black uppercase tracking-[4px] text-gray-700">
-              Powered by{' '}
-              <a href="https://hotcars.com.ar" target="_blank" rel="noopener noreferrer" className="hover:text-[#288b55] transition-colors">
-                HotCars
-              </a>
-            </p>
+            </div>
+
+            {/* Bloque 3: Call to Action + Branding */}
+            <div className="flex flex-col gap-6">
+              <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-8 items-center text-center h-full justify-center">
+                <h4 className="text-xl font-bold text-white tracking-tight">¿Querés publicar tus vehículos en HotCars?</h4>
+                <a 
+                  href="https://hotcars.com.ar" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full bg-[#288b55] hover:bg-[#1e6e42] text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-[15px] shadow-lg shadow-[#288b55]/20"
+                >
+                  Publicar en HotCars →
+                </a>
+              </div>
+              <div className="bg-[#1a232e] rounded-2xl p-6 border border-white/5 flex flex-col items-center gap-2 text-center">
+                <span className="text-xs font-bold uppercase tracking-[2px] text-gray-500">Impulsado por HotCars</span>
+                <span className="text-[11px] font-medium text-gray-600">Tecnología para la gestión de ventas automotrices</span>
+              </div>
+            </div>
+
+          </div>
+          
+          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+             <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[2px]">© 2026 {config.subdomain} - Todos los derechos reservados</p>
+             <a href="https://hotcars.com.ar" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-[3px] text-gray-700 hover:text-[#288b55] transition-colors">Powered by HotCars</a>
           </div>
         </div>
       </footer>
@@ -564,12 +589,6 @@ function VehicleCard({ vehicle: v, onSelect }: { vehicle: Vehicle; onSelect: (v:
         <h3 className="font-black uppercase text-[12px] sm:text-[14px] text-[#0f172a] truncate leading-tight mb-0.5">{v.marca} {v.modelo}</h3>
         {v.version && <p className="text-[9px] sm:text-[10px] font-bold text-[#3483fa] uppercase tracking-wide truncate mb-1">{v.version}</p>}
         <p className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-tight mb-2">{v.anio} • {v.km?.toLocaleString('de-DE')} KM</p>
-        {v.localidad && (
-          <div className="flex items-center gap-1 text-gray-400 mb-2">
-            <MapPin className="w-3 h-3 shrink-0" />
-            <span className="text-[9px] sm:text-[10px] font-semibold truncate">{v.localidad}</span>
-          </div>
-        )}
         <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
           <span className="font-black text-[#288b55] text-base sm:text-lg leading-none">{fmtPrice(v)}</span>
           <span className="text-[8px] sm:text-[9px] font-black uppercase bg-[#0f172a] text-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-md transition-colors group-hover:bg-[#288b55]">Ver detalle</span>
