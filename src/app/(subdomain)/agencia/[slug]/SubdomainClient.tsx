@@ -381,7 +381,12 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* BANNER 1 */}
+      {/* BANNER 1
+          CAMBIO: título mobile sube 4pts → clamp(28px, 4.5vw, 53px) (era clamp(24px,...))
+          Renglones del título sin cambios (ya estaban correctos en el doc fuente)
+          Subtítulo mobile sube 4pts → clamp(24px, 2.1vw, 26px) (era clamp(20px,...))
+          Subtítulo sin cambios en renglones (ya estaban correctos en el doc fuente)
+      ══ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
@@ -389,13 +394,13 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </picture>
         <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
           <h2 className="franklin-left text-white leading-tight" 
-              style={{ fontSize: 'clamp(24px, 4.5vw, 53px)', marginBottom: 0 }}>
+              style={{ fontSize: 'clamp(28px, 4.5vw, 53px)', marginBottom: 0 }}>
             Vende tu auto más fácil<br />
             ¡Aceptamos financiación!<br />
             Vos cobrás al contado!
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[1%]" 
-             style={{ fontSize: 'clamp(20px, 2.1vw, 26px)' }}>
+             style={{ fontSize: 'clamp(24px, 2.1vw, 26px)' }}>
             Nos encargamos de todo el proceso<br />
             y acercamos compradores<br />
             reales listos para cerrar.
@@ -415,7 +420,21 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* BANNER 2 */}
+      {/* BANNER 2
+          CAMBIOS MOBILE:
+          - Título: +4pts → clamp(28px, 4.5vw, 53px) (era clamp(24px,...))
+            Renglones mobile exactos:
+            1. Tenemos más opciones para
+            2. ayudarte a encontrar
+            3. tu próximo vehículo.
+            En desktop se usa el br original (2 renglones).
+          - Subtítulo: +4pts → clamp(24px, 2.1vw, 26px) (era clamp(20px,...))
+            Renglones mobile exactos:
+            1. Si no ves lo que buscas, dejanos los detalles
+            2. y nos encargamos de encontrar opciones
+            3. a tu medida, sin compromiso.
+            En desktop se usa el br original (3 renglones del doc fuente).
+      ══ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
@@ -423,15 +442,33 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </picture>
         <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
           <h2 className="franklin-right text-white mb-[1.5%]" 
-              style={{ fontSize: 'clamp(24px, 4.5vw, 53px)' }}>
-            Tenemos más opciones para ayudarte<br />
-            a encontrar tu próximo vehículo.
+              style={{ fontSize: 'clamp(28px, 4.5vw, 53px)' }}>
+            {/* Mobile: 3 renglones exactos */}
+            <span className="sm:hidden">
+              Tenemos más opciones para<br />
+              ayudarte a encontrar<br />
+              tu próximo vehículo.
+            </span>
+            {/* Desktop: igual que doc fuente */}
+            <span className="hidden sm:inline">
+              Tenemos más opciones para ayudarte<br />
+              a encontrar tu próximo vehículo.
+            </span>
           </h2>
           <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(20px, 2.1vw, 26px)' }}>
-            Si no ves lo que buscas, dejanos los detalles<br />
-            y nos encargamos de encontrar opciones<br />
-            a tu medida, sin compromiso.
+             style={{ fontSize: 'clamp(24px, 2.1vw, 26px)' }}>
+            {/* Mobile: 3 renglones exactos */}
+            <span className="sm:hidden">
+              Si no ves lo que buscas, dejanos los detalles<br />
+              y nos encargamos de encontrar opciones<br />
+              a tu medida, sin compromiso.
+            </span>
+            {/* Desktop: igual que doc fuente */}
+            <span className="hidden sm:inline">
+              Si no ves lo que buscas, dejanos los detalles<br />
+              y nos encargamos de encontrar opciones<br />
+              a tu medida, sin compromiso.
+            </span>
           </p>
           <div className="flex justify-end gap-3 mt-1">
             <button onClick={() => setShowBuscarModal(true)} className="banner-btn banner-btn-solid">Buscar mi próximo auto</button>
