@@ -115,7 +115,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
   const [venderForm, setVenderForm] = useState({ marca: '', modelo: '', anio: '', descripcion: '' });
   const [buscarForm, setBuscarForm] = useState({ marca: '', modelo: '', anio: '', presupuesto: '' });
 
-  // ── AOS init ──
   useEffect(() => {
     import('aos').then(AOS => {
       AOS.default.init({
@@ -302,7 +301,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         }
 
         .banner-title-left {
-          font-size: clamp(16px, 4vw, 53px);
+          font-size: clamp(22px, 5.5vw, 53px);
         }
         @media (min-width: 640px) {
           .banner-title-left {
@@ -311,7 +310,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         }
 
         .banner-title-right {
-          font-size: clamp(16px, 4vw, 53px);
+          font-size: clamp(22px, 5.5vw, 53px);
         }
         @media (min-width: 640px) {
           .banner-title-right {
@@ -320,7 +319,7 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         }
 
         .banner-subtitle {
-          font-size: clamp(13px, 3.5vw, 26px);
+          font-size: clamp(17px, 4vw, 26px);
         }
         @media (min-width: 640px) {
           .banner-subtitle {
