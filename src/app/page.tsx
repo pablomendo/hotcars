@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense, useCallback } from 'react';
+import { useState, useEffect, useMemo, Suspense, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Loader2, MapPin, X, Bell, Eye, Check } from 'lucide-react';
@@ -82,7 +82,6 @@ function TicketCard({ user }: { user: any }) {
             onChange={e => setForm(p => ({ ...p, presupuesto: e.target.value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.') }))} />
         </div>
 
-        {/* Condiciones aceptadas */}
         <div className="flex gap-1 flex-wrap">
           {([
             { key: 'acepta_inhibido', label: 'Inhibido' },
@@ -223,8 +222,32 @@ function MarketplaceContent() {
     <main className="min-h-screen bg-[#e2e8f0] text-[#0f172a] font-sans tracking-tight overflow-x-hidden cursor-default pb-20 md:pb-0">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Genos:ital,wght@0,100..900;1,100..900&family=Instrument+Serif&family=Urbanist:ital,wght@1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@900&display=swap');
         .no-scrollbar::-webkit-scrollbar { display: none; }
         img { display: block; max-width: 100%; }
+
+        .franklin-banner {
+          font-family: 'Libre Franklin', sans-serif;
+          font-weight: 900;
+          display: inline-block;
+          transform: scaleX(0.72);
+          transform-origin: left;
+          letter-spacing: -0.03em;
+          line-height: 1.1;
+        }
+        .franklin-banner-right {
+          font-family: 'Libre Franklin', sans-serif;
+          font-weight: 900;
+          display: inline-block;
+          transform: scaleX(0.72);
+          transform-origin: right;
+          letter-spacing: -0.03em;
+          line-height: 1.1;
+        }
+        .genos-banner {
+          font-family: 'Genos', sans-serif;
+          font-weight: 400;
+        }
       `}</style>
 
       <nav className="flex justify-between items-center p-4 md:p-6 bg-white sticky top-0 z-50 shadow-sm">
@@ -283,14 +306,97 @@ function MarketplaceContent() {
           <div className="md:hidden w-full mb-8 px-4">
             <img src="/banner_phones_1.png" alt="Banner Mobile 1" className="w-full h-auto object-cover rounded-xl" />
           </div>
-          <div className="w-full flex flex-col md:flex-row gap-10 justify-center items-center mb-8 px-4 md:px-8 py-8 bg-[#12242E]">
-            <div className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 w-full md:w-auto">
-              <img src="/banner_red_privada_vendedores.png" alt="Red Privada de Vendedores" className="w-full md:w-[700px] h-auto object-cover" />
+
+          {/* ── BANNERS FRANJAS ── */}
+          <div className="w-full flex flex-col gap-0">
+
+            {/* Franja 1 */}
+            <div className="relative w-full overflow-hidden bg-[#e2e8f0]">
+              {/* Desktop */}
+              <div className="hidden md:block w-full relative">
+                <img src="/Franjas_main_1_desktop.png" alt="Red Privada de Vendedores" className="w-full h-auto block" />
+                <div className="absolute inset-0 flex flex-col justify-center px-[6%]" style={{ paddingTop: '120px' }}>
+                  <h2 className="franklin-banner text-white mb-3 uppercase" style={{ fontSize: 'clamp(23px, 3vw, 51px)' }}>
+                    Red Privada de Vendedores
+                  </h2>
+                  <p className="genos-banner text-white/90 leading-[1.2] mb-6" style={{ fontSize: 'clamp(20px, 1.6vw, 26px)' }}>
+                    Accede al inventario de toda la red y multiplica<br />
+                    tus opciones de venta sin necesidad de mas inversión.<br />
+                    Gestión de grupos de trabajo.
+                  </p>
+                  <div>
+                    <button onClick={() => router.push('/register')} className="px-8 py-3 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest text-[11px] rounded-lg hover:bg-white/10 transition-all cursor-pointer">
+                      Quiero Vender Más
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {/* Mobile */}
+              <div className="md:hidden w-full relative">
+                <img src="/banner-mobile-main-1.png" alt="Red Privada de Vendedores" className="w-full h-auto block" />
+                <div className="absolute inset-0 flex flex-col justify-end px-[6%] pb-[8%]" style={{ paddingTop: '120px' }}>
+                  <h2 className="franklin-banner text-white mb-2 uppercase" style={{ fontSize: 'clamp(22px, 6vw, 36px)' }}>
+                    Red Privada de Vendedores
+                  </h2>
+                  <p className="genos-banner text-white/90 leading-[1.2] mb-4" style={{ fontSize: 'clamp(17px, 3.8vw, 22px)' }}>
+                    Accede al inventario de toda la red y multiplica<br />
+                    tus opciones de venta sin necesidad de mas inversión.<br />
+                    Gestión de grupos de trabajo.
+                  </p>
+                  <div>
+                    <button onClick={() => router.push('/register')} className="px-6 py-2.5 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest text-[10px] rounded-lg hover:bg-white/10 transition-all cursor-pointer">
+                      Quiero Vender Más
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 w-full md:w-auto">
-              <img src="/banner_tu_propia_agencia.png" alt="Tu Propia Agencia" className="w-full md:w-[700px] h-auto object-cover" />
+
+            {/* Franja 2 */}
+            <div className="relative w-full overflow-hidden bg-[#e2e8f0]">
+              {/* Desktop */}
+              <div className="hidden md:block w-full relative">
+                <img src="/Franjas_main_2_desktop.png" alt="Tu Propia Agencia Online" className="w-full h-auto block" />
+                <div className="absolute inset-0 flex flex-col justify-center items-end px-[6%] text-right" style={{ paddingTop: '120px' }}>
+                  <h2 className="franklin-banner-right text-white mb-3 uppercase" style={{ fontSize: 'clamp(23px, 3vw, 51px)' }}>
+                    Tu Propia Agencia Online
+                  </h2>
+                  <p className="genos-banner text-white/90 leading-[1.2] mb-6" style={{ fontSize: 'clamp(20px, 1.6vw, 26px)' }}>
+                    Tu web, tu marca, tu autoridad. Presentate con nivel,<br />
+                    destacate y mostrá tus vehículos<br />
+                    de forma profesional.
+                  </p>
+                  <div>
+                    <button onClick={() => router.push('/register')} className="px-8 py-3 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest text-[11px] rounded-lg hover:bg-white/10 transition-all cursor-pointer">
+                      Crear mi Propia Web
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {/* Mobile */}
+              <div className="md:hidden w-full relative">
+                <img src="/banner-mobile-2_main.png" alt="Tu Propia Agencia Online" className="w-full h-auto block" />
+                <div className="absolute inset-0 flex flex-col justify-end items-end px-[6%] pb-[8%] text-right" style={{ paddingTop: '120px' }}>
+                  <h2 className="franklin-banner-right text-white mb-2 uppercase" style={{ fontSize: 'clamp(22px, 6vw, 36px)' }}>
+                    Tu Propia Agencia Online
+                  </h2>
+                  <p className="genos-banner text-white/90 leading-[1.2] mb-4" style={{ fontSize: 'clamp(17px, 3.8vw, 22px)' }}>
+                    Tu web, tu marca, tu autoridad. Presentate con nivel,<br />
+                    destacate y mostrá tus vehículos<br />
+                    de forma profesional.
+                  </p>
+                  <div>
+                    <button onClick={() => router.push('/register')} className="px-6 py-2.5 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest text-[10px] rounded-lg hover:bg-white/10 transition-all cursor-pointer">
+                      Crear mi Propia Web
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
+          {/* ── fin banners franjas ── */}
+
           <div className="hidden md:block w-[70%] mx-auto mt-12">
             <img src="/banner2_largo.png" alt="Banner Largo 2" className="w-full h-auto object-cover" />
           </div>
@@ -338,7 +444,6 @@ function MarketplaceContent() {
 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-6 items-start">
 
-          {/* Ticket card — primer elemento siempre que haya búsqueda o categoría */}
           {showTicket && <TicketCard user={user} />}
 
           {filteredVehicles.map((v: any) => (
