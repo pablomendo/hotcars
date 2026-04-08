@@ -180,14 +180,11 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
   return (
     <div className="min-h-screen bg-[#e2e8f0]" style={{ fontFamily: "'Inter', sans-serif" }}>
 
-      {/* ── AOS CSS + fuentes + estilos globales ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Genos:wght@300;400;500;600;700;900&family=Libre+Franklin:wght@400;500;700;900&display=swap');
 
-        /* AOS override */
         [data-aos] { backface-visibility: hidden; }
 
-        /* Header buttons */
         .hdr-btn {
           display: flex; align-items: center; justify-content: center;
           color: rgba(255,255,255,0.75);
@@ -207,7 +204,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           box-shadow: 0 0 16px 2px rgba(40,139,85,0.45), inset 0 0 8px rgba(40,139,85,0.15);
         }
 
-        /* Vehicle card hover */
         .vehicle-card {
           transition: transform 0.28s ease-in-out, box-shadow 0.28s ease-in-out;
         }
@@ -216,7 +212,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           box-shadow: 0 16px 40px rgba(0,0,0,0.14);
         }
 
-        /* Banner buttons */
         .banner-btn {
           display: inline-flex; align-items: center; gap: 6px;
           font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px;
@@ -268,10 +263,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           font-weight: 500; 
         }
 
-        /* ══ BANNER OVERLAY RESPONSIVE ══
-           Mobile: sin padding-top, centrado real en la imagen
-           Desktop: padding-top 180px como estaba
-        */
         .banner-overlay-left {
           position: absolute;
           inset: 0;
@@ -309,6 +300,33 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
             justify-content: center;
           }
         }
+
+        .banner-title-left {
+          font-size: clamp(16px, 4vw, 53px);
+        }
+        @media (min-width: 640px) {
+          .banner-title-left {
+            font-size: clamp(24px, 4.5vw, 53px);
+          }
+        }
+
+        .banner-title-right {
+          font-size: clamp(16px, 4vw, 53px);
+        }
+        @media (min-width: 640px) {
+          .banner-title-right {
+            font-size: clamp(24px, 4.5vw, 53px);
+          }
+        }
+
+        .banner-subtitle {
+          font-size: clamp(13px, 3.5vw, 26px);
+        }
+        @media (min-width: 640px) {
+          .banner-subtitle {
+            font-size: clamp(20px, 2.1vw, 26px);
+          }
+        }
       `}</style>
 
       <AnimatePresence>
@@ -343,14 +361,12 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       >
         <div className="h-16 flex items-center justify-between px-4 sm:px-8 relative">
           
-          {/* Botón HOME: Solo en mobile a la izquierda */}
           <div className="flex sm:hidden">
             <a href="#top" className="hdr-btn !rounded-md !border-none">
               HOME
             </a>
           </div>
 
-          {/* Logo: OCULTO en mobile, visible desde sm */}
           <a href="#top" className="hidden sm:flex items-center shrink-0">
             {config.logo_url ? (
               <img src={config.logo_url} alt="Logo" className="h-9 w-auto object-contain" style={{ maxWidth: '140px' }} />
@@ -359,13 +375,11 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
             )}
           </a>
 
-          {/* Botones centrales: Siempre centrados */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
             <button onClick={() => setShowVenderModal(true)} className="hdr-btn">Vender mi auto</button>
             <a href={waLink(config.whatsapp)} target="_blank" rel="noopener noreferrer" className="hdr-btn">Contacto</a>
           </div>
           
-          {/* Spacer para mantener balance en desktop */}
           <div className="w-[130px] hidden sm:block" />
         </div>
       </motion.header>
@@ -373,13 +387,11 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       {/* ══ HERO ══ */}
       <section id="top" className="pt-16 sm:pt-0" style={{ position: 'relative', width: '100%', lineHeight: 0 }}>
         <img src={heroImage} alt="Portada" style={{ display: 'block', width: '100%', height: 'auto' }} />
-        {/* Desktop: degradado */}
         <div className="hidden sm:block" style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '60px',
           background: 'linear-gradient(to bottom, transparent, #288b55)',
           pointerEvents: 'none',
         }} />
-        {/* Mobile: degradado igual que desktop */}
         <div className="block sm:hidden" style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '60px',
           background: 'linear-gradient(to bottom, transparent, #288b55)',
@@ -423,26 +435,19 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* BANNER 1
-          CAMBIOS:
-          - Overlay: reemplaza pt-[180px] por clase .banner-overlay-left (mobile: centrado, desktop: pt-180px)
-          - Título mobile: clamp(32px, 4.5vw, 53px) — +4pts sobre los 28px de la versión anterior
-          - Subtítulo mobile: clamp(24px, 2.1vw, 26px) — sin cambio
-      ══ */}
+      {/* BANNER 1 */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
           <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
         </picture>
         <div className="banner-overlay-left">
-          <h2 className="franklin-left text-white leading-tight" 
-              style={{ fontSize: 'clamp(32px, 4.5vw, 53px)', marginBottom: 0 }}>
+          <h2 className="franklin-left banner-title-left text-white leading-tight" style={{ marginBottom: 0 }}>
             Vende tu auto más fácil<br />
             ¡Aceptamos financiación!<br />
             Vos cobrás al contado!
           </h2>
-          <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[1%]" 
-             style={{ fontSize: 'clamp(24px, 2.1vw, 26px)' }}>
+          <p className="genos banner-subtitle text-white/90 tracking-wide leading-[1.1] mb-[1%]">
             Nos encargamos de todo el proceso<br />
             y acercamos compradores<br />
             reales listos para cerrar.
@@ -462,42 +467,30 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         </section>
       )}
 
-      {/* BANNER 2
-          CAMBIOS:
-          - Overlay: reemplaza pt-[180px] por clase .banner-overlay-right (mobile: centrado, desktop: pt-180px)
-          - Título mobile: clamp(32px, 4.5vw, 53px) — +4pts sobre los 28px de la versión anterior
-          - Subtítulo mobile: clamp(24px, 2.1vw, 26px) — sin cambio
-          - Renglones mobile via sm:hidden / hidden sm:inline sin cambios
-      ══ */}
+      {/* BANNER 2 */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
           <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
         </picture>
         <div className="banner-overlay-right">
-          <h2 className="franklin-right text-white mb-[1.5%]" 
-              style={{ fontSize: 'clamp(32px, 4.5vw, 53px)' }}>
-            {/* Mobile: 3 renglones exactos */}
+          <h2 className="franklin-right banner-title-right text-white mb-[1.5%]">
             <span className="sm:hidden">
               Tenemos más opciones para<br />
               ayudarte a encontrar<br />
               tu próximo vehículo.
             </span>
-            {/* Desktop: igual que doc fuente */}
             <span className="hidden sm:inline">
               Tenemos más opciones para ayudarte<br />
               a encontrar tu próximo vehículo.
             </span>
           </h2>
-          <p className="genos text-white/90 tracking-wide leading-[1.1] mb-[2%]" 
-             style={{ fontSize: 'clamp(24px, 2.1vw, 26px)' }}>
-            {/* Mobile: 3 renglones exactos */}
+          <p className="genos banner-subtitle text-white/90 tracking-wide leading-[1.1] mb-[2%]">
             <span className="sm:hidden">
               Si no ves lo que buscas, dejanos los detalles<br />
               y nos encargamos de encontrar opciones<br />
               a tu medida, sin compromiso.
             </span>
-            {/* Desktop: igual que doc fuente */}
             <span className="hidden sm:inline">
               Si no ves lo que buscas, dejanos los detalles<br />
               y nos encargamos de encontrar opciones<br />
@@ -548,7 +541,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-sans text-left">
             
-            {/* Bloque 1: Información de Agencia */}
             <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
               {config.title && <h3 className="text-2xl font-bold text-white mb-2">{config.title}</h3>}
               <div className="flex flex-col gap-5">
@@ -587,7 +579,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
               </div>
             </div>
 
-            {/* Bloque 2: Gestión HotCars */}
             <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
               <div className="flex flex-col gap-2">
                 <h4 className="text-[17px] font-semibold text-gray-200">Web gestionada a través de HotCars</h4>
@@ -609,7 +600,6 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
               </div>
             </div>
 
-            {/* Bloque 3: Call to Action + Branding */}
             <div className="flex flex-col gap-3">
               <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-8 items-center text-center h-full justify-center">
                 <h4 className="text-xl font-bold text-white tracking-tight">¿Querés publicar tus vehículos en HotCars?</h4>
