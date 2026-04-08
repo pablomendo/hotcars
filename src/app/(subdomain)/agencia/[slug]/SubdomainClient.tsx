@@ -267,6 +267,48 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
           font-family: 'Genos', sans-serif; 
           font-weight: 500; 
         }
+
+        /* ══ BANNER OVERLAY RESPONSIVE ══
+           Mobile: sin padding-top, centrado real en la imagen
+           Desktop: padding-top 180px como estaba
+        */
+        .banner-overlay-left {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          text-align: left;
+          padding-left: 6%;
+          padding-right: 6%;
+          padding-top: 0;
+        }
+        @media (min-width: 640px) {
+          .banner-overlay-left {
+            padding-top: 180px;
+            justify-content: center;
+          }
+        }
+
+        .banner-overlay-right {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          justify-content: center;
+          text-align: right;
+          padding-left: 6%;
+          padding-right: 6%;
+          padding-top: 0;
+        }
+        @media (min-width: 640px) {
+          .banner-overlay-right {
+            padding-top: 180px;
+            justify-content: center;
+          }
+        }
       `}</style>
 
       <AnimatePresence>
@@ -382,19 +424,19 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       )}
 
       {/* BANNER 1
-          CAMBIO: título mobile sube 4pts → clamp(28px, 4.5vw, 53px) (era clamp(24px,...))
-          Renglones del título sin cambios (ya estaban correctos en el doc fuente)
-          Subtítulo mobile sube 4pts → clamp(24px, 2.1vw, 26px) (era clamp(20px,...))
-          Subtítulo sin cambios en renglones (ya estaban correctos en el doc fuente)
+          CAMBIOS:
+          - Overlay: reemplaza pt-[180px] por clase .banner-overlay-left (mobile: centrado, desktop: pt-180px)
+          - Título mobile: clamp(32px, 4.5vw, 53px) — +4pts sobre los 28px de la versión anterior
+          - Subtítulo mobile: clamp(24px, 2.1vw, 26px) — sin cambio
       ══ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_2_mobile.png" />
           <img src="/Banner_subdomain_1.png" alt="Banner vender auto" className="w-full h-auto block" />
         </picture>
-        <div className="absolute inset-0 flex flex-col items-start justify-center text-left px-[6%] pt-[180px]">
+        <div className="banner-overlay-left">
           <h2 className="franklin-left text-white leading-tight" 
-              style={{ fontSize: 'clamp(28px, 4.5vw, 53px)', marginBottom: 0 }}>
+              style={{ fontSize: 'clamp(32px, 4.5vw, 53px)', marginBottom: 0 }}>
             Vende tu auto más fácil<br />
             ¡Aceptamos financiación!<br />
             Vos cobrás al contado!
@@ -421,28 +463,20 @@ export default function SubdomainClient({ config, initialVehicles }: { config: W
       )}
 
       {/* BANNER 2
-          CAMBIOS MOBILE:
-          - Título: +4pts → clamp(28px, 4.5vw, 53px) (era clamp(24px,...))
-            Renglones mobile exactos:
-            1. Tenemos más opciones para
-            2. ayudarte a encontrar
-            3. tu próximo vehículo.
-            En desktop se usa el br original (2 renglones).
-          - Subtítulo: +4pts → clamp(24px, 2.1vw, 26px) (era clamp(20px,...))
-            Renglones mobile exactos:
-            1. Si no ves lo que buscas, dejanos los detalles
-            2. y nos encargamos de encontrar opciones
-            3. a tu medida, sin compromiso.
-            En desktop se usa el br original (3 renglones del doc fuente).
+          CAMBIOS:
+          - Overlay: reemplaza pt-[180px] por clase .banner-overlay-right (mobile: centrado, desktop: pt-180px)
+          - Título mobile: clamp(32px, 4.5vw, 53px) — +4pts sobre los 28px de la versión anterior
+          - Subtítulo mobile: clamp(24px, 2.1vw, 26px) — sin cambio
+          - Renglones mobile via sm:hidden / hidden sm:inline sin cambios
       ══ */}
       <div className="relative w-full overflow-hidden" data-aos="fade-up">
         <picture>
           <source media="(max-width: 640px)" srcSet="/banner_subdomain_1_mobile.png" />
           <img src="/Banner_subdomain_2.png" alt="Banner buscar auto" className="w-full h-auto block" />
         </picture>
-        <div className="absolute inset-0 flex flex-col items-end justify-center text-right px-[6%] pt-[180px]">
+        <div className="banner-overlay-right">
           <h2 className="franklin-right text-white mb-[1.5%]" 
-              style={{ fontSize: 'clamp(28px, 4.5vw, 53px)' }}>
+              style={{ fontSize: 'clamp(32px, 4.5vw, 53px)' }}>
             {/* Mobile: 3 renglones exactos */}
             <span className="sm:hidden">
               Tenemos más opciones para<br />
