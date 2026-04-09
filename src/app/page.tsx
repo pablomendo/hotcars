@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, Suspense, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Loader2, MapPin, X, Bell, Eye, Check } from 'lucide-react';
+import { Search, Loader2, MapPin, X, Bell, Eye, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import SubdomainClient from './[subdomain]/SubdomainClient';
 
 export default function MarketplaceDashboard() {
@@ -112,6 +112,80 @@ function TicketCard({ user }: { user: any }) {
   );
 }
 
+// ── Últimos Ingresos Slider ───────────────────────────────────────────────────
+function UltimosIngresosSlider({ items }: { items: any[] }) {
+  const router = useRouter();
+  const [offset, setOffset] = useState(0);
+  const visibleCount = 5;
+  const max = Math.max(0, items.length - visibleCount);
+
+  const prev = () => setOffset(o => Math.max(0, o - 1));
+  const next = () => setOffset(o => Math.min(max, o + 1));
+
+  const handleViewDetail = (id: string) => {
+    sessionStorage.setItem('marketplace_scroll', window.scrollY.toString());
+    router.push(`/vehiculos/${id}`);
+  };
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="relative w-full">
+      {/* Flecha izquierda */}
+      <button
+        onClick={prev}
+        disabled={offset === 0}
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 -ml-4 md:-ml-6 w-9 h-9 md:w-11 md:h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-[#0f172a] hover:bg-[#288b55] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <ChevronLeft size={20} />
+      </button>
+
+      {/* Cards visibles */}
+      <div className="overflow-hidden">
+        <div
+          className="flex gap-3 md:gap-4 transition-transform duration-400"
+          style={{ transform: `translateX(calc(-${offset} * (100% / ${visibleCount} + 0px)))` }}
+        >
+          {items.map((v: any) => (
+            <div
+              key={v.id}
+              onClick={() => handleViewDetail(v.id)}
+              className="flex-shrink-0 cursor-pointer rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-all border border-gray-200"
+              style={{ width: `calc((100% - ${(visibleCount - 1) * 12}px) / ${visibleCount})` }}
+            >
+              {/* Foto grande */}
+              <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+                {v.fotos?.[0]
+                  ? <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                  : <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase italic text-[8px]">Sin Foto</div>
+                }
+              </div>
+              {/* Info sobre blanco */}
+              <div className="bg-white px-3 py-2.5">
+                <p className="text-[11px] md:text-[13px] font-black uppercase tracking-tight text-[#0f172a] truncate leading-tight">
+                  {v.marca} {v.modelo}
+                </p>
+                <p className="text-[10px] md:text-[11px] font-bold text-gray-400 uppercase mt-0.5">
+                  {v.anio} · <span suppressHydrationWarning>{v.km?.toLocaleString('de-DE')} KM</span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Flecha derecha */}
+      <button
+        onClick={next}
+        disabled={offset >= max}
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 -mr-4 md:-mr-6 w-9 h-9 md:w-11 md:h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-[#0f172a] hover:bg-[#288b55] hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <ChevronRight size={20} />
+      </button>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 function MarketplaceContent() {
   const router = useRouter();
@@ -124,6 +198,7 @@ function MarketplaceContent() {
   const [displayLimit, setDisplayLimit] = useState(15);
   const [totalResults, setTotalResults] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [ultimosIngresos, setUltimosIngresos] = useState([]);
 
   const heroSlides = [
     { img: '/hero1-desktop-hotcars.jpg', ctaPosition: 'left', primaryLabel: 'Comenzar Ahora', primaryPath: '/register', secondaryLabel: 'Ingresar', secondaryPath: '/login' },
@@ -166,6 +241,18 @@ function MarketplaceContent() {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  // Fetch últimos 10 ingresos para el slider
+  useEffect(() => {
+    supabase
+      .from('inventario')
+      .select('id, marca, modelo, anio, km, fotos, created_at')
+      .eq('inventory_status', 'activo')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .range(0, 9)
+      .then(({ data }) => setUltimosIngresos(data || []));
   }, []);
 
   useEffect(() => {
@@ -352,19 +439,21 @@ function MarketplaceContent() {
               </div>
             </div>
 
-            {/* Franja 2 */}
+            {/* Franja 2 — texto actualizado + gradiente inferior */}
             <div className="relative w-full overflow-hidden bg-[#e2e8f0]">
               {/* Desktop */}
               <div className="hidden md:block w-full relative">
                 <img src="/Franjas_main_2_desktop.png" alt="Tu Propia Agencia Online" className="w-full h-auto block" />
+                {/* Gradiente de transparente a #288b55 al pie de la franja */}
+                <div className="absolute bottom-0 left-0 w-full h-[75px] pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, #288b55)' }} />
                 <div className="absolute inset-0 flex flex-col justify-center items-end px-[6%] text-right" style={{ paddingTop: '120px' }}>
                   <h2 className="franklin-banner-right text-white mb-3 uppercase" style={{ fontSize: 'clamp(23px, 3vw, 51px)' }}>
                     Tu Propia Agencia Online
                   </h2>
                   <p className="genos-banner text-white/90 leading-[1.2] mb-6" style={{ fontSize: 'clamp(20px, 1.6vw, 26px)' }}>
-                    Tu web, tu marca, tu autoridad. Presentate con nivel,<br />
-                    destacate y mostrá tus vehículos<br />
-                    de forma profesional.
+                    Tu web, tu marca, tu autoridad. Elevá tu profesionalismo<br />
+                    con herramientas de IA para ventas y un dashboard de gestión<br />
+                    diseñado para maximizar tus resultados.
                   </p>
                   <div>
                     <button onClick={() => router.push('/register')} className="px-8 py-3 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest text-[11px] rounded-lg hover:bg-white/10 transition-all cursor-pointer">
@@ -376,14 +465,16 @@ function MarketplaceContent() {
               {/* Mobile */}
               <div className="md:hidden w-full relative">
                 <img src="/banner-mobile-2_main.png" alt="Tu Propia Agencia Online" className="w-full h-auto block" />
+                {/* Gradiente de transparente a #288b55 al pie de la franja */}
+                <div className="absolute bottom-0 left-0 w-full h-[65px] pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, #288b55)' }} />
                 <div className="absolute inset-0 flex flex-col justify-end items-end px-[6%] pb-[8%] text-right" style={{ paddingTop: '120px' }}>
                   <h2 className="franklin-banner-right text-white mb-2 uppercase" style={{ fontSize: 'clamp(22px, 6vw, 36px)' }}>
                     Tu Propia Agencia Online
                   </h2>
                   <p className="genos-banner text-white/90 leading-[1.2] mb-4" style={{ fontSize: 'clamp(17px, 3.8vw, 22px)' }}>
-                    Tu web, tu marca, tu autoridad. Presentate con nivel,<br />
-                    destacate y mostrá tus vehículos<br />
-                    de forma profesional.
+                    Tu web, tu marca, tu autoridad. Elevá tu profesionalismo<br />
+                    con herramientas de IA para ventas y un dashboard de gestión<br />
+                    diseñado para maximizar tus resultados.
                   </p>
                   <div>
                     <button onClick={() => router.push('/register')} className="px-6 py-2.5 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest text-[10px] rounded-lg hover:bg-white/10 transition-all cursor-pointer">
@@ -397,19 +488,28 @@ function MarketplaceContent() {
           </div>
           {/* ── fin banners franjas ── */}
 
-          <div className="hidden md:block w-[70%] mx-auto mt-12">
-            <img src="/banner2_largo.png" alt="Banner Largo 2" className="w-full h-auto object-cover" />
-          </div>
           <div className="md:hidden w-full mt-8 px-4">
             <img src="/banner_phones_2.png" alt="Banner Mobile 2" className="w-full h-auto object-cover rounded-xl" />
           </div>
         </div>
       )}
 
+      {/* ── Slider Últimos Ingresos ── */}
+      {!search && !selectedCategory && ultimosIngresos.length > 0 && (
+        <section className="w-full bg-[#288b55] pt-10 pb-10">
+          <div className="max-w-[1600px] mx-auto px-10 md:px-16">
+            <h2 className="text-center text-white uppercase italic mb-8 md:mb-6 tracking-tighter text-[28px] md:text-[40px]" style={{ fontFamily: "'Genos', sans-serif" }}>
+              Marketplace Últimos Ingresos
+            </h2>
+            <UltimosIngresosSlider items={ultimosIngresos} />
+          </div>
+        </section>
+      )}
+
       {/* Categorías */}
       <section className="w-full bg-[#288b55] py-8 md:py-6 relative">
         <div className="max-w-[1600px] mx-auto px-4 md:px-8">
-          <h2 className="text-center text-white uppercase italic mb-8 md:mb-6 tracking-tighter text-2xl md:text-[36px]" style={{ fontFamily: "'Genos', sans-serif" }}>
+          <h2 className="text-center text-white uppercase italic mb-8 md:mb-6 tracking-tighter text-[28px] md:text-[40px]" style={{ fontFamily: "'Genos', sans-serif" }}>
             ¿Qué categoría estás buscando?
           </h2>
           <div className="grid grid-cols-2 md:flex md:justify-center items-center gap-6 md:gap-12">
@@ -429,8 +529,8 @@ function MarketplaceContent() {
       {/* Grid de resultados */}
       <div className="w-full mt-8 md:mt-12 pb-24 text-left">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex items-center justify-center relative mb-8 gap-4">
-          <h2 className="italic uppercase font-medium text-[#0f172a] text-center text-2xl md:text-[36px]" style={{ fontFamily: "'Genos', sans-serif" }}>
-            {selectedCategory ? `${categories.find(c => c.name === selectedCategory)?.label} disponibles` : "Inventario de toda la red"}
+          <h2 className="italic uppercase font-medium text-[#0f172a] text-center text-[28px] md:text-[40px]" style={{ fontFamily: "'Genos', sans-serif" }}>
+            {selectedCategory ? `${categories.find(c => c.name === selectedCategory)?.label} disponibles` : "Marketplace Hotcars"}
           </h2>
           {(selectedCategory || search) && <button onClick={resetAllFilters} className="text-gray-400 hover:text-red-600 transition-colors"><X size={28} /></button>}
         </div>
