@@ -18,7 +18,7 @@ const googleSans = Inter_Tight({
 
 export const metadata: Metadata = {
   title: "HotCars | Venta y Gestion Automotor",
-  description: "El marketplace de autos usados más profesional de Argentina. Red privada de vendedores y grupos de trabajo, flips compartidos de vehículos con otros vendedores o agencias, gestión de stock y agencias online.",
+  description: "El marketplace de autos usados más profesional de Argentina. Red privada de vendedores, grupos de trabajo, flips compartidos de vehículos con otros vendedores o agencias, gestión de stock y tu propia agencia online.",
 };
 
 // Agregamos el async aquí
