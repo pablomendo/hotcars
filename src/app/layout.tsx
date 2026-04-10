@@ -17,8 +17,8 @@ const googleSans = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  title: "HotCars | Plataforma Profesional",
-  description: "Compra, venta y consignación de vehículos.",
+  title: "HotCars | Venta y Gestion Automotor",
+  description: "Ecosistema Digial de Ventas y Gestion Automotor.",
 };
 
 // Agregamos el async aquí
