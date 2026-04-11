@@ -3,7 +3,10 @@
 import { useState, useEffect, useMemo, Suspense, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Loader2, MapPin, X, Bell, Eye, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Search, Loader2, MapPin, X, Bell, Eye, Check,
+  ChevronLeft, ChevronRight, Phone, Clock, Instagram, CheckCircle2,
+} from 'lucide-react';
 import SubdomainClient from './[subdomain]/SubdomainClient';
 
 export default function MarketplaceDashboard() {
@@ -125,6 +128,26 @@ function MarketplaceContent() {
   const [totalResults, setTotalResults] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [ultimosIngresos, setUltimosIngresos] = useState([]);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const scrollRestored = useRef(false);
+
+  useEffect(() => {
+    if (inv.length === 0 || scrollRestored.current) return;
+    const saved = sessionStorage.getItem('marketplace_scroll');
+    if (!saved) return;
+    scrollRestored.current = true;
+    const restore = () => {
+      const target = parseInt(saved, 10);
+      window.scrollTo({ top: target, behavior: 'instant' });
+      requestAnimationFrame(() => {
+        if (Math.abs(window.scrollY - target) > 50) {
+          window.scrollTo({ top: target, behavior: 'instant' });
+        }
+        sessionStorage.removeItem('marketplace_scroll');
+      });
+    };
+    requestAnimationFrame(restore);
+  }, [inv]);
 
   const heroSlides = [
     { img: '/hero1-desktop-hotcars.jpg', ctaPosition: 'left', primaryLabel: 'Comenzar Ahora', primaryPath: '/register', secondaryLabel: 'Ingresar', secondaryPath: '/login' },
@@ -169,11 +192,10 @@ function MarketplaceContent() {
     }
   }, []);
 
-  // Fetch últimos 10 ingresos para el slider
   useEffect(() => {
     supabase
       .from('inventario')
-      .select('id, marca, modelo, anio, km, fotos, created_at')
+      .select('id, marca, modelo, anio, km, pv, moneda, localidad, fotos, created_at')
       .eq('inventory_status', 'activo')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
@@ -199,18 +221,12 @@ function MarketplaceContent() {
     fetchInventory({ categoria: cat, marca: marc, modelo: mod }, displayLimit);
   }, [displayLimit]);
 
-  useEffect(() => {
-    const saved = sessionStorage.getItem('marketplace_scroll');
-    if (saved) {
-      setTimeout(() => { window.scrollTo({ top: parseInt(saved), behavior: 'instant' }); sessionStorage.removeItem('marketplace_scroll'); }, 100);
-    }
-  }, [inv]);
-
   const resetAllFilters = () => {
     setSelectedCategory(null);
     setSearch('');
     setDisplayLimit(15);
     sessionStorage.removeItem('marketplace_scroll');
+    scrollRestored.current = false;
     window.history.pushState(null, '', '/');
   };
 
@@ -225,6 +241,12 @@ function MarketplaceContent() {
   const handleViewDetail = (id: string) => {
     sessionStorage.setItem('marketplace_scroll', window.scrollY.toString());
     router.push(`/vehiculos/${id}`);
+  };
+
+  const sliderScrollBy = (dir: 'prev' | 'next') => {
+    if (!sliderRef.current) return;
+    const cardWidth = sliderRef.current.querySelector('.slider-card-wrap')?.clientWidth ?? 200;
+    sliderRef.current.scrollBy({ left: dir === 'next' ? cardWidth + 12 : -(cardWidth + 12), behavior: 'smooth' });
   };
 
   const showTicket = !!(search || selectedCategory);
@@ -254,7 +276,7 @@ function MarketplaceContent() {
           font-weight: 900;
           display: inline-block;
           transform: scaleX(0.72);
-          transform-origin: right;
+          transform-origin: center;
           letter-spacing: -0.03em;
           line-height: 1.1;
         }
@@ -263,14 +285,14 @@ function MarketplaceContent() {
           font-weight: 400;
         }
 
-        /* Slider responsive: mobile 2 cards, desktop 5 cards */
+        /* Slider responsive: mobile 2 cards, desktop 4 cards */
         .slider-card-wrap {
           flex-shrink: 0;
           width: calc(50% - 6px);
         }
         @media (min-width: 768px) {
           .slider-card-wrap {
-            width: calc(20% - 13px);
+            width: calc(25% - 12px);
           }
         }
       `}</style>
@@ -280,10 +302,9 @@ function MarketplaceContent() {
         <div className="px-3 py-1.5 bg-gray-200 border border-gray-300 rounded-xl text-[10px] md:text-xs font-bold text-gray-600 uppercase">PABLO MENDO</div>
       </nav>
 
-      {/* Hero — solo cuando no hay filtros */}
+      {/* Hero */}
       {!search && !selectedCategory && (
         <section className="w-full relative flex flex-col bg-[#288b55] overflow-hidden -mt-[1px] z-10">
-          {/* MOBILE */}
           <div className="md:hidden w-full aspect-[9/16] relative">
             <img src="/hero-mobile-hotcars.jpg" alt="Hero Mobile" className="w-full h-full object-cover" />
             <div className="absolute inset-0 flex flex-col justify-end pb-12 px-6 pointer-events-none">
@@ -300,7 +321,6 @@ function MarketplaceContent() {
               </div>
             </div>
           </div>
-          {/* DESKTOP slider */}
           <div className="hidden md:block w-full overflow-hidden relative">
             {heroSlides.map((slide, idx) => (
               <div key={idx} className={`w-full transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}>
@@ -332,21 +352,14 @@ function MarketplaceContent() {
             <img src="/banner_phones_1.png" alt="Banner Mobile 1" className="w-full h-auto object-cover rounded-xl" />
           </div>
 
-          {/* ── BANNERS FRANJAS ── */}
           <div className="w-full flex flex-col gap-0">
 
             {/* Franja 1 */}
             <div className="relative w-full overflow-hidden bg-[#e2e8f0]">
-              {/* Desktop */}
               <div className="hidden md:block w-full relative">
                 <img src="/Franjas_main_1_desktop.png" alt="Red Privada de Vendedores" className="w-full h-auto block" />
-                {/* paddingTop 95px = subido 25px respecto al original de 120px */}
                 <div className="absolute inset-0 flex flex-col justify-center px-[6%]" style={{ paddingTop: '95px' }}>
-                  <h2 className="franklin-banner mb-3 uppercase" style={{
-                    fontSize: 'clamp(23px, 3vw, 51px)',
-                    color: '#288b55',
-                    textShadow: '0 2px 14px rgba(0,0,0,0.5)',
-                  }}>
+                  <h2 className="franklin-banner mb-3 uppercase" style={{ fontSize: 'clamp(23px, 3vw, 51px)', color: '#288b55', textShadow: '0 2px 14px rgba(0,0,0,0.5)' }}>
                     Red Privada de Vendedores
                   </h2>
                   <p className="genos-banner text-white/90 leading-[1.2] mb-6" style={{ fontSize: 'clamp(20px, 1.6vw, 26px)' }}>
@@ -361,15 +374,10 @@ function MarketplaceContent() {
                   </div>
                 </div>
               </div>
-              {/* Mobile */}
               <div className="md:hidden w-full relative">
                 <img src="/banner-mobile-main-1.png" alt="Red Privada de Vendedores" className="w-full h-auto block" />
                 <div className="absolute inset-0 flex flex-col justify-end px-[6%] pb-[8%]" style={{ paddingTop: '120px' }}>
-                  <h2 className="franklin-banner mb-2 uppercase" style={{
-                    fontSize: 'clamp(22px, 6vw, 36px)',
-                    color: '#288b55',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-                  }}>
+                  <h2 className="franklin-banner mb-2 uppercase" style={{ fontSize: 'clamp(22px, 6vw, 36px)', color: '#288b55', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
                     Red Privada de Vendedores
                   </h2>
                   <p className="genos-banner text-white/90 leading-[1.2] mb-4" style={{ fontSize: 'clamp(17px, 3.8vw, 22px)' }}>
@@ -388,44 +396,33 @@ function MarketplaceContent() {
 
             {/* Franja 2 */}
             <div className="relative w-full overflow-hidden bg-[#e2e8f0]">
-              {/* Desktop */}
               <div className="hidden md:block w-full relative">
                 <img src="/Franjas_main_2_desktop.png" alt="Tu Propia Agencia Online" className="w-full h-auto block" />
                 <div className="absolute bottom-0 left-0 w-full h-[75px] pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, #288b55)' }} />
-                {/* paddingTop 95px = subido 25px */}
-                <div className="absolute inset-0 flex flex-col justify-center items-end px-[6%] text-right" style={{ paddingTop: '95px' }}>
-                  <h2 className="franklin-banner-right mb-3 uppercase" style={{
-                    fontSize: 'clamp(23px, 3vw, 51px)',
-                    color: '#288b55',
-                    textShadow: '0 2px 14px rgba(0,0,0,0.5)',
-                  }}>
+                {/* Bloque posicionado en la mitad derecha, textos centrados dentro de ese espacio */}
+                <div className="absolute inset-0 flex flex-col justify-center items-end text-center" style={{ paddingTop: '95px', paddingRight: '6%', paddingLeft: '35%' }}>
+                  <h2 className="franklin-banner-right mb-3 uppercase w-full text-center" style={{ fontSize: 'clamp(23px, 3vw, 51px)', color: '#288b55', textShadow: '0 2px 14px rgba(0,0,0,0.5)' }}>
                     Tu Propia Agencia Online
                   </h2>
-                  <p className="genos-banner text-white/90 leading-[1.2] mb-6" style={{ fontSize: 'clamp(20px, 1.6vw, 26px)' }}>
+                  <p className="genos-banner text-white/90 leading-[1.2] mb-6 w-full text-center" style={{ fontSize: 'clamp(20px, 1.6vw, 26px)' }}>
                     Tu web, tu marca, tu autoridad. Elevá tu profesionalismo<br />
                     con herramientas de IA para ventas y un dashboard de gestión<br />
                     diseñado para maximizar tus resultados.
                   </p>
-                  <div>
+                  <div className="w-full flex justify-center">
                     <button onClick={() => router.push('/register')} className="px-8 py-3 bg-transparent border-2 border-white text-white font-black uppercase tracking-widest text-[11px] rounded-lg hover:bg-white/10 transition-all cursor-pointer">
                       Crear mi Propia Web
                     </button>
                   </div>
                 </div>
               </div>
-              {/* Mobile */}
               <div className="md:hidden w-full relative">
                 <img src="/banner-mobile-2_main.png" alt="Tu Propia Agencia Online" className="w-full h-auto block" />
                 <div className="absolute bottom-0 left-0 w-full h-[65px] pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent, #288b55)' }} />
                 <div className="absolute inset-0 flex flex-col justify-end items-end px-[6%] pb-[8%] text-right" style={{ paddingTop: '120px' }}>
-                  <h2 className="franklin-banner-right mb-2 uppercase" style={{
-                    fontSize: 'clamp(22px, 6vw, 36px)',
-                    color: '#288b55',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-                  }}>
+                  <h2 className="franklin-banner-right mb-2 uppercase" style={{ fontSize: 'clamp(22px, 6vw, 36px)', color: '#288b55', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
                     Tu Propia Agencia Online
                   </h2>
-                  {/* Subtítulo en 3 líneas — sin mención a dashboard/IA */}
                   <p className="genos-banner text-white/90 leading-[1.25] mb-4" style={{ fontSize: 'clamp(17px, 3.8vw, 22px)' }}>
                     Tu web, tu marca, tu autoridad.<br />
                     Elevá tu profesionalismo con herramientas<br />
@@ -441,49 +438,70 @@ function MarketplaceContent() {
             </div>
 
           </div>
-          {/* ── fin banners franjas ── */}
-
-          {/* banner_phones_2.png eliminado — solo mostraba en mobile */}
         </div>
       )}
 
-      {/* ── Slider Últimos Ingresos ── */}
+      {/* Slider Últimos Ingresos */}
       {!search && !selectedCategory && ultimosIngresos.length > 0 && (
         <section className="w-full bg-[#288b55] pt-10 pb-10">
           <div className="max-w-[1600px] mx-auto px-4 md:px-16">
             <h2 className="text-center text-white uppercase italic mb-8 md:mb-6 tracking-tighter text-[28px] md:text-[40px]" style={{ fontFamily: "'Genos', sans-serif" }}>
               Marketplace Últimos Ingresos
             </h2>
-            {/* Scroll nativo táctil — mobile 2 cards visibles, desktop 5 */}
-            <div
-              className="slider-scroll flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-2"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
-            >
-              {ultimosIngresos.map((v: any) => (
-                <div
-                  key={v.id}
-                  onClick={() => {
-                    sessionStorage.setItem('marketplace_scroll', window.scrollY.toString());
-                    router.push(`/vehiculos/${v.id}`);
-                  }}
-                  className="slider-card-wrap snap-start cursor-pointer rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-all border border-gray-200"
-                >
-                  <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden">
-                    {v.fotos?.[0]
-                      ? <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} loading="lazy" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                      : <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase italic text-[8px]">Sin Foto</div>
-                    }
+            <div className="relative">
+              {/* Flecha izquierda */}
+              <button
+                onClick={() => sliderScrollBy('prev')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 -ml-4 md:-ml-6 w-9 h-9 md:w-11 md:h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-[#0f172a] hover:bg-[#288b55] hover:text-white transition-all"
+              >
+                <ChevronLeft size={20} />
+              </button>
+
+              <div
+                ref={sliderRef}
+                className="slider-scroll flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-2"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              >
+                {ultimosIngresos.map((v: any) => (
+                  <div
+                    key={v.id}
+                    onClick={() => {
+                      sessionStorage.setItem('marketplace_scroll', window.scrollY.toString());
+                      router.push(`/vehiculos/${v.id}`);
+                    }}
+                    className="slider-card-wrap snap-start cursor-pointer rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-xl transition-all border border-gray-200 group"
+                  >
+                    <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+                      {v.fotos?.[0]
+                        ? <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        : <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase italic text-[8px]">Sin Foto</div>
+                      }
+                    </div>
+                    <div className="bg-white px-3 py-2.5 flex flex-col gap-0.5">
+                      <p className="text-[11px] md:text-[13px] font-black uppercase tracking-tight text-[#0f172a] truncate leading-tight">
+                        {v.marca} {v.modelo}
+                      </p>
+                      <p className="text-[10px] md:text-[11px] font-bold text-gray-400 uppercase">
+                        {v.anio} · <span suppressHydrationWarning>{v.km?.toLocaleString('de-DE')} KM</span>
+                      </p>
+                      <p className="text-[#288b55] font-black text-[11px] md:text-[13px] leading-none" suppressHydrationWarning>
+                        {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}
+                      </p>
+                      <div className="flex items-center gap-1 text-gray-400 font-bold uppercase text-[9px] md:text-[10px] truncate">
+                        <MapPin size={9} /> {v.localidad || 'Sin ubicación'}
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white px-3 py-2.5">
-                    <p className="text-[11px] md:text-[13px] font-black uppercase tracking-tight text-[#0f172a] truncate leading-tight">
-                      {v.marca} {v.modelo}
-                    </p>
-                    <p className="text-[10px] md:text-[11px] font-bold text-gray-400 uppercase mt-0.5">
-                      {v.anio} · <span suppressHydrationWarning>{v.km?.toLocaleString('de-DE')} KM</span>
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+
+              {/* Flecha derecha */}
+              <button
+                onClick={() => sliderScrollBy('next')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 -mr-4 md:-mr-6 w-9 h-9 md:w-11 md:h-11 bg-white rounded-full shadow-lg flex items-center justify-center text-[#0f172a] hover:bg-[#288b55] hover:text-white transition-all"
+              >
+                <ChevronRight size={20} />
+              </button>
             </div>
           </div>
         </section>
@@ -510,7 +528,7 @@ function MarketplaceContent() {
       </section>
 
       {/* Grid de resultados */}
-      <div className="w-full mt-8 md:mt-12 pb-24 text-left">
+      <div className="w-full mt-8 md:mt-12 pb-12 text-left">
         <div className="max-w-[1400px] mx-auto px-4 md:px-8 flex items-center justify-center relative mb-8 gap-4">
           <h2 className="italic uppercase font-medium text-[#0f172a] text-center text-[28px] md:text-[40px]" style={{ fontFamily: "'Genos', sans-serif" }}>
             {selectedCategory ? `${categories.find(c => c.name === selectedCategory)?.label} disponibles` : "Marketplace Hotcars"}
@@ -526,15 +544,13 @@ function MarketplaceContent() {
         </div>
 
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-6 items-start">
-
           {showTicket && <TicketCard user={user} />}
-
           {filteredVehicles.map((v: any) => (
             <div key={v.id} onClick={() => handleViewDetail(v.id)}
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[300px] md:h-[393px] w-full transition-all hover:shadow-xl cursor-pointer">
-              <div className="relative h-[130px] md:h-[180px] w-full bg-gray-100 flex-shrink-0">
+              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-[300px] md:h-[393px] w-full transition-all hover:shadow-xl cursor-pointer group">
+              <div className="relative h-[130px] md:h-[180px] w-full bg-gray-100 flex-shrink-0 overflow-hidden">
                 {v.fotos?.[0]
-                  ? <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} loading="lazy" className="w-full h-full object-cover" />
+                  ? <img src={v.fotos[0]} alt={`${v.marca} ${v.modelo}`} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   : <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase italic text-[8px]">Sin Foto</div>
                 }
               </div>
@@ -580,6 +596,97 @@ function MarketplaceContent() {
           </div>
         )}
       </div>
+
+      {/* ── Footer ── */}
+      <footer className="bg-[#0b1114] text-white pt-16 pb-12 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans text-left">
+
+            <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
+              <h3 className="text-2xl font-bold text-white mb-2">HotCars</h3>
+              <div className="flex flex-col gap-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                    <MapPin className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <span className="text-gray-300 text-[15px] pt-1">Buenos Aires, Argentina</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                    <Phone className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <span className="text-gray-300 text-[15px]">11 7898-4773</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <span className="text-gray-300 text-[15px]">Soporte Agencias: 9 a 18hs</span>
+                </div>
+                <div className="flex items-center gap-4 group">
+                  <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 group-hover:bg-[#288b55]/20 border border-white/5 transition-all">
+                    <Instagram className="w-4 h-4 text-gray-400 group-hover:text-[#288b55]" />
+                  </div>
+                  <a href="https://instagram.com/hotcars.arg" target="_blank" rel="noopener noreferrer" className="text-gray-300 text-[15px] hover:text-[#288b55]">@hotcars.arg</a>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6">
+              <div className="flex flex-col gap-2">
+                <h4 className="text-[17px] font-semibold text-gray-200">Ecosistema HotCars</h4>
+                <p className="text-sm text-gray-500 font-medium">Tecnología diseñada para escalar tu negocio automotriz.</p>
+              </div>
+              <div className="flex flex-col gap-5 mt-2">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#288b55] shrink-0 mt-0.5" />
+                  <span className="text-gray-300 text-sm"><b>Red Privada de Vendedores:</b> Intercambio de stock con reglas claras.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#288b55] shrink-0 mt-0.5" />
+                  <span className="text-gray-300 text-sm"><b>Dashboard con IA:</b> Gestión inteligente de inventario con métricas avanzadas.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#288b55] shrink-0 mt-0.5" />
+                  <span className="text-gray-300 text-sm"><b>Agencia Online:</b> Web pública que profesionaliza tu propuesta de marca.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-[#288b55] shrink-0 mt-0.5" />
+                  <span className="text-gray-300 text-sm"><b>Publicación Multi-Agencia:</b> El empuje de red para vender más rápido.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-6">
+              <div className="bg-[#1a232e] rounded-2xl p-8 border border-white/5 flex flex-col gap-6 items-center text-center h-full justify-center">
+                <h4 className="text-xl font-bold text-white tracking-tight">¿Listo para profesionalizar tu inventario?</h4>
+                <div className="w-full flex flex-col gap-3">
+                  <a href="/crear-agencia" className="w-full bg-[#288b55] hover:bg-[#1e6e42] text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 text-[15px] shadow-lg shadow-[#288b55]/20">
+                    Crear mi Agencia Online →
+                  </a>
+                  <a href="/publicar-particular" className="w-full border border-white/10 hover:bg-white/5 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center text-[15px]">
+                    Vender mi auto particular
+                  </a>
+                </div>
+              </div>
+              <div className="bg-[#1a232e] rounded-2xl p-6 border border-white/5 flex flex-col items-center gap-2 text-center">
+                <span className="text-xs font-bold uppercase tracking-[2px] text-gray-500">IMPULSADO POR HOTCARS</span>
+                <span className="text-[11px] font-medium text-gray-600">Tecnologia para la gestion y venta automotriz</span>
+              </div>
+            </div>
+
+          </div>
+
+          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[2px]">© 2026 HotCars | Gestión Automotriz - Todos los derechos reservados</p>
+            <div className="flex gap-6">
+              <a href="/terminos" className="text-[10px] font-black uppercase tracking-[2px] text-gray-700 hover:text-[#288b55] transition-colors">Términos</a>
+              <a href="/privacidad" className="text-[10px] font-black uppercase tracking-[2px] text-gray-700 hover:text-[#288b55] transition-colors">Privacidad</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
     </main>
   );
 }
