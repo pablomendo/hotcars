@@ -654,7 +654,7 @@ function MarketplaceContent() {
                   <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center shrink-0 group-hover:bg-[#288b55]/20 border border-white/5 transition-all">
                     <Instagram className="w-4 h-4 text-gray-400 group-hover:text-[#288b55]" />
                   </div>
-                  <a href="https://instagram.com/hotcars.com.ar" target="_blank" rel="noopener noreferrer" className="text-gray-300 text-[15px] hover:text-[#288b55] transition-colors">@hotcars.com.ar</a>
+                  <a href="https://instagram.com/hotcars.app" target="_blank" rel="noopener noreferrer" className="text-gray-300 text-[15px] hover:text-[#288b55] transition-colors">hotcars.app</a>
                 </div>
               </div>
             </div>

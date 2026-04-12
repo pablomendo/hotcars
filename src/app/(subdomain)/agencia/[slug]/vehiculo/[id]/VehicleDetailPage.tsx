@@ -12,7 +12,7 @@ import {
   Check, Car
 } from 'lucide-react';
 
-// ─── Componente de Mapa (FIX DEFINITIVO: TRANSPARENCIA TOTAL) ─────────────────────────────
+// ─── Componente de Mapa ───────────────────────────────────────────────────────
 
 function VehicleMapInner({ localidad, provincia }: { localidad: string; provincia: string }) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -81,7 +81,7 @@ function VehicleMapInner({ localidad, provincia }: { localidad: string; provinci
   return <div ref={mapRef} className="relative z-10" style={{ height: '100%', width: '100%' }} />;
 }
 
-// ─── Componentes de UI (Copiados del Main) ────────────────────────────────────────────────────────
+// ─── Componentes de UI ────────────────────────────────────────────────────────
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -174,7 +174,7 @@ function HorizontalSlider({ title, vehicles, router, slug }: { title: string; ve
   );
 }
 
-// ─── Lógica Principal ───────────────────────────────────────────────────────
+// ─── Lógica Principal ─────────────────────────────────────────────────────────
 
 export default function VehicleDetailPage() {
   const params = useParams();
@@ -196,7 +196,6 @@ export default function VehicleDetailPage() {
   const [showVenderModal, setShowVenderModal] = useState(false);
   const [venderForm, setVenderForm] = useState({ marca: '', modelo: '', anio: '', descripcion: '' });
 
-  // Estados para la Lupa (Zoom)
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
 
@@ -346,7 +345,7 @@ export default function VehicleDetailPage() {
               </button>
             </div>
 
-            {/* LUPA (ZOOM) - Ocupa el espacio vacío debajo de compartir */}
+            {/* LUPA (ZOOM) */}
             <div className="mt-6 flex-grow flex flex-col overflow-hidden">
               <AnimatePresence>
                 {isZooming && (

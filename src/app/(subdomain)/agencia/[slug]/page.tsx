@@ -1,66 +1,15 @@
+// app/(subdomain)/agencia/[slug]/vehiculo/[id]/page.tsx
+// SERVER Component — genera OG metadata dinámico por vehículo
+
+import type { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
-import SubdomainClient from './SubdomainClient';
+import VehicleDetailPage from './VehicleDetailPage';
 
 const supabase = createClient(
   'https://xkwkgcjgxjvidiwthwbr.supabase.co',
   'sb_publishable_Ou5RH-wPn0_LDs3F8hd-5w_5gSWvlDF'
 );
-
-const FIELDS = 'id, marca, modelo, version, anio, km, pv, moneda, fotos, is_featured, is_new, inventory_status, categoria, localidad, provincia, descripcion, acepta_permuta, financiacion, created_at, show_on_web, created_by_user_id, web_order';
-
-export default async function SubdomainPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-
-  const { data: config, error } = await supabase
-    .from('web_configs')
-    .select('*')
-    .eq('subdomain', slug)
-    .single();
-
-  if (error || !config) return notFound();
-
-  const [propiosRes, flipsRes] = await Promise.all([
-    supabase
-      .from('inventario')
-      .select(FIELDS)
-      .eq('created_by_user_id', config.user_id)
-      .eq('show_on_web', true)
-      .neq('inventory_status', 'pausado')
-      .order('web_order', { ascending: true }),
-
-    // show_on_web vive en inventario, no en flip_compartido — se filtra en JS abajo
-    supabase
-      .from('flip_compartido')
-      .select(`inventario:auto_id(${FIELDS})`)
-      .eq('vendedor_user_id', config.user_id)
-      .eq('status', 'approved'),
-  ]);
-
-  const propios = (propiosRes.data || []).map((v: any) => ({
-    ...v,
-    fotos: normalizeFotos(v.fotos),
-  }));
-
-  const flips = (flipsRes.data || [])
-    .map((f: any) => f.inventario)
-    .filter((v: any) =>
-      v !== null &&
-      v.show_on_web === true &&
-      v.inventory_status?.toLowerCase() !== 'pausado'
-    )
-    .map((v: any) => ({
-      ...v,
-      fotos: normalizeFotos(v.fotos),
-    }));
-
-  const seen = new Set<string>();
-  const vehicles = [...propios, ...flips]
-    .filter(v => { if (seen.has(v.id)) return false; seen.add(v.id); return true; })
-    .sort((a, b) => (a.web_order || 0) - (b.web_order || 0));
-
-  return <SubdomainClient config={config} initialVehicles={vehicles} />;
-}
 
 function normalizeFotos(raw: unknown): string[] {
   if (!raw) return [];
@@ -73,4 +22,87 @@ function normalizeFotos(raw: unknown): string[] {
     return [];
   }
   return arr.filter((f): f is string => typeof f === 'string' && f.startsWith('http'));
+}
+
+// ── generateMetadata ──────────────────────────────────────────────────────────
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string; id: string }> }
+): Promise<Metadata> {
+  const { slug, id } = await params;
+
+  const [{ data: vehicle }, { data: config }] = await Promise.all([
+    supabase
+      .from('inventario')
+      .select('marca, modelo, version, anio, km, pv, moneda, fotos, descripcion')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('web_configs')
+      .select('agency_name, subdomain')
+      .eq('subdomain', slug)
+      .single(),
+  ]);
+
+  if (!vehicle) {
+    return {
+      title: 'Vehículo | HotCars PRO',
+      description: 'Detalle de vehículo en HotCars PRO.',
+    };
+  }
+
+  const agencyName = config?.agency_name || config?.subdomain || slug;
+  const fotos = normalizeFotos(vehicle.fotos);
+  const imageUrl = fotos[0] || 'https://hotcars.com.ar/hero1-desktop-hotcars.jpg';
+
+  const titulo = `${vehicle.marca} ${vehicle.modelo}${vehicle.version ? ' ' + vehicle.version : ''} ${vehicle.anio}`;
+  const precio = `${vehicle.moneda === 'USD' ? 'U$S' : '$'} ${Number(vehicle.pv).toLocaleString('de-DE')}`;
+  const km = `${Number(vehicle.km).toLocaleString('de-DE')} km`;
+  const description = `${titulo} — ${km} — ${precio}. Publicado por ${agencyName} en HotCars PRO.`;
+  const pageUrl = `https://${slug}.hotcars.com.ar/agencia/${slug}/vehiculo/${id}`;
+
+  return {
+    title: `${titulo} | ${agencyName}`,
+    description,
+    openGraph: {
+      title: `${titulo} — ${precio}`,
+      description,
+      url: pageUrl,
+      siteName: 'HotCars PRO',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: titulo,
+        },
+      ],
+      locale: 'es_AR',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${titulo} — ${precio}`,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+export default async function VehicleDetailServerPage({
+  params,
+}: {
+  params: Promise<{ slug: string; id: string }>;
+}) {
+  const { slug, id } = await params;
+
+  const { data: vehicle, error } = await supabase
+    .from('inventario')
+    .select('id')
+    .eq('id', id)
+    .single();
+
+  if (error || !vehicle) return notFound();
+
+  return <VehicleDetailPage />;
 }
