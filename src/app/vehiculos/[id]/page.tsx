@@ -604,9 +604,7 @@ export default function VehicleDetailPage() {
         auto_id: vehicle.id, user_id: user.id, owner_id: vehicle.owner_user_id, pregunta: directQuestionText.trim(),
       });
       if (error) throw error;
-      // ── TRACKING CONSULTAS ──────────────────────────────────────────────
       supabase.rpc('increment_vehicle_stat', { p_vehicle_id: vehicle.id, p_owner_user_id: vehicle.owner_user_id, p_field: 'consultas' }).then(({ error: e }) => { if (e) console.warn('stat consultas', e); });
-      // ── NOTIFICACIÓN: nueva pregunta al dueño ───────────────────────────
       supabase.from('notifications').insert({
         user_id: vehicle.owner_user_id,
         type: 'nueva_pregunta',

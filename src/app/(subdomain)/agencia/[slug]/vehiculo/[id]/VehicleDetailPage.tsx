@@ -1,18 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Zap, Facebook, MessageCircle, Share2,
-  RefreshCw, Heart, Handshake, User, ChevronLeft, ChevronRight,
-  TrendingUp, X, ShieldAlert, AlertCircle,
-  Loader2, MapPin, Mail, Link, Phone, CornerDownLeft, Navigation,
-  Check, Car
+  RefreshCw, Handshake, ChevronLeft, ChevronRight,
+  X, Loader2, Link, Phone, Navigation, Share2, Car
 } from 'lucide-react';
 
-// ─── Componente de Mapa ───────────────────────────────────────────────────────
+// ─── Mapa ─────────────────────────────────────────────────────────────────────
 
 function VehicleMapInner({ localidad, provincia }: { localidad: string; provincia: string }) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -27,61 +24,39 @@ function VehicleMapInner({ localidad, provincia }: { localidad: string; provinci
     })
       .then(r => r.json())
       .then(data => {
-        if (data && data[0]) {
-          setCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
-        } else {
-          setError(true);
-        }
+        if (data?.[0]) setCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+        else setError(true);
       })
       .catch(() => setError(true));
   }, [localidad, provincia]);
 
   useEffect(() => {
     if (!coords || !mapRef.current) return;
-    
     if (!document.getElementById('leaflet-css')) {
       const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
+      link.id = 'leaflet-css'; link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
     }
-
     import('leaflet').then(L => {
       const Leaflet = L.default;
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-      }
-
-      const map = Leaflet.map(mapRef.current!, { 
-        scrollWheelZoom: false, 
-        zoomControl: true,
-        attributionControl: false 
-      }).setView([coords.lat, coords.lng], 13);
-      
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); }
+      const map = Leaflet.map(mapRef.current!, { scrollWheelZoom: false, zoomControl: true, attributionControl: false })
+        .setView([coords.lat, coords.lng], 13);
       mapInstanceRef.current = map;
-
       Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
       Leaflet.marker([coords.lat, coords.lng]).addTo(map);
-
       setTimeout(() => map.invalidateSize(), 300);
     });
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
+    return () => { if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; } };
   }, [coords]);
 
   if (error) return <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-xl text-gray-400 text-sm">No se pudo cargar el mapa</div>;
   if (!coords) return <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-xl"><Loader2 className="animate-spin text-gray-300 w-6 h-6" /></div>;
-
   return <div ref={mapRef} className="relative z-10" style={{ height: '100%', width: '100%' }} />;
 }
 
-// ─── Componentes de UI ────────────────────────────────────────────────────────
+// ─── WhatsApp Icon ────────────────────────────────────────────────────────────
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -89,6 +64,8 @@ const WhatsAppIcon = () => (
     <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.845L.057 23.428a.5.5 0 00.609.61l5.71-1.494A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.652-.51-5.17-1.4l-.37-.22-3.389.887.896-3.293-.242-.381A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
   </svg>
 );
+
+// ─── Share Modal ──────────────────────────────────────────────────────────────
 
 function ShareModal({ vehicle, onClose }: { vehicle: any; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -124,13 +101,15 @@ function ShareModal({ vehicle, onClose }: { vehicle: any; onClose: () => void })
   );
 }
 
+// ─── Vehicle Card ─────────────────────────────────────────────────────────────
+
 function VehicleCard({ rv, onClick }: { rv: any; onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
   return (
     <button onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      className="flex-shrink-0 w-[220px] text-left rounded-[8px] overflow-hidden border border-gray-200 bg-white shadow-sm transition-all flex flex-col cursor-pointer"
+      className="flex-shrink-0 w-[200px] sm:w-[220px] text-left rounded-[8px] overflow-hidden border border-gray-200 bg-white shadow-sm transition-all flex flex-col cursor-pointer"
       style={{ boxShadow: hovered ? '0 8px 24px rgba(0,0,0,0.12)' : '0 1px 4px rgba(0,0,0,0.06)' }}>
-      <div className="w-full h-[143px] bg-gray-100 overflow-hidden">
+      <div className="w-full h-[130px] bg-gray-100 overflow-hidden">
         <img src={rv.fotos?.[0]} alt={rv.modelo} className="w-full h-full object-cover transition-transform duration-500" style={{ transform: hovered ? 'scale(1.08)' : 'scale(1)' }} />
       </div>
       <div className="p-3 flex-grow flex flex-col">
@@ -140,11 +119,13 @@ function VehicleCard({ rv, onClick }: { rv: any; onClick: () => void }) {
           <span className="text-gray-300">|</span>
           <span className="text-[11px] text-[#333] font-bold">{Number(rv.km).toLocaleString('de-DE')} km</span>
         </div>
-        <p className="text-[16px] font-black text-[#1e293b] mt-auto pt-2">{rv.moneda === 'USD' ? 'U$S' : '$'} {Number(rv.pv).toLocaleString('de-DE')}</p>
+        <p className="text-[15px] font-black text-[#1e293b] mt-auto pt-2">{rv.moneda === 'USD' ? 'U$S' : '$'} {Number(rv.pv).toLocaleString('de-DE')}</p>
       </div>
     </button>
   );
 }
+
+// ─── Horizontal Slider ────────────────────────────────────────────────────────
 
 function HorizontalSlider({ title, vehicles, router, slug }: { title: string; vehicles: any[]; router: any; slug: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -156,17 +137,17 @@ function HorizontalSlider({ title, vehicles, router, slug }: { title: string; ve
     <div className="bg-white md:border md:border-gray-200 md:rounded-md md:shadow-sm px-4 md:px-6 pt-5 pb-5 relative group">
       <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-4">{title}</p>
       <div className="relative">
-        <button onClick={() => scroll('left')} className="absolute left-[-18px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-100 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all">
+        <button onClick={() => scroll('left')} className="absolute left-[-18px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-100 rounded-full hidden md:flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all">
           <ChevronLeft size={20} className="text-[#3483fa]" />
         </button>
-        <div ref={ref} className="flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory">
+        <div ref={ref} className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-1">
           {vehicles.map(rv => (
             <div key={rv.id} className="snap-start flex-shrink-0">
               <VehicleCard rv={rv} onClick={() => router.push(`/agencia/${slug}/vehiculo/${rv.id}`)} />
             </div>
           ))}
         </div>
-        <button onClick={() => scroll('right')} className="absolute right-[-18px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-100 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all">
+        <button onClick={() => scroll('right')} className="absolute right-[-18px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-100 rounded-full hidden md:flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all">
           <ChevronRight size={20} className="text-[#3483fa]" />
         </button>
       </div>
@@ -174,7 +155,69 @@ function HorizontalSlider({ title, vehicles, router, slug }: { title: string; ve
   );
 }
 
-// ─── Lógica Principal ─────────────────────────────────────────────────────────
+// ─── Mobile Image Carousel ────────────────────────────────────────────────────
+
+function MobileCarousel({ fotos, onOpenGallery }: { fotos: string[]; onOpenGallery: (idx: number) => void }) {
+  const [current, setCurrent] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+
+  const prev = () => setCurrent(c => (c - 1 + fotos.length) % fotos.length);
+  const next = () => setCurrent(c => (c + 1) % fotos.length);
+
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? next() : prev();
+    touchStartX.current = null;
+  };
+
+  if (!fotos.length) return (
+    <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center">
+      <Car className="w-12 h-12 text-gray-300" />
+    </div>
+  );
+
+  return (
+    <div
+      className="relative w-full bg-black overflow-hidden"
+      style={{ aspectRatio: '4/3' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      <img
+        src={fotos[current]}
+        alt=""
+        className="w-full h-full object-contain"
+        onClick={() => onOpenGallery(current)}
+      />
+      {fotos.length > 1 && (
+        <>
+          <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white">
+            <ChevronLeft size={18} />
+          </button>
+          <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white">
+            <ChevronRight size={18} />
+          </button>
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {fotos.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`h-1.5 rounded-full transition-all ${i === current ? 'bg-white w-4' : 'bg-white/50 w-1.5'}`}
+              />
+            ))}
+          </div>
+          <div className="absolute bottom-3 right-3 bg-black/50 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+            {current + 1}/{fotos.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function VehicleDetailPage() {
   const params = useParams();
@@ -183,8 +226,6 @@ export default function VehicleDetailPage() {
   const vehicleId = params.id as string;
 
   const [vehicle, setVehicle] = useState<any>(null);
-  const [ownerData, setOwnerData] = useState<any>(null);
-  const [ownerVehicleCount, setOwnerVehicleCount] = useState(0);
   const [ownerVehicles, setOwnerVehicles] = useState<any[]>([]);
   const [webConfig, setWebConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -192,10 +233,8 @@ export default function VehicleDetailPage() {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  
   const [showVenderModal, setShowVenderModal] = useState(false);
   const [venderForm, setVenderForm] = useState({ marca: '', modelo: '', anio: '', descripcion: '' });
-
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
 
@@ -211,18 +250,13 @@ export default function VehicleDetailPage() {
       const { data: cv, error: vErr } = await supabase.from('inventario').select('*').eq('id', vehicleId).single();
       if (vErr) throw vErr;
       setVehicle(cv);
-
       if (cv) {
-        const [userRes, webRes, ownedRes] = await Promise.all([
-          supabase.from('usuarios').select('full_name, phone').eq('auth_id', cv.owner_user_id).single(),
+        const [webRes, ownedRes] = await Promise.all([
           supabase.from('web_configs').select('*').eq('subdomain', slug).single(),
           supabase.from('inventario').select('*', { count: 'exact' }).eq('owner_user_id', cv.owner_user_id).eq('inventory_status', 'activo').neq('id', vehicleId).order('created_at', { ascending: false })
         ]);
-        
-        setOwnerData(userRes.data);
         setWebConfig(webRes.data);
         setOwnerVehicles(ownedRes.data || []);
-        setOwnerVehicleCount(ownedRes.count || 0);
       }
     } catch (err) {
       console.error(err);
@@ -240,7 +274,11 @@ export default function VehicleDetailPage() {
     setZoomPos({ x, y });
   };
 
-  if (loading) return <div className="flex h-screen w-full items-center justify-center bg-[#f1f5f9]"><Loader2 className="animate-spin text-[#288b55] w-8 h-8" /></div>;
+  if (loading) return (
+    <div className="flex h-screen w-full items-center justify-center bg-[#f1f5f9]">
+      <Loader2 className="animate-spin text-[#288b55] w-8 h-8" />
+    </div>
+  );
   if (!vehicle) return null;
 
   const fotos = vehicle.fotos || [];
@@ -249,11 +287,11 @@ export default function VehicleDetailPage() {
   const mapsQuery = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${vehicle.localidad}, ${vehicle.provincia}, Argentina`)}`;
 
   return (
-    <main className="min-h-screen bg-[#f5f5f5] text-[#333] pb-12 font-sans overflow-x-hidden relative">
+    <main className="min-h-screen bg-[#f5f5f5] text-[#333] pb-24 md:pb-12 font-sans overflow-x-hidden relative">
       {isShareOpen && <ShareModal vehicle={vehicle} onClose={() => setIsShareOpen(false)} />}
-      
-      {/* HEADER DINÁMICO */}
-      <header className={`fixed top-0 left-0 right-0 z-[100] h-16 flex items-center justify-between px-8 transition-all duration-500 ${scrolled ? 'bg-[#0b1114]/95 backdrop-blur-md border-b border-white/5 shadow-lg' : 'bg-black/50 backdrop-blur-sm'}`}>
+
+      {/* HEADER */}
+      <header className={`fixed top-0 left-0 right-0 z-[100] h-16 flex items-center justify-between px-4 sm:px-8 transition-all duration-500 ${scrolled ? 'bg-[#0b1114]/95 backdrop-blur-md border-b border-white/5 shadow-lg' : 'bg-[#0b1114]/80 backdrop-blur-sm'}`}>
         <div className="flex items-center shrink-0 cursor-pointer" onClick={() => router.push(`/agencia/${slug}`)}>
           {webConfig?.logo_url ? (
             <img src={webConfig.logo_url} alt="Logo" className="h-9 w-auto object-contain" />
@@ -261,20 +299,18 @@ export default function VehicleDetailPage() {
             <span className="text-white font-black uppercase text-[11px] tracking-[3px] opacity-70">{slug}</span>
           )}
         </div>
-        
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <button onClick={() => setShowVenderModal(true)} className="flex items-center justify-center text-white font-black text-[9px] uppercase tracking-[1.5px] px-6 py-2.5 border border-white/20 hover:border-[#288b55] transition-all bg-transparent hover:bg-[#288b55]/10 rounded-sm">
+          <button onClick={() => setShowVenderModal(true)} className="flex items-center justify-center text-white font-black text-[9px] uppercase tracking-[1.5px] px-4 sm:px-6 py-2.5 border border-white/20 hover:border-[#288b55] transition-all bg-transparent hover:bg-[#288b55]/10 rounded-sm">
             Vender mi auto
           </button>
-          <a href={`https://wa.me/${webConfig?.whatsapp?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center text-white font-black text-[9px] uppercase tracking-[1.5px] px-6 py-2.5 border border-white/20 hover:border-[#288b55] transition-all bg-transparent hover:bg-[#288b55]/10 rounded-sm">
+          <a href={`https://wa.me/${webConfig?.whatsapp?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center text-white font-black text-[9px] uppercase tracking-[1.5px] px-4 sm:px-6 py-2.5 border border-white/20 hover:border-[#288b55] transition-all bg-transparent hover:bg-[#288b55]/10 rounded-sm">
             Contacto
           </a>
         </div>
-        
-        <div className="w-[130px] hidden sm:block" />
+        <div className="w-[80px] sm:w-[130px] hidden sm:block" />
       </header>
 
-      {/* MODAL VENDER AUTO */}
+      {/* MODAL VENDER */}
       <AnimatePresence>
         {showVenderModal && (
           <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowVenderModal(false)}>
@@ -295,26 +331,98 @@ export default function VehicleDetailPage() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-[1200px] mx-auto mt-[80px] px-4">
-        
+      {/* ══ MOBILE LAYOUT (< md) ══ */}
+      <div className="block md:hidden">
+
+        {/* Carousel full width pegado al header */}
+        <div className="mt-16">
+          <MobileCarousel
+            fotos={fotos}
+            onOpenGallery={(idx) => { setSelectedImageIndex(idx); setIsGalleryOpen(true); }}
+          />
+        </div>
+
+        {/* Info card */}
+        <div className="bg-white px-4 pt-5 pb-6">
+          <p className="text-[12px] font-bold text-gray-400 mb-1 uppercase tracking-wide">
+            {vehicle.anio} · {Number(vehicle.km).toLocaleString('de-DE')} km
+          </p>
+          <h1 className="text-[22px] font-black text-[#0f172a] leading-tight uppercase">
+            {vehicle.marca} {vehicle.modelo}
+          </h1>
+          {vehicle.version && (
+            <p className="text-[12px] font-bold text-[#3483fa] uppercase mt-0.5">{vehicle.version}</p>
+          )}
+          <p className="text-[30px] font-black text-[#0f172a] mt-3 leading-none">
+            {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}
+          </p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {vehicle.acepta_permuta && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-[10px] font-black uppercase tracking-wider">
+                <RefreshCw size={11} /> Acepta Permuta
+              </div>
+            )}
+            {vehicle.financiacion && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-100 rounded-lg text-green-700 text-[10px] font-black uppercase tracking-wider">
+                <Handshake size={11} /> Apto Financiación
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Descripción */}
+        <div className="bg-white mt-2 px-4 py-5">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Descripción</h3>
+          <p className="text-[15px] text-[#555] whitespace-pre-line leading-relaxed">
+            {vehicle.descripcion || 'Sin descripción adicional.'}
+          </p>
+        </div>
+
+        {/* Ubicación */}
+        {vehicle.localidad && (
+          <div className="bg-white mt-2 px-4 py-5">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Ubicación</h3>
+            <div className="rounded-xl overflow-hidden border border-gray-100" style={{ height: '200px' }}>
+              <VehicleMapInner localidad={vehicle.localidad} provincia={vehicle.provincia} />
+            </div>
+            <p className="text-[10px] font-bold text-center mt-2 text-gray-400 uppercase">
+              {vehicle.localidad}, {vehicle.provincia}
+            </p>
+            <a href={mapsQuery} target="_blank" rel="noopener noreferrer"
+              className="mt-3 w-full py-3 flex items-center justify-center gap-2 text-white font-black uppercase text-[12px] tracking-widest rounded-xl bg-[#1e293b] hover:bg-[#334155]">
+              <Navigation size={15} /> Cómo llegar
+            </a>
+          </div>
+        )}
+
+        {/* Más unidades */}
+        {ownerVehicles.length > 0 && (
+          <div className="mt-2">
+            <HorizontalSlider title="Más unidades de esta agencia" vehicles={ownerVehicles} router={router} slug={slug} />
+          </div>
+        )}
+      </div>
+
+      {/* ══ DESKTOP LAYOUT (>= md) ══ */}
+      <div className="hidden md:block max-w-[1200px] mx-auto mt-[80px] px-4">
         <div className="flex items-center gap-2 py-4 text-[13px] text-[#3483fa]">
           <button onClick={() => router.push(`/agencia/${slug}`)} className="hover:underline">Volver al listado</button>
           <ChevronRight size={12} className="text-gray-400" />
           <span className="text-gray-500 uppercase">{vehicle.marca} {vehicle.modelo}</span>
         </div>
 
-        <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden grid grid-cols-1 md:grid-cols-12">
-          
+        <div className="bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden grid grid-cols-12">
           {/* Galería */}
-          <section className="md:col-span-8 p-4 flex flex-row gap-4">
+          <section className="col-span-8 p-4 flex flex-row gap-4">
             <div className="flex flex-col gap-2 w-16">
               {fotos.map((foto: string, idx: number) => (
-                <button key={idx} onClick={() => setSelectedImageIndex(idx)} className={`w-12 h-12 rounded border-2 overflow-hidden ${selectedImageIndex === idx ? 'border-[#3483fa]' : 'border-gray-200'}`}>
+                <button key={idx} onClick={() => setSelectedImageIndex(idx)}
+                  className={`w-12 h-12 rounded border-2 overflow-hidden ${selectedImageIndex === idx ? 'border-[#3483fa]' : 'border-gray-200'}`}>
                   <img src={foto} className="w-full h-full object-cover" alt="" />
                 </button>
               ))}
             </div>
-            <div 
+            <div
               className="flex-1 bg-gray-50 flex items-center justify-center rounded-lg overflow-hidden cursor-crosshair h-[500px] relative"
               onMouseEnter={() => setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}
@@ -325,34 +433,30 @@ export default function VehicleDetailPage() {
             </div>
           </section>
 
-          {/* Info Lateral */}
-          <section className="md:col-span-4 border-l border-gray-100 p-6 flex flex-col relative">
+          {/* Info lateral */}
+          <section className="col-span-4 border-l border-gray-100 p-6 flex flex-col relative">
             <p className="text-[13px] font-bold text-gray-400 mb-1">{vehicle.anio} | {Number(vehicle.km).toLocaleString('de-DE')} km</p>
             <h1 className="text-2xl font-bold text-[#333] leading-tight mb-4">{vehicle.marca} {vehicle.modelo}</h1>
-            
             <div className="mb-8">
               <span className="text-4xl font-black text-[#1e293b]">
                 {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}
               </span>
             </div>
-
             <div className="flex flex-col gap-3">
-              <a href={waUrl} target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-[#288b55] text-white rounded-[10px] font-black text-[14px] uppercase text-center flex items-center justify-center gap-2 shadow-lg shadow-[#288b55]/20 transition-all hover:bg-[#1e6e42]">
+              <a href={waUrl} target="_blank" rel="noopener noreferrer"
+                className="w-full py-4 bg-[#288b55] text-white rounded-[10px] font-black text-[14px] uppercase text-center flex items-center justify-center gap-2 shadow-lg shadow-[#288b55]/20 transition-all hover:bg-[#1e6e42]">
                 <Phone size={18} /> WhatsApp
               </a>
-              <button onClick={() => setIsShareOpen(true)} className="w-full py-4 border border-gray-200 rounded-[10px] font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
+              <button onClick={() => setIsShareOpen(true)}
+                className="w-full py-4 border border-gray-200 rounded-[10px] font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-gray-50 transition-all">
                 <Share2 size={18} /> Compartir
               </button>
             </div>
-
-            {/* LUPA (ZOOM) */}
             <div className="mt-6 flex-grow flex flex-col overflow-hidden">
               <AnimatePresence>
                 {isZooming && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                  <motion.div
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     className="w-full aspect-square rounded-xl border border-gray-200 shadow-2xl bg-gray-100 overflow-hidden sticky top-20"
                     style={{
                       backgroundImage: `url(${fotos[selectedImageIndex]})`,
@@ -367,9 +471,9 @@ export default function VehicleDetailPage() {
           </section>
         </div>
 
-        {/* Sección Descripción y Mapa */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-          <div className="md:col-span-8 bg-white p-8 rounded-md shadow-sm border border-gray-200">
+        {/* Descripción + Mapa */}
+        <div className="mt-6 grid grid-cols-12 gap-6">
+          <div className="col-span-8 bg-white p-8 rounded-md shadow-sm border border-gray-200">
             <h3 className="text-xl font-bold mb-4 uppercase tracking-tighter text-[#0f172a]">Descripción</h3>
             <div className="flex flex-wrap gap-3 mb-8">
               {vehicle.acepta_permuta && <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 text-[10px] font-black uppercase tracking-widest"><RefreshCw size={14} /> Acepta Permuta</div>}
@@ -377,8 +481,7 @@ export default function VehicleDetailPage() {
             </div>
             <p className="text-[16px] text-[#666] whitespace-pre-line leading-relaxed font-medium">{vehicle.descripcion || 'Sin descripción adicional.'}</p>
           </div>
-
-          <div className="md:col-span-4 flex flex-col">
+          <div className="col-span-4 flex flex-col">
             {vehicle.localidad && (
               <div className="bg-white p-6 rounded-md shadow-sm border border-gray-200 flex flex-col h-full">
                 <h3 className="text-xl font-bold mb-4 uppercase tracking-tighter text-[#0f172a]">UBICACIÓN</h3>
@@ -386,8 +489,8 @@ export default function VehicleDetailPage() {
                   <VehicleMapInner localidad={vehicle.localidad} provincia={vehicle.provincia} />
                 </div>
                 <p className="text-[10px] font-bold text-center mt-3 text-gray-400 uppercase">{vehicle.localidad}, {vehicle.provincia}</p>
-                <a href={mapsQuery} target="_blank" rel="noopener noreferrer" 
-                   className="mt-4 w-full py-3 flex items-center justify-center gap-2 text-white font-black uppercase text-[13px] tracking-widest rounded-[10px] bg-[#1e293b] hover:bg-[#334155] shadow-[0_2px_0_#0f172a]">
+                <a href={mapsQuery} target="_blank" rel="noopener noreferrer"
+                  className="mt-4 w-full py-3 flex items-center justify-center gap-2 text-white font-black uppercase text-[13px] tracking-widest rounded-[10px] bg-[#1e293b] hover:bg-[#334155] shadow-[0_2px_0_#0f172a]">
                   <Navigation size={16} /> CÓMO LLEGAR
                 </a>
               </div>
@@ -395,17 +498,43 @@ export default function VehicleDetailPage() {
           </div>
         </div>
 
-        {/* Sugerencias de la Agencia */}
         <div className="mt-12">
-          <HorizontalSlider title={`Más unidades de esta agencia`} vehicles={ownerVehicles} router={router} slug={slug} />
+          <HorizontalSlider title="Más unidades de esta agencia" vehicles={ownerVehicles} router={router} slug={slug} />
         </div>
-
       </div>
 
+      {/* ══ MOBILE CTA FIJO (bottom bar) ══ */}
+      <div className="fixed bottom-0 left-0 right-0 z-[90] flex md:hidden bg-white border-t border-gray-200 px-4 py-3 gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <a href={waUrl} target="_blank" rel="noopener noreferrer"
+          className="flex-1 py-3.5 bg-[#288b55] text-white rounded-xl font-black text-[13px] uppercase text-center flex items-center justify-center gap-2 shadow-lg shadow-[#288b55]/20">
+          <Phone size={16} /> WhatsApp
+        </a>
+        <button onClick={() => setIsShareOpen(true)}
+          className="w-14 py-3.5 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-all">
+          <Share2 size={18} className="text-gray-500" />
+        </button>
+      </div>
+
+      {/* Gallery fullscreen */}
       {isGalleryOpen && (
         <div className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4">
-          <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-all cursor-pointer"><X size={32} /></button>
+          <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-all cursor-pointer">
+            <X size={32} />
+          </button>
+          {fotos.length > 1 && (
+            <>
+              <button onClick={() => setSelectedImageIndex(i => (i - 1 + fotos.length) % fotos.length)} className="absolute left-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/10 rounded-full">
+                <ChevronLeft size={32} />
+              </button>
+              <button onClick={() => setSelectedImageIndex(i => (i + 1) % fotos.length)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/10 rounded-full">
+                <ChevronRight size={32} />
+              </button>
+            </>
+          )}
           <img src={fotos[selectedImageIndex]} className="max-w-full max-h-[85vh] object-contain shadow-2xl" alt="Gallery View" />
+          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-sm font-bold">
+            {selectedImageIndex + 1} / {fotos.length}
+          </p>
         </div>
       )}
     </main>

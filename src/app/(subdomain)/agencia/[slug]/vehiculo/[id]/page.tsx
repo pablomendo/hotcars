@@ -1,4 +1,4 @@
-// app/(subdomain)/agencia/[slug]/vehiculo/[id]/page.tsx
+// app/vehiculos/[id]/page.tsx
 // SERVER Component — genera OG metadata dinámico por vehículo
 
 import type { Metadata } from 'next';
@@ -24,44 +24,30 @@ function normalizeFotos(raw: unknown): string[] {
   return arr.filter((f): f is string => typeof f === 'string' && f.startsWith('http'));
 }
 
-// ── generateMetadata ──────────────────────────────────────────────────────────
 export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string; id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {
-  const { slug, id } = await params;
+  const { id } = await params;
+  const realId = id.length > 36 ? id.slice(-36) : id;
 
-  const [{ data: vehicle }, { data: config }] = await Promise.all([
-    supabase
-      .from('inventario')
-      .select('marca, modelo, version, anio, km, pv, moneda, fotos, descripcion')
-      .eq('id', id)
-      .single(),
-    supabase
-      .from('web_configs')
-      .select('agency_name, subdomain')
-      .eq('subdomain', slug)
-      .single(),
-  ]);
+  const { data: vehicle } = await supabase
+    .from('inventario')
+    .select('marca, modelo, version, anio, km, pv, moneda, fotos, owner_user_id')
+    .eq('id', realId)
+    .single();
 
-  if (!vehicle) {
-    return {
-      title: 'Vehículo | HotCars PRO',
-      description: 'Detalle de vehículo en HotCars PRO.',
-    };
-  }
+  if (!vehicle) return { title: 'Vehículo | HotCars PRO' };
 
-  const agencyName = config?.agency_name || config?.subdomain || slug;
   const fotos = normalizeFotos(vehicle.fotos);
   const imageUrl = fotos[0] || 'https://hotcars.com.ar/hero1-desktop-hotcars.jpg';
-
   const titulo = `${vehicle.marca} ${vehicle.modelo}${vehicle.version ? ' ' + vehicle.version : ''} ${vehicle.anio}`;
   const precio = `${vehicle.moneda === 'USD' ? 'U$S' : '$'} ${Number(vehicle.pv).toLocaleString('de-DE')}`;
   const km = `${Number(vehicle.km).toLocaleString('de-DE')} km`;
-  const description = `${titulo} — ${km} — ${precio}. Publicado por ${agencyName} en HotCars PRO.`;
-  const pageUrl = `https://${slug}.hotcars.com.ar/agencia/${slug}/vehiculo/${id}`;
+  const description = `${titulo} — ${km} — ${precio}. Publicado en HotCars PRO.`;
+  const pageUrl = `https://hotcars.com.ar/vehiculos/${id}`;
 
   return {
-    title: `${titulo} | ${agencyName}`,
+    title: `${titulo} | HotCars PRO`,
     description,
     openGraph: {
       title: `${titulo} — ${precio}`,
@@ -88,18 +74,18 @@ export async function generateMetadata(
   };
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-export default async function VehicleDetailServerPage({
+export default async function Page({
   params,
 }: {
-  params: Promise<{ slug: string; id: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug, id } = await params;
+  const { id } = await params;
+  const realId = id.length > 36 ? id.slice(-36) : id;
 
   const { data: vehicle, error } = await supabase
     .from('inventario')
     .select('id')
-    .eq('id', id)
+    .eq('id', realId)
     .single();
 
   if (error || !vehicle) return notFound();
