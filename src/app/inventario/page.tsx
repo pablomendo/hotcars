@@ -5,8 +5,86 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle, User, Save, Send
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle, User, Save, Send, ExternalLink
 } from 'lucide-react';
+
+// ─── Modal de Vendido ─────────────────────────────────────────────────────────
+function SellModal({
+  vehicle,
+  flippers,
+  onConfirm,
+  onClose,
+}: {
+  vehicle: any;
+  flippers: any[];
+  onConfirm: (data: { esFlip: boolean; flipperTag: string }) => void;
+  onClose: () => void;
+}) {
+  const [esFlip, setEsFlip] = useState(false);
+  const [flipperTag, setFlipperTag] = useState('');
+
+  return (
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center">
+        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-6 text-green-600 border border-green-100">
+          <Check size={32} strokeWidth={2.5} />
+        </div>
+        <h3 className="text-lg font-black uppercase text-[#1e293b] mb-1">Registrar venta</h3>
+        <p className="text-gray-500 text-[12px] font-medium text-center mb-6">
+          {vehicle.brand} {vehicle.model} {vehicle.year}
+        </p>
+
+        <div className="w-full flex flex-col gap-3 mb-6">
+          <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">¿Cómo se vendió?</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setEsFlip(false)}
+              className={`flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest border-2 transition-all ${
+                !esFlip ? 'border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e]' : 'border-gray-200 text-gray-400'
+              }`}
+            >
+              Venta propia
+            </button>
+            <button
+              onClick={() => setEsFlip(true)}
+              className={`flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest border-2 transition-all ${
+                esFlip ? 'border-[#2596be] bg-[#2596be]/10 text-[#2596be]' : 'border-gray-200 text-gray-400'
+              }`}
+            >
+              Con flipper
+            </button>
+          </div>
+
+          {esFlip && (
+            <div className="flex flex-col gap-1 mt-1">
+              <label className="text-[9px] font-black uppercase text-gray-400 tracking-widest">@ del vendedor flipper</label>
+              <input
+                type="text"
+                value={flipperTag}
+                onChange={e => setFlipperTag(e.target.value)}
+                placeholder="@usuario"
+                className="border border-gray-200 rounded-xl px-4 py-3 text-[13px] outline-none focus:border-[#2596be] transition-all"
+              />
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={() => onConfirm({ esFlip, flipperTag })}
+          className="w-full py-4 bg-[#22c55e] text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-[#16a34a] transition-all active:scale-95 mb-3"
+        >
+          Confirmar venta
+        </button>
+        <button
+          onClick={onClose}
+          className="text-gray-400 text-[11px] font-black uppercase tracking-[0.2em] hover:text-gray-600"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function InventoryPage() {
     const router = useRouter();
@@ -28,6 +106,9 @@ export default function InventoryPage() {
 
     const [confirmDeletePropio, setConfirmDeletePropio] = useState<any>(null);
     const [confirmDeleteFlip, setConfirmDeleteFlip] = useState<any>(null);
+
+    // ── Modal de vendido ──────────────────────────────────────────────────────
+    const [sellModalVehicle, setSellModalVehicle] = useState<any>(null);
 
     const [flipMessage, setFlipMessage] = useState('');
     const [isSendingMessage, setIsSendingMessage] = useState(false);
@@ -76,7 +157,6 @@ export default function InventoryPage() {
         if (daysLeft <= 7) return { type: 'por_vencer', daysLeft };
         return null;
     };
-    // ──────────────────────────────────────────────────────────────────────
 
     const hasUnsavedChanges = () => {
         const clienteChanged = clienteOriginalRef.current &&
@@ -443,12 +523,64 @@ export default function InventoryPage() {
         }
     };
 
+    // ── Ejecutar venta con datos del modal ────────────────────────────────────
+    const executeSell = async (item: any, { esFlip, flipperTag }: { esFlip: boolean; flipperTag: string }) => {
+        const id = item.id;
+        setSellModalVehicle(null);
+        setProcessingId(id);
+        const soldAt = new Date().toISOString();
+        const updateData = {
+            commercial_status: 'vendido',
+            inventory_status: 'vendido',
+            sold_at: soldAt,
+        };
+        try {
+            await supabase.from('ventas').insert({
+                owner_user_id: userId,
+                auto_id: id,
+                marca: item.brand,
+                modelo: item.model,
+                anio: item.year,
+                moneda: item.prices?.currency?.includes('USD') ? 'USD' : 'ARS',
+                precio_venta: item.prices?.salePrice || 0,
+                precio_costo: item.prices?.purchasePrice || 0,
+                ganancia: item.prices?.myProfit || 0,
+                sold_at: soldAt,
+                es_flip: esFlip,
+                vendedor_user_id: esFlip ? null : userId,
+                notas: esFlip && flipperTag ? `Vendido con flipper: ${flipperTag}` : null,
+            });
+
+            const { error } = await supabase.from('inventario').update(updateData).eq('id', id);
+            if (error) throw error;
+
+            setInv(prev => prev.map(i => i.id === id ? { ...i, ...updateData } : i));
+            if (selectedAuto?.id === id) setSelectedAuto((prev: any) => ({ ...prev, ...updateData }));
+
+            await insertNotification(
+                userId!,
+                'venta_registrada',
+                'Venta registrada',
+                `Felicitaciones! Tu ${item.brand} ${item.model} fue marcado como vendido.`,
+                id
+            );
+
+            setTimeout(() => fetchInventory(userId || undefined), 500);
+        } catch (err: any) {
+            alert(err.message);
+            fetchInventory(userId || undefined);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     const handleAction = async (item: any, action: string) => {
         const id = item.id;
 
         if (action === 'EDIT') {
             if (!item.isProprio) return;
-            router.push(`/publicar?id=${id}`);
+            // ── FIX: ir a editar el vehiculo existente, no publicar uno nuevo ──
+            router.push(`/publicar?id=${id}&edit=true`);
             return;
         }
 
@@ -463,6 +595,12 @@ export default function InventoryPage() {
 
         if (!item.isProprio) {
             alert("Acceso denegado: Solo el dueno de la unidad puede modificar su estado comercial o de inventario.");
+            return;
+        }
+
+        // ── Interceptar SELL para mostrar modal ───────────────────────────────
+        if (action === 'SELL') {
+            setSellModalVehicle(item);
             return;
         }
 
@@ -524,32 +662,6 @@ export default function InventoryPage() {
                 );
             } else if (action === 'RESERVE') {
                 updateData = { commercial_status: 'reservado' };
-            } else if (action === 'SELL') {
-                const soldAt = new Date().toISOString();
-                updateData = {
-                    commercial_status: 'vendido',
-                    inventory_status: 'vendido',
-                    sold_at: soldAt,
-                };
-                await supabase.from('ventas').insert({
-                    owner_user_id: userId,
-                    auto_id: id,
-                    marca: item.brand,
-                    modelo: item.model,
-                    anio: item.year,
-                    moneda: item.prices?.currency?.includes('USD') ? 'USD' : 'ARS',
-                    precio_venta: item.prices?.salePrice || 0,
-                    precio_costo: item.prices?.purchasePrice || 0,
-                    ganancia: item.prices?.myProfit || 0,
-                    sold_at: soldAt,
-                });
-                await insertNotification(
-                    userId!,
-                    'venta_registrada',
-                    'Venta registrada',
-                    `Felicitaciones! Tu ${item.brand} ${item.model} fue marcado como vendido.`,
-                    id
-                );
             } else if (action === 'SET_AVAILABLE') {
                 const { data: rpcData, error: rpcError } = await supabase.rpc('activar_vehiculo_inventario', {
                     p_auto_id: id,
@@ -596,6 +708,15 @@ export default function InventoryPage() {
         } finally {
             setProcessingId(null);
         }
+    };
+
+    // ── Generar slug para ver publicacion ─────────────────────────────────────
+    const getVehicleSlug = (v: any) => {
+        const base = `${v.brand}-${v.model}-${v.year}`
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)+/g, '');
+        return `${base}-${v.id}`;
     };
 
     const filtered = useMemo(() => {
@@ -658,7 +779,6 @@ export default function InventoryPage() {
         return null;
     };
 
-    // Badge inline para vista lista
     const ExpiryBadgeInline = ({ v }: { v: any }) => {
         const expiry = getExpiryStatus(v);
         if (!expiry) return null;
@@ -671,7 +791,6 @@ export default function InventoryPage() {
         }
         return null;
     };
-    // ──────────────────────────────────────────────────────────────────────
 
     return (
         <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans text-left">
@@ -682,6 +801,16 @@ export default function InventoryPage() {
                 }
                 button { cursor: pointer; }
             `}</style>
+
+            {/* Modal de vendido */}
+            {sellModalVehicle && (
+                <SellModal
+                    vehicle={sellModalVehicle}
+                    flippers={[]}
+                    onConfirm={(data) => executeSell(sellModalVehicle, data)}
+                    onClose={() => setSellModalVehicle(null)}
+                />
+            )}
 
             {/* Modal limite de plan */}
             {showLimitModal && (
@@ -869,6 +998,7 @@ export default function InventoryPage() {
                             const isExpired = expiry?.type === 'vencida';
                             const isProcessing = processingId === v.id;
                             const isVendido = v.commercial_status === 'vendido';
+                            const slug = getVehicleSlug(v);
                             return (
                                 <div key={v.id} onClick={() => !isProcessing && handleOpenModal(v)} className={`bg-[#141b1f] border border-white/5 rounded-xl overflow-hidden flex flex-col group transition-all hover:border-white/20 cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
                                     <div className="relative w-full aspect-[16/10] bg-slate-900 overflow-hidden">
@@ -887,7 +1017,6 @@ export default function InventoryPage() {
                                                 <Zap size={8} fill="currentColor" /> Flip Compartido
                                             </div>
                                         )}
-                                        {/* ── Badge de vencimiento corregido ── */}
                                         {v.isProprio && !isVendido && (
                                             <ExpiryBadge v={v} />
                                         )}
@@ -909,6 +1038,19 @@ export default function InventoryPage() {
                                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-tight truncate block">
                                                 {v.location} {v.city ? `• ${v.city}` : ''}
                                             </span>
+                                        </div>
+
+                                        {/* ── Botón Ver publicación ── */}
+                                        <div className="mb-2" onClick={e => e.stopPropagation()}>
+                                            <a
+                                                href={`/vehiculos/${slug}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-400 hover:text-[#22c55e] border border-white/10 hover:border-[#22c55e]/30 rounded-md px-2 py-1 transition-all"
+                                            >
+                                                <ExternalLink size={9} />
+                                                Ver publicación
+                                            </a>
                                         </div>
 
                                         <div className="flex justify-between items-end mb-3">
@@ -1017,6 +1159,7 @@ export default function InventoryPage() {
                                     const isExpired = expiry?.type === 'vencida';
                                     const isProcessing = processingId === v.id;
                                     const isVendido = v.commercial_status === 'vendido';
+                                    const slug = getVehicleSlug(v);
                                     return (
                                         <tr key={v.id} onClick={() => !isProcessing && handleOpenModal(v)} className={`hover:bg-white/[0.02] transition-colors group cursor-pointer ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}>
                                             <td className="p-4 font-black text-white uppercase tracking-tight flex items-center gap-2 text-left">
@@ -1027,8 +1170,16 @@ export default function InventoryPage() {
                                                         <Zap size={7} fill="currentColor"/> FLIP
                                                     </span>
                                                 )}
-                                                {/* ── Badge inline corregido ── */}
                                                 <ExpiryBadgeInline v={v} />
+                                                <a
+                                                    href={`/vehiculos/${slug}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={e => e.stopPropagation()}
+                                                    className="text-[7px] text-slate-500 hover:text-[#22c55e] border border-white/10 hover:border-[#22c55e]/30 rounded px-1.5 py-0.5 flex items-center gap-0.5 transition-all"
+                                                >
+                                                    <ExternalLink size={7} /> Ver
+                                                </a>
                                             </td>
                                             <td className="p-4 text-right font-mono opacity-50 text-[10px] uppercase">
                                                 {v.isProprio ? 'MIO' : 'TERCERO'}
