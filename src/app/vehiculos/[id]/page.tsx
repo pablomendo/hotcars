@@ -496,7 +496,6 @@ export default function VehicleDetailPage() {
       const currentUser = sessionRes.data.session?.user || null;
       setVehicle(cv); setUser(currentUser);
 
-      // ── TRACKING VISTAS ──────────────────────────────────────────────────
       if (cv && currentUser?.id !== cv.owner_user_id) {
         supabase.rpc('increment_vehicle_stat', { p_vehicle_id: cv.id, p_owner_user_id: cv.owner_user_id, p_field: 'vistas' }).then(({ error: e }) => { if (e) console.warn('stat vistas', e); });
       }
@@ -569,6 +568,7 @@ export default function VehicleDetailPage() {
     finally { setIsFavLoading(false); }
   };
 
+  // ─── FIX: manejo correcto de respuesta jsonb de Supabase ──────────────────
   const handleFlipAction = async () => {
     if (!user || !vehicle || flipStatus || isProcessing) return;
     setShowLoadingModal(true); setIsProcessing(true);
@@ -576,9 +576,16 @@ export default function VehicleDetailPage() {
     try {
       const { data: rpcData, error: rpcError } = await supabase.rpc('activar_flip_compartido', { p_auto_id: vehicle.id, p_vendedor_user_id: user.id });
       if (rpcError) throw rpcError;
-      if (rpcData?.ok) setFlipStatus(rpcData.status);
-      else if (rpcData?.error === 'limite_alcanzado') { setShowLoadingModal(false); setShowLimitModal(true); return; }
-      else alert('Error: ' + (rpcData?.error || 'Desconocido'));
+      const result = Array.isArray(rpcData) ? rpcData[0] : rpcData;
+      if (result?.ok) {
+        setFlipStatus(result.status);
+      } else if (result?.error === 'limite_alcanzado') {
+        setShowLoadingModal(false);
+        setShowLimitModal(true);
+        return;
+      } else {
+        alert('Error: ' + (result?.error || 'Desconocido'));
+      }
     } catch (err: any) { alert('Error de conexión: ' + (err.message || '')); }
     finally { setShowLoadingModal(false); setIsProcessing(false); }
   };
@@ -713,7 +720,6 @@ export default function VehicleDetailPage() {
 
       <div className="max-w-[1200px] mx-auto mt-[100px] px-4">
 
-        {/* Breadcrumb */}
         <div className="flex items-center gap-2 py-4 text-[13px] text-[#3483fa] overflow-x-auto whitespace-nowrap scrollbar-hide">
           <button onClick={() => router.push('/', { scroll: false })} className="hover:underline cursor-pointer">Volver al listado</button>
           <span className="text-gray-300">|</span>
