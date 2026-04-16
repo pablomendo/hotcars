@@ -19,14 +19,14 @@ export default function RegisterPage() {
   const [showFounderField, setShowFounderField] = useState(false);
 
   const prices = {
-    FREE: { monthly: 45000, quarterly: 45000 * 3 * 0.75, yearly: 45000 * 12 * 0.7 },
+    STARTER: { monthly: 45000, quarterly: 45000 * 3 * 0.75, yearly: 45000 * 12 * 0.7 },
     PRO: { monthly: 60000, quarterly: 60000 * 3 * 0.75, yearly: 60000 * 12 * 0.7 },
     VIP: { monthly: 80000, quarterly: 80000 * 3 * 0.75, yearly: 80000 * 12 * 0.7 }
   };
 
   const plans = [
     {
-      id: 'FREE',
+      id: 'STARTER',
       name: 'Plan Starter',
       icon: <Shield size={32} className="text-slate-400 stroke-[1.5px]" />,
       features: ['Pagina Web (10 unidades)', 'Dashboard de gestión', 'Gestión de inventario (12 unidades)', 'Soporte Básico']

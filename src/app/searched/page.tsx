@@ -115,16 +115,15 @@ function NuevoTicketModal({ userId, userName, onCreated, onClose }: { userId: st
   );
 }
 
-// ── Modal Tengo Este Auto — seleccionar vehículo del inventario ───────────────
+// ── Modal Tengo Este Auto — selección múltiple ────────────────────────────────
 function TengoEsteAutoModal({
   ticket, userId, userName, onClose,
 }: {
   ticket: any; userId: string; userName: string; onClose: () => void;
 }) {
-  const router = useRouter();
   const [myInventory, setMyInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAuto, setSelectedAuto] = useState<any>(null);
+  const [selectedAutos, setSelectedAutos] = useState<any[]>([]);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -135,7 +134,6 @@ function TengoEsteAutoModal({
         .select('id, marca, modelo, version, anio, pv, moneda, fotos, localidad')
         .eq('owner_user_id', userId)
         .eq('inventory_status', 'activo')
-        .eq('is_flip', false)
         .order('created_at', { ascending: false });
       setMyInventory(data || []);
       setLoading(false);
@@ -146,20 +144,30 @@ function TengoEsteAutoModal({
   const getSlug = (v: any) =>
     `${v.marca}-${v.modelo}-${v.anio}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${v.id}`;
 
+  const toggleSelection = (auto: any) => {
+    setSelectedAutos(prev => 
+      prev.find(a => a.id === auto.id) 
+        ? prev.filter(a => a.id !== auto.id) 
+        : [...prev, auto]
+    );
+  };
+
   const handleSend = async () => {
+    if (selectedAutos.length === 0) return;
     setSending(true);
     try {
-      const autoInfo = selectedAuto
-        ? ` Mirá el auto: ${window.location.origin}/vehiculos/${getSlug(selectedAuto)}`
-        : '';
-      const msg = `Hola, tengo el ${ticket.marca}${ticket.modelo ? ' ' + ticket.modelo : ''}${ticket.version ? ' ' + ticket.version : ''} que estás buscando. ¿Te interesa?${autoInfo}`;
+      const vehiclesList = selectedAutos.map(a => 
+        `- ${a.marca} ${a.modelo || ''} (${a.anio}): ${window.location.origin}/vehiculos/${getSlug(a)}`
+      ).join('\n');
+
+      const msg = `Hola, tengo opciones para tu búsqueda de ${ticket.marca}${ticket.modelo ? ' ' + ticket.modelo : ''}:\n\n${vehiclesList}\n\n¿Te interesa alguno?`;
 
       const { error } = await supabase.from('messages').insert({
         sender_user_id: userId,
         receiver_user_id: ticket.user_id,
         sender_name: userName,
         content: msg,
-        related_auto_id: selectedAuto?.id || null,
+        related_auto_id: selectedAutos[0].id, // Referenciamos el primero como principal
         type: 'ticket_busqueda',
       });
       if (error) throw error;
@@ -168,8 +176,8 @@ function TengoEsteAutoModal({
         user_id: ticket.user_id,
         type: 'respuesta_ticket',
         category: 'inventory',
-        title: 'Tenemos el auto que buscás',
-        body: `Un vendedor respondió tu búsqueda de ${ticket.marca}${ticket.modelo ? ' ' + ticket.modelo : ''}.`,
+        title: 'Tenemos opciones para tu búsqueda',
+        body: `Un vendedor te envió ${selectedAutos.length} vehículos para tu búsqueda de ${ticket.marca}.`,
         related_entity_type: 'tickets_busqueda',
         related_entity_id: ticket.id,
         action_url: '/mensajes',
@@ -180,44 +188,40 @@ function TengoEsteAutoModal({
       setTimeout(onClose, 1200);
     } catch (e: any) {
       alert('Error: ' + e.message);
-    } finally {
       setSending(false);
     }
   };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      onClick={e => { if (e.target === e.currentTarget && !sending) onClose(); }}>
       <div className="bg-[#1a2a34] border border-white/10 rounded-xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[85vh]">
-
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 flex-shrink-0">
           <div>
-            <span className="text-[11px] font-black uppercase tracking-widest text-white block">Tengo este auto</span>
+            <span className="text-[11px] font-black uppercase tracking-widest text-white block">Enviar propuestas</span>
             <span className="text-[9px] text-slate-400 uppercase">
-              Para: {ticket.marca}{ticket.modelo ? ' ' + ticket.modelo : ''} — elegí uno de tus autos para compartir (opcional)
+              Seleccioná uno o más vehículos de tu inventario para enviar
             </span>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={18} /></button>
         </div>
 
-        {/* Grid inventario */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 min-h-[300px]">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="animate-spin text-[#288b55]" size={24} /></div>
           ) : myInventory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 opacity-40 gap-2">
               <Car size={28} className="text-slate-500" />
-              <span className="text-[10px] font-black uppercase text-slate-500">Sin autos activos en tu inventario</span>
+              <span className="text-[10px] font-black uppercase text-slate-500">Sin vehículos activos</span>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {myInventory.map(v => {
-                const isSelected = selectedAuto?.id === v.id;
+                const isSelected = selectedAutos.find(a => a.id === v.id);
                 return (
-                  <button key={v.id} onClick={() => setSelectedAuto(isSelected ? null : v)}
+                  <button key={v.id} onClick={() => toggleSelection(v)}
                     className={`text-left rounded-lg overflow-hidden border transition-all active:scale-95 ${
-                      isSelected ? 'border-[#288b55] ring-1 ring-[#288b55]' : 'border-white/10 hover:border-white/20'
+                      isSelected ? 'border-[#288b55] ring-1 ring-[#288b55] bg-[#288b55]/10' : 'border-white/10 hover:border-white/20'
                     }`}>
                     <div className="relative w-full aspect-[16/9] bg-slate-800">
                       {v.fotos?.[0]
@@ -233,11 +237,6 @@ function TengoEsteAutoModal({
                     <div className="p-2">
                       <p className="text-[10px] font-black text-white uppercase truncate">{v.marca} {v.modelo}</p>
                       <p className="text-[9px] text-slate-400 font-bold">{v.anio} · {v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.pv).toLocaleString('de-DE')}</p>
-                      {v.localidad && (
-                        <p className="text-[8px] text-slate-500 flex items-center gap-0.5 mt-0.5">
-                          <MapPin size={8} />{v.localidad}
-                        </p>
-                      )}
                     </div>
                   </button>
                 );
@@ -246,18 +245,18 @@ function TengoEsteAutoModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-4 pb-4 pt-3 border-t border-white/5 flex-shrink-0 space-y-2">
-          {selectedAuto && (
-            <p className="text-[9px] text-slate-400 text-center">
-              Se enviará el link del <span className="text-white font-bold">{selectedAuto.marca} {selectedAuto.modelo}</span> junto al mensaje
-            </p>
-          )}
-          <button onClick={handleSend} disabled={sending}
+          <p className="text-[9px] text-center font-bold uppercase tracking-tight">
+            {selectedAutos.length > 0 
+              ? <span className="text-[#288b55]">Seleccionados: {selectedAutos.length} vehículos</span>
+              : <span className="text-amber-500/70">Debes seleccionar al menos un auto</span>
+            }
+          </p>
+          <button onClick={handleSend} disabled={sending || selectedAutos.length === 0 || sent}
             className={`w-full py-3 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-              sent ? 'bg-[#22c55e] text-white' : 'bg-[#288b55] text-white hover:bg-[#1e6e42] disabled:opacity-40'
+              sent ? 'bg-[#22c55e] text-white' : 'bg-[#288b55] text-white hover:bg-[#1e6e42] disabled:opacity-40 disabled:cursor-not-allowed'
             }`}>
-            {sending ? <Loader2 size={13} className="animate-spin" /> : sent ? <><Check size={13} /> Enviado</> : <><Send size={13} /> {selectedAuto ? 'Enviar con auto adjunto' : 'Enviar sin adjuntar auto'}</>}
+            {sending ? <Loader2 size={13} className="animate-spin" /> : sent ? <><Check size={13} /> Enviados con éxito</> : <><Send size={13} /> Enviar propuestas ({selectedAutos.length})</>}
           </button>
         </div>
       </div>
@@ -303,7 +302,6 @@ function TicketRow({
 
       <div className="bg-white/5 border border-white/10 rounded-md px-4 py-3 flex items-center gap-3 w-full">
         <Bell size={14} className="text-[#288b55] flex-shrink-0" />
-
         <div className="flex flex-1 items-center gap-3 min-w-0 flex-wrap">
           <span className="text-[12px] font-black text-white uppercase">{ticket.marca}</span>
           {ticket.modelo && <span className="text-[11px] font-bold text-slate-400 uppercase">{ticket.modelo}</span>}
@@ -330,8 +328,6 @@ function TicketRow({
             {new Date(ticket.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
           </span>
         </div>
-
-        {/* CTA — solo para tickets ajenos */}
         {!isMine && userId && (
           sent ? (
             <span className="flex items-center gap-1 text-[#22c55e] text-[9px] font-black uppercase flex-shrink-0 whitespace-nowrap">
@@ -344,8 +340,6 @@ function TicketRow({
             </button>
           )
         )}
-
-        {/* Cancelar — solo para tickets propios */}
         {isMine && ticket.status === 'activo' && onCancel && (
           <button onClick={() => onCancel(ticket.id)}
             className="flex-shrink-0 p-1 rounded text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all">
@@ -418,12 +412,9 @@ export default function VehiculosBuscadosPage() {
   return (
     <div className="bg-[#0b1114] min-h-screen w-full text-slate-300 font-sans text-left">
       <style>{`@font-face { font-family: 'Genos'; src: url('/fonts/genos/Genos-VariableFont_wght.ttf') format('truetype'); }`}</style>
-
       {showModal && userId && (
         <NuevoTicketModal userId={userId} userName={userName} onCreated={() => fetchTickets(userId)} onClose={() => setShowModal(false)} />
       )}
-
-      {/* Subheader */}
       <div className="fixed top-[90px] lg:top-[80px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-3 py-5 lg:h-[87px] lg:pt-[15px]">
         <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center gap-2">
           <div className="grid grid-cols-2 lg:flex items-center gap-1 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
@@ -445,19 +436,22 @@ export default function VehiculosBuscadosPage() {
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 pt-[200px] lg:pt-[183px] pb-20 space-y-4">
-
-        {tab === 'red' && (
-          <div className="flex flex-col items-center w-full gap-4">
+        <div className="flex flex-col items-center w-full gap-4">
+          <div className="flex items-center gap-3 w-full max-w-2xl">
             <button onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#288b55] hover:bg-[#1e6e42] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
+              className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#288b55] hover:bg-[#1e6e42] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-[#288b55]/10">
               <Plus size={14} /> Nueva búsqueda
             </button>
-            <div className="relative w-full max-w-2xl">
+            
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input type="text" placeholder="Buscar por marca, modelo o versión..." value={search} onChange={e => setSearch(e.target.value)}
                 className="bg-white/5 border border-white/10 rounded-md pl-10 pr-4 py-2.5 text-sm w-full outline-none focus:border-[#288b55]/50 transition-all text-white" />
             </div>
-            {redFiltered.length === 0 ? (
+          </div>
+
+          {tab === 'red' && (
+            redFiltered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 opacity-30 gap-3">
                 <Bell size={40} className="text-slate-500" />
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Sin búsquedas activas en la red</span>
@@ -468,17 +462,11 @@ export default function VehiculosBuscadosPage() {
                   <TicketRow key={ticket.id} ticket={ticket} isMine={ticket.user_id === userId} onCancel={handleCancel} userId={userId || undefined} userName={userName} />
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            )
+          )}
 
-        {tab === 'mis' && (
-          <div className="flex flex-col items-center w-full gap-4">
-            <button onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#288b55] hover:bg-[#1e6e42] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
-              <Plus size={14} /> Nueva búsqueda
-            </button>
-            {misTickets.length === 0 ? (
+          {tab === 'mis' && (
+            misTickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 opacity-30 gap-3">
                 <Bell size={36} className="text-slate-500" />
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">No creaste ninguna búsqueda todavía</span>
@@ -489,9 +477,9 @@ export default function VehiculosBuscadosPage() {
                   <TicketRow key={ticket.id} ticket={ticket} isMine onCancel={handleCancel} />
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            )
+          )}
+        </div>
       </div>
     </div>
   );

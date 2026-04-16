@@ -103,13 +103,11 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
   const photoRef = useRef<HTMLDivElement>(null);
   const finalRef = useRef<HTMLDivElement>(null);
 
-  // En modo edición las fotos existentes son URLs (no base64), las separamos
   const [vehiclePhotos, setVehiclePhotos] = useState<string[]>([]);
-  // URLs originales que ya están en Cloudinary (no hay que volver a subirlas)
   const [existingPhotoUrls, setExistingPhotoUrls] = useState<string[]>([]);
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [userPlan, setUserPlan] = useState<string>("FREE");
+  const [userPlan, setUserPlan] = useState<string>("Starter");
   const [willBePaused, setWillBePaused] = useState(false);
 
   // ── Cargar datos existentes en modo edición ───────────────────────────────
@@ -131,7 +129,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
           return;
         }
 
-        // Poblar todos los campos con los datos existentes
         setSelectedCategory(data.categoria || "");
         setSelectedBrand(data.marca || "");
         setSelectedModel(data.modelo || "");
@@ -163,13 +160,11 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
         setFlipperGain(Number(data.ganancia_flipper) || 0);
         setOwnerGain(Number(data.ganancia_dueno) || 0);
 
-        // Fotos existentes: son URLs de Cloudinary
         const fotos: string[] = data.fotos || [];
         setVehiclePhotos(fotos);
         setExistingPhotoUrls(fotos);
         if (fotos.length > 0) setMainPhoto(fotos[0]);
 
-        // Saltar directo al paso final de edición (step 4)
         setStep(4);
       } catch (err: any) {
         alert("Error cargando vehículo: " + err.message);
@@ -203,7 +198,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
         .ilike('plan_type', dbPlan)
         .maybeSingle();
 
-      const limit = planData?.max_inventory_vehicles ?? (currentPlan === 'FREE' ? 12 : 25);
+      const limit = planData?.max_inventory_vehicles ?? (currentPlan === 'Starter' ? 12 : 25);
 
       const { count: propiosCount } = await supabase
         .from('inventario')
@@ -218,7 +213,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
 
       const totalActivos = (propiosCount ?? 0) + (tercerosCount ?? 0);
 
-      // En modo edición no aplica el límite (ya existe en inventario)
       if (!isEditMode && currentPlan !== 'VIP' && limit !== null && totalActivos >= limit) {
         setWillBePaused(true);
       } else {
@@ -490,12 +484,10 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
     smartScroll(finalRef);
   };
 
-  // ── Determinar si una foto es una URL existente (Cloudinary) o base64 nueva ──
   const isExistingUrl = (photo: string) => {
     return photo.startsWith('http://') || photo.startsWith('https://');
   };
 
-  // ── Guardar cambios (UPDATE) o publicar nuevo (INSERT) ────────────────────
   const finalizarPublicacion = async () => {
     if (!userId) {
       alert("Error: Usuario no identificado. Por favor, reintenta.");
@@ -512,14 +504,11 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
     setPublishStatus("loading");
 
     try {
-      // Subir solo las fotos nuevas (base64), mantener las URLs existentes tal cual
       const uploadResults = await Promise.all(
         vehiclePhotos.map(async (photo) => {
           if (isExistingUrl(photo)) {
-            // Ya es una URL de Cloudinary, no hay que subirla de nuevo
             return photo;
           }
-          // Es base64 nueva, subirla
           const formData = new FormData();
           formData.append("file", photo);
           formData.append("upload_preset", "hotcars_inventario");
@@ -533,7 +522,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
       );
 
       if (isEditMode && editId) {
-        // ── MODO EDICIÓN: UPDATE ──────────────────────────────────────────────
         const { error } = await supabase
           .from('inventario')
           .update({
@@ -569,21 +557,20 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
         }, 2000);
 
       } else {
-        // ── MODO CREACIÓN: INSERT ─────────────────────────────────────────────
         const { data: profile } = await supabase
           .from('usuarios')
           .select('plan_type')
           .filter('auth_id', 'eq', userId)
           .maybeSingle();
 
-        const dbPlan = profile?.plan_type?.trim().toLowerCase() || "free";
+        const dbPlan = profile?.plan_type?.trim().toLowerCase() || "starter";
         const { data: planData } = await supabase
           .from('plan_limits')
           .select('max_inventory_vehicles')
           .ilike('plan_type', dbPlan)
           .maybeSingle();
 
-        const limit = planData?.max_inventory_vehicles ?? (dbPlan === 'free' ? 12 : 25);
+        const limit = planData?.max_inventory_vehicles ?? (dbPlan === 'starter' ? 12 : 25);
         
         const { count: pCount } = await supabase
           .from('inventario')
@@ -653,7 +640,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
 
   const inputClassName = "w-full h-12 bg-white uppercase font-bold text-gray-800 border-gray-200 focus:border-[#00984a] focus:ring-0 outline-none transition-all border rounded-xl px-4 shadow-sm";
 
-  // ── Pantalla de carga mientras se obtienen los datos del vehículo ─────────
   if (isLoadingEdit) {
     return (
       <div className="min-h-screen w-full font-sans bg-[#f0f2f5] flex flex-col items-center">
@@ -669,6 +655,30 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
   return (
     <div className="min-h-screen w-full font-sans bg-[#f0f2f5] flex flex-col items-center">
       <Header />
+
+      {/* ── Estilos para hover de tarjetas de categoría ── */}
+      <style>{`
+        .category-card {
+          transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                      box-shadow 0.25s ease;
+          will-change: transform, box-shadow;
+        }
+        .category-card:hover {
+          transform: translateY(-6px) scale(1.06) rotate(-1deg);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.10);
+        }
+        .category-card:hover .category-img {
+          transform: scale(1.12) translateY(-4px);
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .category-img {
+          transition: transform 0.25s ease;
+        }
+        .category-card:active {
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+        }
+      `}</style>
       
       {isPublishing && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
@@ -717,19 +727,48 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
         </div>
       )}
 
+      {/* ── PASO 1: Selección de categoría ─────────────────────────────────── */}
       {step === 1 && !isEditMode && (
         <div className="w-full animate-in fade-in duration-500 pt-20">
+          {/* Banner hero */}
           <div className="w-full h-64 md:h-72 flex flex-col pt-16 md:pt-[45px] items-center text-center px-6 bg-[#00984a]">
-            <h1 className="text-4xl md:text-[68px] font-normal text-white mb-2 tracking-tight" style={{ fontFamily: '"Instrument Serif", serif' }}>Empecemos a trabajar!</h1>
-            <p className="text-base md:text-[22px] text-white opacity-95 tracking-tight" style={{ fontFamily: '"Genos", sans-serif' }}>¿Qué tipo de unidad vas a publicar hoy?</p>
+            <h1
+              className="text-4xl md:text-[68px] font-normal text-white mb-2 tracking-tight"
+              style={{
+                fontFamily: '"Instrument Serif", serif',
+                textShadow: '0 4px 24px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.14)',
+              }}
+            >
+              Empecemos a trabajar!
+            </h1>
+            <p
+              className="text-base md:text-[22px] text-white opacity-95 tracking-tight"
+              style={{
+                fontFamily: '"Genos", sans-serif',
+                textShadow: '0 2px 12px rgba(0,0,0,0.18)',
+              }}
+            >
+              ¿Qué tipo de unidad vas a publicar hoy?
+            </p>
           </div>
+
+          {/* Grilla de categorías */}
           <div className="p-4 md:p-6 -mt-24 md:-mt-28">
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-5 max-w-5xl mx-auto">
               {categories.map((cat) => (
-                <div key={cat.name} className="cursor-pointer bg-white rounded-xl flex flex-col items-center justify-between p-4 aspect-square shadow-lg active:scale-95 transition-transform" onClick={() => handleSelectCategory(cat.name)}>
-                  <div className="flex-1 flex items-center justify-center w-full">
+                <div
+                  key={cat.name}
+                  className="category-card cursor-pointer bg-white rounded-xl flex flex-col items-center justify-between p-4 aspect-square shadow-lg"
+                  onClick={() => handleSelectCategory(cat.name)}
+                >
+                  <div className="flex-1 flex items-center justify-center w-full overflow-hidden">
                     <div className="relative w-[130px] h-[95px] md:w-[145px] md:h-[105px]">
-                      <Image src={cat.icon} alt={cat.name} fill className="object-contain" />
+                      <Image
+                        src={cat.icon}
+                        alt={cat.name}
+                        fill
+                        className="object-contain category-img"
+                      />
                     </div>
                   </div>
                   <p className="text-[11px] md:text-[13px] font-extrabold text-gray-700 uppercase mt-2">{cat.name}</p>
@@ -740,6 +779,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
         </div>
       )}
 
+      {/* ── PASOS 2+ ─────────────────────────────────────────────────────────── */}
       {(step >= 2 || isEditMode) && (
         <div className="w-full max-w-[590px] px-4 pt-24 pb-20 flex flex-col items-center gap-10 animate-in fade-in duration-500">
           <div className="flex justify-between items-center w-full">
@@ -766,7 +806,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
             )}
           </div>
 
-          {/* En modo edición mostramos encabezado con datos del vehículo */}
           {isEditMode && (
             <div className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-1">
               <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Editando vehículo</p>
@@ -901,7 +940,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
             </div>
           )}
 
-          {/* KM y ubicación — visible en creación según flujo, y siempre en edición */}
           {(isEditMode || ((selectedVersion && !isManual) || (selectedYear && isManual === false && selectedBrand !== "" && selectedModel !== ""))) && (
             <div ref={kmRef} className="w-full text-left animate-in fade-in">
               <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google">Kilometros y Ubicacion</h2>
@@ -929,12 +967,12 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
                       <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
                         <Share2 size={12} className="text-gray-400"/> Flip Compartido
                       </label>
-                      {userPlan === "FREE" && <span className="text-[7px] font-bold text-orange-500 uppercase ml-5">Obligatorio en Plan Free</span>}
+                      {userPlan === "Starter" && <span className="text-[7px] font-bold text-orange-500 uppercase ml-5">Obligatorio en Plan Starter</span>}
                     </div>
                     <button
                       type="button"
-                      onClick={() => { if (userPlan !== "FREE") { setIsFlipActive(prev => !prev); } }}
-                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border shadow-md ${isFlipActive ? "bg-[#2563eb] border-[#2563eb] text-white" : "bg-gray-200 border-gray-300 text-gray-500"} ${userPlan === "FREE" ? "pointer-events-none opacity-80" : "cursor-pointer active:scale-95"}`}
+                      onClick={() => { if (userPlan !== "Starter") { setIsFlipActive(prev => !prev); } }}
+                      className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all border shadow-md ${isFlipActive ? "bg-[#2563eb] border-[#2563eb] text-white" : "bg-gray-200 border-gray-300 text-gray-500"} ${userPlan === "Starter" ? "pointer-events-none opacity-80" : "cursor-pointer active:scale-95"}`}
                     >
                       {isFlipActive ? "Flip activado" : "Activar Flip"}
                     </button>
@@ -959,7 +997,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
             </div>
           )}
 
-          {/* Puntos clave y descripción */}
+          {/* ── Puntos clave y descripción ─────────────────────────────────── */}
           {(isEditMode || step >= 2.5) && (
             <div ref={highlightsRef} className="w-full text-left animate-in fade-in duration-500">
               <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google text-center md:text-left">Condición de Venta, Puntos clave y Descripción</h2>
@@ -982,23 +1020,46 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
                     </div>
                   )}
                 </div>
+
+                {/* ── Descripción + botón IA ── */}
                 <div className="flex flex-col gap-3">
                   <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Descripción</label>
                   <div className="w-full flex flex-col items-center gap-4">
                     <div className="w-full bg-[#f8f9fa] border border-gray-200 rounded-2xl p-4 flex flex-col items-center gap-2 shadow-inner">
-                      <div className="bg-gray-200 text-gray-500 text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-tighter">presiona boton azul para generar descripcion por ia</div>
-                      <textarea className="w-full min-h-[100px] bg-transparent text-sm text-gray-700 outline-none resize-none text-center font-medium" placeholder="..." value={description} onChange={(e) => setDescription(e.target.value)} />
+                      <div className="bg-gray-200 text-gray-500 text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-tighter text-center">
+                        presiona el botón azul para generar descripción por IA
+                      </div>
+                      {/*
+                        FIX MOBILE: se reemplaza <textarea> por un <div contentEditable>
+                        para evitar que iOS/Android bloqueen el foco en textareas dentro de
+                        tarjetas scroll. Funciona igual que un textarea en todos los dispositivos.
+                      */}
+                      <div
+                        contentEditable
+                        suppressContentEditableWarning
+                        onInput={(e) => setDescription((e.currentTarget as HTMLDivElement).innerText)}
+                        className="w-full min-h-[100px] bg-transparent text-sm text-gray-700 outline-none text-center font-medium whitespace-pre-wrap break-words"
+                        style={{ wordBreak: 'break-word' }}
+                        dangerouslySetInnerHTML={undefined}
+                        data-placeholder="..."
+                      >
+                        {description}
+                      </div>
                     </div>
+
+                    {/* Botón grande y tap-friendly para mobile */}
                     <button
                       onClick={handleGenerateIA}
                       disabled={isGeneratingIA || iaAttempts === 0}
-                      className="bg-blue-600 text-white font-black py-3 px-8 rounded-xl text-[10px] uppercase flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit disabled:opacity-50"
+                      className="bg-blue-600 text-white font-black py-4 px-8 rounded-2xl text-sm uppercase flex items-center justify-center gap-2 shadow-lg transition-all w-full md:w-fit disabled:opacity-50 active:scale-95 touch-manipulation"
+                      style={{ WebkitTapHighlightColor: 'transparent' }}
                     >
-                      <Sparkles className={`h-4 w-4 ${isGeneratingIA ? "animate-spin" : ""}`} />
-                      {isGeneratingIA ? "Generando..." : "Generar descripción"}
+                      <Sparkles className={`h-5 w-5 ${isGeneratingIA ? "animate-spin" : ""}`} />
+                      {isGeneratingIA ? "Generando descripción..." : `Generar con IA (${iaAttempts} intentos)`}
                     </button>
                   </div>
                 </div>
+
                 {!isEditMode && step === 2.5 && (
                   <button onClick={() => { setStep(3); smartScroll(photoRef); }} className="w-full bg-[#00984a] text-white font-black py-4 rounded-xl uppercase shadow-md active:scale-95 transition-all">Siguiente</button>
                 )}
@@ -1231,7 +1292,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
   );
 }
 
-// ── Export default envuelto en Suspense (requerido por useSearchParams) ────────
+// ── Export default envuelto en Suspense ───────────────────────────────────────
 export default function AddVehicleModal({ onClose }: { onClose?: () => void }) {
   return (
     <Suspense fallback={

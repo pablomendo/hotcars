@@ -12,7 +12,7 @@ export default function FlipsCompartidosPage() {
     const [sentFlips, setSentFlips] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState<string | null>(null);
-    const [userPlan, setUserPlan] = useState<string>('free');
+    const [userPlan, setUserPlan] = useState<string>('starter');
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [userNames, setUserNames] = useState<Record<string, string>>({});
     const [receivedPage, setReceivedPage] = useState(1);
@@ -30,7 +30,7 @@ export default function FlipsCompartidosPage() {
                     .select('plan_type')
                     .eq('auth_id', user.id)
                     .maybeSingle();
-                if (profile) setUserPlan((profile.plan_type || 'free').toLowerCase());
+                if (profile) setUserPlan((profile.plan_type || 'starter').toLowerCase());
                 fetchFlips(user.id);
             }
         };
@@ -191,7 +191,7 @@ export default function FlipsCompartidosPage() {
                                 <button onClick={() => handleUpdateStatus(flip.id, 'rejected')} className="bg-[#ef4444] text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all active:scale-95">Rechazar</button>
                             </>
                         )}
-                        {tipo === 'recibida' && flip.status === 'approved' && userPlan !== 'free' && (
+                        {tipo === 'recibida' && flip.status === 'approved' && userPlan !== 'starter' && (
                             <button onClick={() => setConfirmCancel({ id: flip.id, marca: inv?.marca, modelo: inv?.modelo, tipo: 'recibida' })} className="border border-[#ef4444] text-[#ef4444] px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all active:scale-95">Cancelar</button>
                         )}
                         {tipo === 'enviada' && (
@@ -351,7 +351,7 @@ export default function FlipsCompartidosPage() {
                                                     <button onClick={() => handleUpdateStatus(flip.id, 'rejected')} className="bg-[#ef4444] hover:bg-[#dc2626] text-white px-4 py-1.5 rounded text-xs font-bold transition-all active:scale-95">Rechazar</button>
                                                 </div>
                                             )}
-                                            {flip.status === 'approved' && userPlan !== 'free' && (
+                                            {flip.status === 'approved' && userPlan !== 'starter' && (
                                                 <button onClick={() => setConfirmCancel({ id: flip.id, marca: flip.inventario?.marca, modelo: flip.inventario?.modelo, tipo: 'recibida' })} className="border border-[#ef4444] text-[#ef4444] hover:bg-[#ef4444] hover:text-white px-3 py-1.5 rounded text-xs font-bold transition-all">Cancelar Flip</button>
                                             )}
                                         </td>

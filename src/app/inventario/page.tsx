@@ -97,7 +97,7 @@ export default function InventoryPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
-    const [userPlan, setUserPlan] = useState<string>('Free'); 
+    const [userPlan, setUserPlan] = useState<string>('Starter'); 
 
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
     const [openSection, setOpenSection] = useState<string | null>(null);
@@ -215,7 +215,7 @@ export default function InventoryPage() {
                         .maybeSingle();
 
                     if (profile) {
-                        setUserPlan(profile.plan_type || 'Free');
+                        setUserPlan(profile.plan_type || 'starter');
                         setUserName(profile.nombre || null);
                     }
                     

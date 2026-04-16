@@ -661,7 +661,7 @@ export default function VehicleDetailPage() {
   const profitLabel = isOwner ? 'TU GANANCIA' : 'GANANCIA FLIPPER';
   const profitValue = isOwner ? vehicle.ganancia_dueno : vehicle.ganancia_flipper;
   const publishDate = new Date(vehicle.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
-  const isOwnerFree = ownerData?.plan_type?.toLowerCase() === 'free';
+  const isOwnerFree = ownerData?.plan_type?.toLowerCase() === 'starter';
   const canFlipDirecto = isOwnerFree || vehicle.is_flip === true;
   const whatsappNumber = ownerData?.phone?.replace(/\D/g, '');
   const whatsappMsg = encodeURIComponent(`Hola! Vi el ${vehicle.marca} ${vehicle.modelo} ${vehicle.anio} en HotCars y me interesa. ${typeof window !== 'undefined' ? window.location.href : ''}`);
