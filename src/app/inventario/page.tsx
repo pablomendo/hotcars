@@ -579,7 +579,6 @@ export default function InventoryPage() {
 
         if (action === 'EDIT') {
             if (!item.isProprio) return;
-            // ── FIX: ir a editar el vehiculo existente, no publicar uno nuevo ──
             router.push(`/publicar?id=${id}&edit=true`);
             return;
         }
@@ -1040,8 +1039,8 @@ export default function InventoryPage() {
                                             </span>
                                         </div>
 
-                                        {/* ── Botón Ver publicación ── */}
-                                        <div className="mb-2" onClick={e => e.stopPropagation()}>
+                                        {/* ── Botón Ver publicación alineado a la derecha ── */}
+                                        <div className="mb-2 flex justify-end" onClick={e => e.stopPropagation()}>
                                             <a
                                                 href={`/vehiculos/${slug}`}
                                                 target="_blank"

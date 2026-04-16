@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Plus, Settings, Menu, X, User, LogOut, HelpCircle, LayoutGrid } from 'lucide-react';
+import { Home, Plus, Settings, Menu, X, User, LogOut, HelpCircle, LayoutGrid, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type Props = {

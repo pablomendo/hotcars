@@ -48,6 +48,7 @@ export default function MobilePanelMenu({ isLoggedIn, userData, onClose, onLogou
                     <div className="flex flex-col space-y-1 flex-1">
                         <MobileNavLink href="/dashboard" onClose={onClose}>Dashboard</MobileNavLink>
                         <MobileNavLink href="/inventario" onClose={onClose}>Inventario</MobileNavLink>
+                        <MobileNavLink href="/clientes" onClose={onClose}>Clientes</MobileNavLink>
                         <MobileNavLink href="/dashboard/web" onClose={onClose}>Mi Web</MobileNavLink>
                         <MobileNavLink href="/flips-compartidos" onClose={onClose}>Flips Compartidos</MobileNavLink>
                         <MobileNavLink href="/mensajes" onClose={onClose}>Mensajes</MobileNavLink>
