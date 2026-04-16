@@ -23,15 +23,6 @@ const FEEDBACK_STYLES: Record<FeedbackVariant, { iconBg: string; iconColor: stri
   warning: { iconBg: 'bg-orange-50', iconColor: 'text-orange-500',btnBg: 'bg-[#ff4d00] hover:bg-[#e64500]', btnShadow: 'shadow-orange-200', Icon: AlertCircle  },
 };
 
-const THEMES = [
-  { id: 'verde_oscuro',   label: 'Verde Oscuro',   preview: ['#0b1114','#22c55e'] },
-  { id: 'rojo_carbono',   label: 'Rojo Carbono',   preview: ['#0f0a0a','#ef4444'] },
-  { id: 'azul_acero',     label: 'Azul Acero',     preview: ['#090e14','#3b82f6'] },
-  { id: 'naranja_tuning', label: 'Naranja Tuning',  preview: ['#0f0a05','#f97316'] },
-  { id: 'blanco_total',   label: 'Blanco Total',   preview: ['#0d0d0d','#f1f5f9'] },
-  { id: 'dorado_vip',     label: 'Dorado VIP',     preview: ['#09080a','#eab308'] },
-];
-
 const getFirstPhoto = (fotos: any): string | null => {
   if (!fotos) return null;
   let arr: any[];
@@ -67,11 +58,8 @@ export default function MiWebPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [descripcion, setDescripcion] = useState('');
-  const [selectedTheme, setSelectedTheme] = useState('verde_oscuro');
   const [whatsappFlotante, setWhatsappFlotante] = useState(false);
   const [whatsappFlotanteNumero, setWhatsappFlotanteNumero] = useState('');
-  const [seoTitulo, setSeoTitulo] = useState('');
-  const [seoDescripcion, setSeoDescripcion] = useState('');
   const [dbConfig, setDbConfig] = useState<any>(null);
   const [config, setConfig] = useState({
     subdomain: 'miagencia', customDomain: '',
@@ -104,11 +92,8 @@ export default function MiWebPage() {
       setIsOnline(data.is_online !== false);
       setLogoUrl(data.logo_url || '');
       setDescripcion(data.descripcion || '');
-      setSelectedTheme(data.theme || 'verde_oscuro');
       setWhatsappFlotante(!!data.whatsapp_flotante);
       setWhatsappFlotanteNumero(data.whatsapp_flotante_numero || '');
-      setSeoTitulo(data.seo_titulo || '');
-      setSeoDescripcion(data.seo_descripcion || '');
     }
   };
 
@@ -146,9 +131,8 @@ export default function MiWebPage() {
         instagram: config.instagram, facebook: config.facebook, tiktok: config.tiktok, whatsapp: config.whatsapp,
         direccion: config.direccion, horarios: config.horarios, telefono: config.telefono,
         show_socials_footer: showSocialsInFooter, cover_image_url: previewImage,
-        change_count: newChangeCount, logo_url: logoUrl, descripcion, theme: selectedTheme,
+        change_count: newChangeCount, logo_url: logoUrl, descripcion,
         whatsapp_flotante: whatsappFlotante, whatsapp_flotante_numero: whatsappFlotanteNumero,
-        seo_titulo: seoTitulo, seo_descripcion: seoDescripcion,
         updated_at: new Date().toISOString()
       };
       if (subdomainToSave !== current?.subdomain || !current) dataToSave.last_subdomain_change = now.toISOString();
@@ -429,10 +413,6 @@ export default function MiWebPage() {
                   </div>
                 </ConfigCard>
 
-                {/* ══ FOTO DE PORTADA — FIX DEFINITIVO ══
-                    Antes: aspect-video + object-cover → recortaba la imagen
-                    Ahora: sin altura fija + width:100% height:auto → imagen completa sin recorte
-                */}
                 <ConfigCard title="Foto de Portada" description={planFeatures.cover_image ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
                   <div className={`flex flex-col gap-3 ${!planFeatures.cover_image ? 'opacity-20 pointer-events-none' : ''}`}>
                     <div className="relative rounded-xl border border-white/10 overflow-hidden bg-slate-900">
@@ -493,25 +473,6 @@ export default function MiWebPage() {
                   </div>
                 </ConfigCard>
 
-                <ConfigCard title="Estilo Visual" description={isPro ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
-                  <div className={`flex flex-col gap-3 ${!isPro ? 'opacity-20 pointer-events-none' : ''}`}>
-                    <div className="grid grid-cols-3 gap-2">
-                      {THEMES.map(theme => (
-                        <button key={theme.id} onClick={() => setSelectedTheme(theme.id)}
-                          className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border transition-all ${selectedTheme === theme.id ? 'border-[#22c55e] bg-[#22c55e]/5' : 'border-white/5 bg-black/20 hover:border-white/20'}`}>
-                          <div className="w-full h-6 rounded-lg overflow-hidden flex">
-                            <div className="flex-1" style={{ backgroundColor: theme.preview[0] }}/>
-                            <div className="w-3" style={{ backgroundColor: theme.preview[1] }}/>
-                          </div>
-                          <span className="text-[7px] font-black uppercase tracking-tight text-slate-400 text-center leading-tight">{theme.label}</span>
-                          {selectedTheme === theme.id && <div className="absolute top-1 right-1 w-3 h-3 bg-[#22c55e] rounded-full flex items-center justify-center"><Check size={7} className="text-black"/></div>}
-                        </button>
-                      ))}
-                    </div>
-                    <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase w-full mt-1">Confirmar</button>
-                  </div>
-                </ConfigCard>
-
                 <ConfigCard title="WhatsApp Flotante" description={isVip ? 'Disponible en tu plan' : 'Solo VIP'}>
                   <div className={`flex flex-col gap-4 ${!isVip ? 'opacity-20 pointer-events-none' : ''}`}>
                     <div className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5">
@@ -522,34 +483,6 @@ export default function MiWebPage() {
                     </div>
                     <div className={whatsappFlotante ? '' : 'opacity-40 pointer-events-none'}>
                       <SocialInput icon={<MessageCircle size={14} className="text-green-500"/>} placeholder="Número (ej: 5491112345678)" value={whatsappFlotanteNumero} onChange={(v:string) => setWhatsappFlotanteNumero(v)}/>
-                    </div>
-                    <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase w-full">Confirmar</button>
-                  </div>
-                </ConfigCard>
-
-                <ConfigCard title="Vista previa al compartir" description="Solo VIP">
-                  <div className={`flex flex-col gap-3 ${!isVip ? 'opacity-20 pointer-events-none' : ''}`}>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Tag size={11}/> Título del link</label>
-                      <input type="text" value={seoTitulo} onChange={e => setSeoTitulo(e.target.value)} maxLength={60} placeholder="Ej: Automotriz López | Usados en Córdoba"
-                        className="bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[11px] text-white outline-none focus:border-[#22c55e]/40 transition-all placeholder:text-white/20 font-bold uppercase"/>
-                      <span className="text-[9px] text-slate-600 font-mono text-right">{seoTitulo.length}/60</span>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><FileText size={11}/> Descripción</label>
-                      <textarea value={seoDescripcion} onChange={e => setSeoDescripcion(e.target.value)} maxLength={160} rows={2}
-                        className="bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[11px] text-white outline-none resize-none focus:border-[#22c55e]/40 transition-all placeholder:text-white/20 font-bold uppercase"/>
-                      <span className="text-[9px] text-slate-600 font-mono text-right">{seoDescripcion.length}/160</span>
-                    </div>
-                    <div className="bg-[#1f2c34] rounded-xl overflow-hidden border border-white/5">
-                      <div className="h-10 bg-[#141b1f] flex items-center justify-center border-b border-white/5">
-                        {logoUrl ? <img src={logoUrl} className="h-7 object-contain opacity-60" alt=""/> : <span className="text-[8px] text-slate-600 font-black uppercase tracking-widest">preview</span>}
-                      </div>
-                      <div className="p-2 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-black text-white truncate">{seoTitulo || 'Título de tu web'}</span>
-                        <span className="text-[9px] text-slate-400 line-clamp-1">{seoDescripcion || 'Descripción al compartir.'}</span>
-                        <span className="text-[8px] text-slate-600 uppercase">{config.subdomain}.hotcars.com.ar</span>
-                      </div>
                     </div>
                     <button onClick={handleSaveConfig} className="bg-[#134e4d] text-white text-[10px] font-black px-8 py-2 rounded uppercase w-full">Confirmar</button>
                   </div>
