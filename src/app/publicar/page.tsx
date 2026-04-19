@@ -76,7 +76,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [shadows, setShadows] = useState(100);
-  const [iaAttempts, setIaAttempts] = useState(2);
+  const [iaAttempts, setIaAttempts] = useState(1);
   const [isGeneratingIA, setIsGeneratingIA] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<"loading" | "success" | "paused">("loading");
@@ -664,19 +664,19 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
           will-change: transform, box-shadow;
         }
         .category-card:hover {
-          transform: translateY(-6px) scale(1.06) rotate(-1deg);
-          box-shadow: 0 20px 40px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.10);
+          transform: translateY(-3px) scale(1.03) rotate(-0.5deg);
+          box-shadow: 0 10px 20px rgba(0,0,0,0.09), 0 4px 8px rgba(0,0,0,0.05);
         }
         .category-card:hover .category-img {
-          transform: scale(1.12) translateY(-4px);
+          transform: scale(1.06) translateY(-2px);
           transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .category-img {
           transition: transform 0.25s ease;
         }
         .category-card:active {
-          transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+          transform: translateY(-1px) scale(1.01);
+          box-shadow: 0 4px 10px rgba(0,0,0,0.07);
         }
       `}</style>
       
@@ -1030,21 +1030,15 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
                         presiona el botón azul para generar descripción por IA
                       </div>
                       {/*
-                        FIX MOBILE: se reemplaza <textarea> por un <div contentEditable>
-                        para evitar que iOS/Android bloqueen el foco en textareas dentro de
-                        tarjetas scroll. Funciona igual que un textarea en todos los dispositivos.
+                        FIX MOBILE: se revierte a <textarea> porque contentEditable causa 
+                        efecto espejo (el cursor vuelve a 0 en cada render).
                       */}
-                      <div
-                        contentEditable
-                        suppressContentEditableWarning
-                        onInput={(e) => setDescription((e.currentTarget as HTMLDivElement).innerText)}
-                        className="w-full min-h-[100px] bg-transparent text-sm text-gray-700 outline-none text-center font-medium whitespace-pre-wrap break-words"
-                        style={{ wordBreak: 'break-word' }}
-                        dangerouslySetInnerHTML={undefined}
-                        data-placeholder="..."
-                      >
-                        {description}
-                      </div>
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full min-h-[100px] bg-transparent text-sm text-gray-700 outline-none text-center font-medium resize-none overflow-hidden"
+                        placeholder="..."
+                      />
                     </div>
 
                     {/* Botón grande y tap-friendly para mobile */}
@@ -1180,7 +1174,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-4 mt-2">
-                  <button onClick={handleImprovePhotoIA} disabled={iaAttempts === 0 || isGeneratingIA || vehiclePhotos.length === 0} className={`w-fit self-center py-1.5 px-4 rounded-lg font-bold uppercase text-[9px] flex items-center justify-center gap-2 transition-all shadow-sm ${iaAttempts > 0 && !isGeneratingIA && vehiclePhotos.length > 0 ? "bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white hover:scale-[1.01]" : "bg-gray-200 text-gray-400 shadow-none"}`}><Sparkles className={`h-3 w-3 ${iaAttempts > 0 && !isGeneratingIA ? "animate-pulse" : ""}`} />{isGeneratingIA ? "Mejorando..." : `Mejorar portada IA (${iaAttempts})`}</button>
                   {!isEditMode && (
                     <button disabled={vehiclePhotos.length === 0} onClick={handleNextFromPhotos} className={`w-full font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors uppercase shadow-md active:scale-95 ${vehiclePhotos.length > 0 ? 'bg-[#00984a] text-white' : 'bg-gray-200 text-gray-400 shadow-none'}`}>Siguiente</button>
                   )}

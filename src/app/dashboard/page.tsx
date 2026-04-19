@@ -221,7 +221,7 @@ function PotencialCard({
     const needleTip = { x: CX + 80 * Math.cos(needleRad), y: CY + 80 * Math.sin(needleRad) };
 
     return (
-        <div className="bg-[#141b1f] p-5 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full">
+        <div className="bg-[#141b1f] p-5 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full w-full">
             <div className="flex justify-between items-start mb-1">
                 <h3 className="text-white text-xl font-bold">Potencial de Ganancia</h3>
                 <TrendingUp className="text-[#288b55] w-5 h-5" />
@@ -355,7 +355,7 @@ function InventarioRadialCard({ inventoryStatus }: {
     };
 
     return (
-        <div className="bg-[#141b1f] p-5 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full">
+        <div className="bg-[#141b1f] p-5 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full w-full">
             <div className="flex justify-between items-start mb-2">
                 <h3 className="text-white text-xl font-bold">Estado de Inventario</h3>
                 <BarChart3 className="text-blue-400 w-5 h-5" />
@@ -457,7 +457,7 @@ function Top10Card({ top10Data, top10Max }: { top10Data: { pos: number; auto: st
     };
 
     return (
-        <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full flex flex-col">
+        <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full flex flex-col w-full">
             <div className="flex justify-between items-start mb-1">
                 <h3 className="text-white text-xl font-bold">Top 10 Usados Argentina</h3>
                 <TrendingUp className="text-[#288b55] w-5 h-5 flex-shrink-0" />
@@ -559,7 +559,7 @@ function RankingCard({ userId }: { userId: string }) {
     const metricColor = { vistas: '#3b82f6', guardados: '#ec4899', consultas: '#f97316' };
 
     return (
-        <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full">
+        <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full w-full">
             <div className="flex justify-between items-start px-5 pt-5 pb-3">
                 <div>
                     <h3 className="text-white text-xl font-bold">Ranking Inventario</h3>
@@ -647,7 +647,7 @@ function MiInventarioCard({ catSorted, catTotal, catColors }: {
     const catMax = catSorted.length > 0 ? catSorted[0][1] : 1;
 
     return (
-        <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full">
+        <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full w-full">
             <div className="flex justify-between items-start mb-1">
                 <h3 className="text-white text-xl font-bold">Tu Inventario por Categoría</h3>
                 <BarChart3 className="text-[#288b55] w-5 h-5 flex-shrink-0" />
@@ -723,6 +723,8 @@ export default function DashboardPage() {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [editMode, setEditMode] = useState(false);
     const [layout, setLayout] = useState<CardConfig[]>(DEFAULT_LAYOUT);
+    const [ventasPage, setVentasPage] = useState(1);
+    const [avisosPage, setAvisosPage] = useState(1);
 
     const DOLAR_BLUE = 1500;
 
@@ -864,6 +866,7 @@ export default function DashboardPage() {
             r: Math.round(r / total * 100),
             l: Math.round(l / total * 100),
             c: Math.round(c / total * 100),
+            rCount: r, lCount: l, cCount: c,
             rCount: r, lCount: l, cCount: c,
         };
     }, [inventory]);
@@ -1031,29 +1034,47 @@ export default function DashboardPage() {
 
             case 'ventas':
                 return (
-                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full">
+                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl flex flex-col h-full w-full">
                         <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-white text-xl font-bold">Ventas</h3>
-                            <ShoppingBag className="text-[#288b55] w-5 h-5" />
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="text-white text-xl font-bold">Ventas</h3>
+                                {ventasTab === 'mes' && tendencia !== null && (
+                                    <div className={`flex items-center justify-center gap-1.5 px-2 py-0.5 rounded border ${tendencia.diff >= 0 ? 'border-[#288b55]/20 bg-[#288b55]/5' : 'border-red-400/20 bg-red-400/5'}`}>
+                                        <span className={`text-[9px] font-black uppercase tracking-widest ${tendencia.diff >= 0 ? 'text-[#288b55]' : 'text-red-400'}`}>
+                                            {tendencia.diff >= 0 ? '+' : ''}{tendencia.pct}% vs mes anterior
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <ShoppingBag className="text-[#288b55] w-5 h-5 flex-shrink-0" />
                         </div>
                         <div className="flex gap-1 p-1 bg-black/30 rounded-lg border border-white/5 mb-4">
                             {(['mes', 'anterior', 'historico'] as const).map(t => (
-                                <button key={t} onClick={() => setVentasTab(t)}
+                                <button key={t} onClick={() => { setVentasTab(t); setVentasPage(1); }}
                                     className={`flex-1 py-1.5 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${ventasTab === t ? 'bg-[#288b55] text-white' : 'text-slate-500 hover:text-slate-300'}`}>
                                     {t === 'mes' ? 'Este mes' : t === 'anterior' ? 'Anterior' : 'Total'}
                                 </button>
                             ))}
                         </div>
                         {ventasActivas.length > 0 ? (
-                            <div className="flex flex-col divide-y divide-white/[0.04] mb-4 flex-1">
-                                {ventasActivas.slice(0, 5).map((v: any) => (
-                                    <div key={v.id} className="flex justify-between items-center py-2.5">
-                                        <span className="text-[11px] font-bold text-slate-300 uppercase truncate max-w-[150px]">{v.marca} {v.modelo}</span>
-                                        <span className="text-[9px] text-gray-600 flex-shrink-0 ml-2">
-                                            {new Date(v.sold_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
-                                        </span>
+                            <div className="flex flex-col mb-4 flex-1 min-h-0">
+                                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col divide-y divide-white/[0.04] pr-1">
+                                    {ventasActivas.slice((ventasPage - 1) * 7, ventasPage * 7).map((v: any) => (
+                                        <div key={v.id} className="flex justify-between items-center py-1.5">
+                                            <span className="text-[11px] font-bold text-slate-300 uppercase truncate max-w-[150px]">{v.marca} {v.modelo}</span>
+                                            <span className="text-[9px] text-gray-600 flex-shrink-0 ml-2">
+                                                {new Date(v.sold_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                                {Math.ceil(ventasActivas.length / 7) > 1 && (
+                                    <div className="flex justify-center items-center gap-3 mt-2 flex-shrink-0">
+                                        <button disabled={ventasPage === 1} onClick={() => setVentasPage(p => p - 1)} className="p-1 disabled:opacity-30 text-white hover:text-[#288b55] transition-colors"><ChevronLeft size={14}/></button>
+                                        <span className="text-[10px] text-gray-500 font-bold">{ventasPage} / {Math.ceil(ventasActivas.length / 7)}</span>
+                                        <button disabled={ventasPage === Math.ceil(ventasActivas.length / 7)} onClick={() => setVentasPage(p => p + 1)} className="p-1 disabled:opacity-30 text-white hover:text-[#288b55] transition-colors"><ChevronRight size={14}/></button>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         ) : (
                             <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest mb-4">Sin ventas en este período</p>
@@ -1075,13 +1096,6 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                             </div>
-                            {ventasTab === 'mes' && tendencia !== null && (
-                                <div className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border ${tendencia.diff >= 0 ? 'border-[#288b55]/20 bg-[#288b55]/5' : 'border-red-400/20 bg-red-400/5'}`}>
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${tendencia.diff >= 0 ? 'text-[#288b55]' : 'text-red-400'}`}>
-                                        {tendencia.diff >= 0 ? '+' : ''}{tendencia.pct}% vs mes anterior
-                                    </span>
-                                </div>
-                            )}
                         </div>
                     </div>
                 );
@@ -1091,20 +1105,11 @@ export default function DashboardPage() {
 
             case 'avisos':
                 return (() => {
-                    const nowMs = Date.now();
                     const avisosEnhanced = autosClavo.map((v: any) => {
-                        const dias = v.diasEnStock;
-                        const mockVisitas = Math.floor(Math.random() * 40);
-                        const mockConsultas = Math.floor(Math.random() * 5);
-                        let problema = '', problemColor = '#ef4444', problemIcon = '⚠️';
-                        if (mockConsultas === 0 && dias > 50) { problema = 'Sin consultas'; problemIcon = '👻'; problemColor = '#ef4444'; }
-                        else if (mockVisitas < 15) { problema = 'Pocas visitas'; problemIcon = '📉'; problemColor = '#f97316'; }
-                        else if (dias > 55) { problema = 'Precio alto'; problemIcon = '💸'; problemColor = '#eab308'; }
-                        else { problema = 'Baja rotación'; problemIcon = '🐌'; problemColor = '#f97316'; }
-                        return { ...v, mockVisitas, mockConsultas, problema, problemColor, problemIcon };
+                        return { ...v };
                     });
                     return (
-                        <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full">
+                        <div className="bg-[#141b1f] rounded-xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-full w-full">
                             <div className="flex justify-between items-center px-5 pt-5 pb-3">
                                 <div>
                                     <h3 className="text-white text-xl font-bold">Avisos en Riesgo</h3>
@@ -1129,35 +1134,37 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col divide-y divide-white/[0.04] overflow-y-auto flex-1">
-                                    {avisosEnhanced.map((v: any) => (
-                                        <div key={v.id} className="px-5 py-3 hover:bg-white/[0.02] transition-colors">
-                                            <div className="flex items-start justify-between gap-2 mb-1.5">
-                                                <div className="flex-1 min-w-0">
-                                                    <span className="text-white text-[11px] font-black uppercase truncate block">{v.marca || v.brand} {v.modelo || v.model}</span>
-                                                    <div className="flex items-center gap-1.5 mt-1">
-                                                        <span className="text-[10px]">{v.problemIcon}</span>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: v.problemColor }}>{v.problema}</span>
-                                                        <span className="text-gray-700 text-[9px]">·</span>
-                                                        <span className="text-red-400 text-[9px] font-bold">{v.diasEnStock} días</span>
+                                <div className="flex flex-col flex-1 min-h-0">
+                                    <div className="flex-1 min-h-0 overflow-y-auto flex flex-col divide-y divide-white/[0.04]">
+                                        {avisosEnhanced.slice((avisosPage - 1) * 5, avisosPage * 5).map((v: any) => (
+                                            <div key={v.id} className="px-5 py-2 hover:bg-white/[0.02] transition-colors">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <span className="text-white text-[11px] font-black uppercase truncate block mb-1">{v.marca || v.brand} {v.modelo || v.model}</span>
+                                                        <div className="flex gap-3">
+                                                            <span className="text-red-400 text-[8px] font-bold">{v.diasEnStock} días</span>
+                                                            <span className="text-[8px] text-gray-600 font-bold">{v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.price || v.pv || 0).toLocaleString('es-AR')}</span>
+                                                        </div>
                                                     </div>
+                                                    <button onClick={() => router.push('/inventario')}
+                                                        className="flex-shrink-0 px-2.5 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-red-500/20 transition-colors whitespace-nowrap">
+                                                        Optimizar
+                                                    </button>
                                                 </div>
-                                                <button onClick={() => router.push('/inventario')}
-                                                    className="flex-shrink-0 px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-red-500/20 transition-colors whitespace-nowrap">
-                                                    Optimizar
-                                                </button>
                                             </div>
-                                            <div className="flex gap-3">
-                                                <span className="text-[8px] text-gray-600 font-bold">👁 {v.mockVisitas} vistas</span>
-                                                <span className="text-[8px] text-gray-600 font-bold">💬 {v.mockConsultas} consultas</span>
-                                                <span className="text-[8px] text-gray-600 font-bold">{v.moneda === 'USD' ? 'U$S' : '$'} {Number(v.price || v.pv || 0).toLocaleString('es-AR')}</span>
-                                            </div>
+                                        ))}
+                                    </div>
+                                    {Math.ceil(avisosEnhanced.length / 5) > 1 && (
+                                        <div className="flex justify-center items-center gap-3 py-1.5 border-t border-white/5 flex-shrink-0">
+                                            <button disabled={avisosPage === 1} onClick={() => setAvisosPage(p => p - 1)} className="p-1 disabled:opacity-30 text-white hover:text-[#288b55] transition-colors"><ChevronLeft size={14}/></button>
+                                            <span className="text-[10px] text-gray-500 font-bold">{avisosPage} / {Math.ceil(avisosEnhanced.length / 5)}</span>
+                                            <button disabled={avisosPage === Math.ceil(avisosEnhanced.length / 5)} onClick={() => setAvisosPage(p => p + 1)} className="p-1 disabled:opacity-30 text-white hover:text-[#288b55] transition-colors"><ChevronRight size={14}/></button>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             )}
                             {avisosEnhanced.length > 0 && (
-                                <div className="px-5 py-3 border-t border-white/5 flex justify-between items-center">
+                                <div className="px-5 py-3 border-t border-white/5 flex justify-between items-center flex-shrink-0">
                                     <span className="text-gray-600 text-[8px] font-bold uppercase tracking-widest">Inmovilizado</span>
                                     <span className="text-red-400 text-[11px] font-black">USD {fmt(montoInmovilizado)}</span>
                                 </div>
@@ -1171,7 +1178,7 @@ export default function DashboardPage() {
 
             case 'mercado':
                 return (
-                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full flex flex-col">
+                    <div className="bg-[#141b1f] p-6 rounded-xl border border-white/5 shadow-2xl h-full flex flex-col w-full">
                         <div className="flex justify-between items-start mb-1">
                             <h3 className="text-white text-xl font-bold">Mercado Usado Argentina</h3>
                             <BarChart3 className="text-blue-400 w-5 h-5 flex-shrink-0" />
@@ -1293,22 +1300,6 @@ export default function DashboardPage() {
 
                     {/* Mobile: Editar + Plan en fila | Desktop: misma fila a la derecha */}
                     <div className="flex items-center justify-center gap-2">
-                        <button
-                            onClick={() => setEditMode(e => !e)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
-                                editMode
-                                    ? 'border-[#288b55]/40 bg-[#288b55]/10 text-[#288b55]'
-                                    : 'border-white/10 bg-white/5 text-slate-400 hover:text-white'
-                            }`}
-                        >
-                            {editMode ? <><Check size={13} /> Listo</> : <><Settings size={13} /> Editar</>}
-                        </button>
-                        {editMode && (
-                            <button onClick={resetLayout}
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 text-slate-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
-                                <X size={11} /> Resetear
-                            </button>
-                        )}
                         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${
                             userPlan === 'VIP' ? 'border-blue-400/20 bg-blue-400/5 text-blue-400' :
                             userPlan === 'PRO' ? 'border-yellow-500/20 bg-yellow-500/5 text-yellow-500' :
@@ -1341,26 +1332,28 @@ export default function DashboardPage() {
                     </SortableContext>
                 </DndContext>
 
-                {editMode && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-[#288b55]/10 border border-[#288b55]/20 rounded-xl">
-                        <GripVertical size={14} className="text-[#288b55]" />
-                        <p className="text-[#288b55] text-[10px] font-bold uppercase tracking-widest">
-                            Arrastrá las cards con el ícono <strong>⠿</strong> · Cambiá el tamaño con <strong>−</strong> y <strong>+</strong> · El diseño se guarda automáticamente
-                        </p>
-                    </div>
-                )}
-
-                <DndContext sensors={cardSensors} collisionDetection={rectIntersection} onDragEnd={handleCardDragEnd}>
-                    <SortableContext items={layout.map(c => c.id)} strategy={rectSortingStrategy}>
-                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 auto-rows-auto">
-                            {layout.map(config => (
-                                <SortableCard key={config.id} config={config} editMode={editMode} onResize={handleResize} onResizeHeight={handleResizeHeight}>
-                                    {renderCard(config.id)}
-                                </SortableCard>
-                            ))}
-                        </div>
-                    </SortableContext>
-                </DndContext>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 auto-rows-auto">
+                    {layout.map(config => {
+                        const colClass: Record<number, string> = {
+                            1: 'col-span-1',
+                            2: 'col-span-1 lg:col-span-2',
+                            3: 'col-span-1 lg:col-span-3',
+                            4: 'col-span-1 lg:col-span-4',
+                        };
+                        const HEIGHT_CLASS: Record<string, string> = {
+                            xs: 'min-h-[120px]',
+                            sm: 'min-h-[180px]',
+                            md: 'min-h-[280px]',
+                            lg: 'min-h-[380px]',
+                            xl: 'min-h-[500px]',
+                        };
+                        return (
+                            <div key={config.id} className={`${colClass[config.colSpan]} ${HEIGHT_CLASS[config.height]} flex`}>
+                                {renderCard(config.id)}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
         </div>

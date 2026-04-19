@@ -31,6 +31,7 @@ interface ClienteUnificado {
   ultimaAccion: string;
   notas: string;
   fecha_hitos: any[];
+  contraparte?: string | null;
 }
 
 // ── Modal Nuevo Cliente ──────────────────────────────────────────────────────
@@ -40,7 +41,8 @@ function NuevoClienteModal({ onCreated, onClose }: { onCreated: () => void; onCl
     nombre: '',
     contacto: '',
     rol: 'Comprador',
-    notas: ''
+    notas: '',
+    dominio: ''
   });
 
   const handleSubmit = async () => {
@@ -51,9 +53,19 @@ function NuevoClienteModal({ onCreated, onClose }: { onCreated: () => void; onCl
       if (!user) return;
 
       const tabla = form.rol === 'Comprador' ? 'cliente_comprador' : 'cliente_consignatario';
-      const payload = form.rol === 'Comprador' 
-        ? { user_id: user.id, nombre: form.nombre, contacto: form.contacto, notas: form.notas }
-        : { user_id: user.id, nombre: form.nombre, telefono: form.contacto, notas: form.notas };
+      
+      const payload: any = { 
+        user_id: user.id, 
+        nombre: form.nombre, 
+        notas: form.notas,
+        dominio: form.dominio.toUpperCase()
+      };
+
+      if (form.rol === 'Comprador') {
+        payload.contacto = form.contacto;
+      } else {
+        payload.telefono = form.contacto;
+      }
 
       const { error } = await supabase.from(tabla).insert(payload);
       if (error) throw error;
@@ -71,7 +83,7 @@ function NuevoClienteModal({ onCreated, onClose }: { onCreated: () => void; onCl
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-[#1a2a34] border border-white/10 rounded-xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+      <div className="bg-[#1a2a34] border border-white/10 rounded-lg w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Plus size={15} className="text-[#288b55]" />
@@ -89,7 +101,10 @@ function NuevoClienteModal({ onCreated, onClose }: { onCreated: () => void; onCl
             ))}
           </div>
           <input className={inputCls} placeholder="Nombre completo *" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
-          <input className={inputCls} placeholder="Teléfono / Contacto *" value={form.contacto} onChange={e => setForm(p => ({ ...p, contacto: e.target.value }))} />
+          <div className="grid grid-cols-2 gap-3">
+            <input className={inputCls} placeholder="Teléfono / Contacto *" value={form.contacto} onChange={e => setForm(p => ({ ...p, contacto: e.target.value }))} />
+            <input className={inputCls} placeholder="Dominio (Patente)" value={form.dominio} onChange={e => setForm(p => ({ ...p, dominio: e.target.value.toUpperCase() }))} />
+          </div>
           <textarea className={inputCls + " resize-none"} placeholder="Notas adicionales..." rows={3} value={form.notas} onChange={e => setForm(p => ({ ...p, notas: e.target.value }))} />
           <button onClick={handleSubmit} disabled={loading || !form.nombre.trim()}
             className="w-full py-3 bg-[#288b55] hover:bg-[#1e6e42] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40">
@@ -126,20 +141,41 @@ const ClientesPage = () => {
         supabase.from('cliente_consignatario').select('*').eq('user_id', user.id),
         supabase.from('cliente_comprador').select('*').eq('user_id', user.id),
         supabase.from('ventas').select('*').eq('owner_user_id', user.id),
-        supabase.from('inventario').select('id, marca, modelo')
+        supabase.from('inventario').select('id, marca, modelo, version, anio, dominio')
       ]);
 
       const inventarioMap = new Map();
+      const inventarioPorDominio = new Map();
+      
       if (resInventario.data) {
-        resInventario.data.forEach(i => inventarioMap.set(i.id, `${i.marca} ${i.modelo}`));
+        resInventario.data.forEach(i => {
+          const identificacion = `${i.marca || ''} ${i.modelo || ''} ${i.version || ''} ${i.anio || ''} ${i.dominio ? `(${i.dominio})` : '(Sin Patente)'}`.replace(/\s+/g, ' ').trim();
+          inventarioMap.set(i.id, identificacion);
+          if (i.dominio) inventarioPorDominio.set(i.dominio.toUpperCase(), identificacion);
+        });
       }
+
+      // Mapas para encontrar el parentesco por dominio y por auto_id
+      const consigPorDominio = new Map();
+      const consigPorAutoId = new Map();
+      (resConsignatarios.data || []).forEach(c => {
+        if (c.dominio) consigPorDominio.set(c.dominio.toUpperCase(), c.nombre);
+        if (c.auto_id) consigPorAutoId.set(c.auto_id, c.nombre);
+      });
+
+      const compPorDominio = new Map();
+      const compPorAutoId = new Map();
+      (resCompradores.data || []).forEach(c => {
+        if (c.dominio) compPorDominio.set(c.dominio.toUpperCase(), c.nombre);
+        if (c.auto_id) compPorAutoId.set(c.auto_id, c.nombre);
+      });
 
       const listaConsignatarios = (resConsignatarios.data || []).map((c: any) => ({
         id: c.id,
         nombre: c.nombre || 'Sin nombre',
         contacto: c.telefono || 'Sin contacto',
         rol: 'Consignatario' as const,
-        unidadAsociada: inventarioMap.get(c.auto_id) || 'Unidad Consignada',
+        unidadAsociada: inventarioMap.get(c.auto_id) || (c.dominio ? inventarioPorDominio.get(c.dominio.toUpperCase()) || `Unidad Dominio: ${c.dominio}` : 'Unidad Consignada'),
         estadoGestion: 'En Venta',
         ultimaAccion: `Consignó: ${c.moneda || 'ARS'} ${Number(c.precio_minimo || 0).toLocaleString()}`,
         notas: c.notas || `DNI: ${c.dni || 'N/A'}`,
@@ -148,7 +184,8 @@ const ClientesPage = () => {
           evento: 'Consignación Recibida',
           detalle: `Precio mínimo: ${c.moneda} ${c.precio_minimo}`,
           tipo: 'status'
-        }]
+        }],
+        contraparte: (c.auto_id && compPorAutoId.get(c.auto_id)) || (c.dominio ? compPorDominio.get(c.dominio.toUpperCase()) : null)
       }));
 
       const listaCompradores = (resCompradores.data || []).map((c: any) => {
@@ -162,11 +199,14 @@ const ClientesPage = () => {
           nombre: c.nombre || 'Sin nombre',
           contacto: c.contacto || 'Sin contacto',
           rol: 'Comprador' as const,
-          unidadAsociada: ventaRelacionada ? `${ventaRelacionada.marca} ${ventaRelacionada.modelo}` : (inventarioMap.get(c.auto_id) || 'Buscando unidad'),
-          estadoGestion: c.venta_concretada ? 'Vendido' : (c.senia_reserva ? 'Señado' : 'Lead'),
+          unidadAsociada: ventaRelacionada 
+            ? `${ventaRelacionada.marca || ''} ${ventaRelacionada.modelo || ''} ${ventaRelacionada.version || ''} ${ventaRelacionada.anio || ''} ${ventaRelacionada.dominio ? `(${ventaRelacionada.dominio})` : '(Sin Patente)'}`.replace(/\s+/g, ' ').trim() 
+            : (inventarioMap.get(c.auto_id) || (c.dominio ? inventarioPorDominio.get(c.dominio.toUpperCase()) || `Interés en: ${c.dominio}` : 'Buscando unidad')),
+          estadoGestion: c.reserva_caida ? 'Reserva Caída' : (c.venta_concretada ? 'Vendido' : (c.senia_reserva ? 'Señado' : 'Lead')),
           ultimaAccion: c.fecha_venta ? `Vendido el ${c.fecha_venta}` : 'En seguimiento',
           notas: c.notas || '',
-          fecha_hitos: hitos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+          fecha_hitos: hitos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
+          contraparte: (c.auto_id && consigPorAutoId.get(c.auto_id)) || (c.dominio ? consigPorDominio.get(c.dominio.toUpperCase()) : null)
         };
       });
 
@@ -179,6 +219,20 @@ const ClientesPage = () => {
   };
 
   useEffect(() => { fetchClientesReal(); }, []);
+
+  const marcarReservaCaida = async (id: string) => {
+    if (!window.confirm('¿Confirmás que esta reserva se cayó?')) return;
+    try {
+      const { error } = await supabase.from('cliente_comprador').update({ reserva_caida: true }).eq('id', id);
+      if (error) throw error;
+      setClientes(prev => prev.map(c => c.id === id ? { ...c, estadoGestion: 'Reserva Caída' } : c));
+      if (selectedCliente?.id === id) {
+        setSelectedCliente(prev => prev ? { ...prev, estadoGestion: 'Reserva Caída' } : null);
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
+  };
 
   const toggleSelect = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -215,7 +269,9 @@ const ClientesPage = () => {
 
   const clientesFiltrados = clientes.filter(c => {
     const matchesTab = filter === 'Todos' || c.rol === filter;
-    const matchesSearch = c.nombre.toLowerCase().includes(search.toLowerCase()) || c.contacto.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = c.nombre.toLowerCase().includes(search.toLowerCase()) || 
+                          c.contacto.toLowerCase().includes(search.toLowerCase()) ||
+                          c.unidadAsociada.toLowerCase().includes(search.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
@@ -238,7 +294,7 @@ const ClientesPage = () => {
 
       <div className="fixed top-[90px] lg:top-[80px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-3 py-5 lg:h-20">
         <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center justify-center gap-2">
-          <div className="grid grid-cols-3 lg:flex items-center gap-1 p-1 bg-black/20 rounded-xl border border-white/5 w-full lg:w-fit">
+          <div className="grid grid-cols-3 lg:flex items-center gap-1 p-1 bg-black/20 rounded-lg border border-white/5 w-full lg:w-fit">
             {['Todos', 'Consignatario', 'Comprador'].map((l) => (
               <button key={l} onClick={() => { setFilter(l); setCurrentPage(1); }}
                 className={`px-3 py-1.5 rounded-lg text-[10px] lg:text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap ${filter === l ? 'bg-[#134e4d] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
@@ -251,8 +307,7 @@ const ClientesPage = () => {
       </div>
 
       <div className="max-w-[1600px] mx-auto">
-        {/* BUSCADOR: mb-4 para achicar distancia con la tabla */}
-        <div className="flex flex-col items-center w-full mb-4">
+        <div className="flex flex-col items-start w-full mb-4">
           <div className="flex items-center gap-3 w-full max-w-2xl">
             <button onClick={() => setShowAddModal(true)}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-2.5 bg-[#288b55] hover:bg-[#1e6e42] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-[#288b55]/10">
@@ -260,13 +315,12 @@ const ClientesPage = () => {
             </button>
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input type="text" placeholder="Buscar por nombre o contacto..." value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+              <input type="text" placeholder="Buscar por nombre, contacto o dominio..." value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
                 className="bg-white/5 border border-white/10 rounded-md pl-10 pr-4 py-2.5 text-sm w-full outline-none focus:border-[#288b55]/50 transition-all text-white" />
             </div>
           </div>
         </div>
 
-        {/* ACCIONES MASIVAS: Solo ocupa espacio si hay selección */}
         {selectedIds.size > 0 && (
           <div className="flex justify-end mb-4">
             <button onClick={deleteSelected} disabled={isDeleting}
@@ -279,7 +333,7 @@ const ClientesPage = () => {
 
         <div className="flex gap-8 items-start">
           <div className="flex-1 overflow-x-auto">
-            <div className="bg-[#161f23] border border-slate-800/60 rounded-2xl shadow-2xl overflow-hidden min-w-[340px]">
+            <div className="bg-[#161f23] border border-slate-800/60 rounded-xl shadow-2xl overflow-hidden min-w-[340px]">
               <table className="w-full text-left border-collapse font-sans">
                 <thead className="bg-[#1c282d]/50 text-slate-500 text-[11px] uppercase tracking-[0.15em] font-black border-b border-slate-800">
                   <tr>
@@ -293,40 +347,57 @@ const ClientesPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/40">
-                  {currentItems.map((c) => (
-                    <tr key={c.id} onClick={() => handleSelectCliente(c)}
-                      className={`hover:bg-slate-800/20 cursor-pointer transition-all group ${selectedCliente?.id === c.id ? 'bg-emerald-500/[0.03]' : ''} ${selectedIds.has(c.id) ? 'bg-red-500/[0.02]' : ''}`}>
-                      <td className="px-4 md:px-6 py-4">
-                        <div onClick={(e) => toggleSelect(c.id, e)} className="text-slate-600 hover:text-emerald-500 transition-colors">
-                          {selectedIds.has(c.id) ? <CheckSquare size={18} className="text-emerald-500" /> : <Square size={18} />}
-                        </div>
-                      </td>
-                      <td className="px-3 md:px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#1c282d] border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 flex-shrink-0">
-                            <User size={18} />
+                  {currentItems.map((c) => {
+                    const phone = c.contacto.replace(/\D/g, '');
+                    const waLink = phone ? `https://wa.me/${phone}` : undefined;
+
+                    return (
+                      <tr key={c.id} onClick={() => handleSelectCliente(c)}
+                        className={`hover:bg-slate-800/20 cursor-pointer transition-all group ${selectedCliente?.id === c.id ? 'bg-emerald-500/[0.03]' : ''} ${selectedIds.has(c.id) ? 'bg-red-500/[0.02]' : ''}`}>
+                        <td className="px-4 md:px-6 py-4">
+                          <div onClick={(e) => toggleSelect(c.id, e)} className="text-slate-600 hover:text-emerald-500 transition-colors">
+                            {selectedIds.has(c.id) ? <CheckSquare size={18} className="text-emerald-500" /> : <Square size={18} />}
                           </div>
-                          <div className="min-w-0">
-                            <span className="font-bold text-slate-100 text-sm block truncate max-w-[120px] md:max-w-none">{c.nombre}</span>
-                            <span className={`sm:hidden text-[9px] px-2 py-0.5 rounded font-black uppercase border inline-block mt-1 ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
+                        </td>
+                        <td className="px-3 md:px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#1c282d] border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 flex-shrink-0">
+                              <User size={18} />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-bold text-slate-100 text-sm block truncate max-w-[120px] md:max-w-none">{c.nombre}</span>
+                              <span className={`sm:hidden text-[9px] px-2 py-0.5 rounded font-black uppercase border inline-block mt-1 ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 md:px-6 py-4 text-center hidden sm:table-cell">
-                        <span className={`text-[10px] px-2.5 py-1 rounded-lg font-black uppercase border inline-block ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
-                      </td>
-                      <td className="px-4 md:px-6 py-4 text-sky-400 font-bold text-sm truncate max-w-[160px] hidden md:table-cell">{c.unidadAsociada}</td>
-                      <td className="px-4 md:px-6 py-4 text-center hidden lg:table-cell">
-                        <span className="text-[11px] font-bold text-slate-400 bg-slate-800/50 px-2 py-1 rounded inline-block">{c.estadoGestion}</span>
-                      </td>
-                      <td className="px-4 md:px-6 py-4 text-[11px] text-slate-400 font-medium max-w-[180px] hidden lg:table-cell">{c.ultimaAccion}</td>
-                      <td className="px-4 md:px-6 py-4 text-center">
-                        <button onClick={e => e.stopPropagation()} className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#1c282d] border border-slate-700 text-emerald-500 flex items-center justify-center mx-auto hover:bg-emerald-500/20 transition-all">
-                          <MessageCircle size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-center hidden sm:table-cell">
+                          <span className={`text-[10px] px-2.5 py-1 rounded-lg font-black uppercase border inline-block ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-sky-400 font-bold text-sm truncate max-w-[200px] hidden md:table-cell">{c.unidadAsociada}</td>
+                        <td className="px-4 md:px-6 py-4 text-center hidden lg:table-cell">
+                          <span className={`text-[11px] font-bold px-2 py-1 rounded inline-block ${c.estadoGestion === 'Reserva Caída' ? 'text-red-400 bg-red-500/10 border border-red-500/20' : 'text-slate-400 bg-slate-800/50'}`}>{c.estadoGestion}</span>
+                        </td>
+                        <td className="px-4 md:px-6 py-4 text-[11px] text-slate-400 font-medium max-w-[180px] hidden lg:table-cell">{c.ultimaAccion}</td>
+                        <td className="px-4 md:px-6 py-4 text-center">
+                          <a 
+                            href={waLink}
+                            target={waLink ? "_blank" : undefined}
+                            rel="noopener noreferrer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!waLink) {
+                                e.preventDefault();
+                                alert("No hay un número de teléfono válido cargado para este cliente.");
+                              }
+                            }} 
+                            className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#1c282d] border border-slate-700 text-emerald-500 flex items-center justify-center mx-auto hover:bg-emerald-500/20 transition-all cursor-pointer"
+                          >
+                            <MessageCircle size={16} />
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -355,8 +426,8 @@ const ClientesPage = () => {
           </div>
 
           {selectedCliente && (
-            <div className="hidden md:block w-[420px] bg-[#161f23] border border-slate-800 rounded-3xl p-8 sticky top-8 shadow-2xl animate-in slide-in-from-right-4 duration-500 text-left font-sans flex-shrink-0">
-              <LegajoContent cliente={selectedCliente} onClose={() => { setSelectedCliente(null); setShowLegajo(false); }} />
+            <div className="hidden md:block w-[380px] bg-[#161f23] border border-slate-800 rounded-xl p-5 sticky top-8 shadow-2xl animate-in slide-in-from-right-4 duration-500 text-left font-sans flex-shrink-0">
+              <LegajoContent cliente={selectedCliente} onClose={() => { setSelectedCliente(null); setShowLegajo(false); }} onMarcarCaida={marcarReservaCaida} />
             </div>
           )}
         </div>
@@ -365,41 +436,70 @@ const ClientesPage = () => {
   );
 };
 
-function LegajoContent({ cliente, onClose }: { cliente: ClienteUnificado; onClose: () => void }) {
+function LegajoContent({ cliente, onClose, onMarcarCaida }: { cliente: ClienteUnificado; onClose: () => void; onMarcarCaida?: (id: string) => void }) {
   return (
     <>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-5">
         <h2 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
           <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>Legajo
         </h2>
         <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors"><X size={20}/></button>
       </div>
-      <div className="flex items-center gap-5 mb-10 p-5 bg-[#1c282d] border border-slate-800 rounded-2xl">
-        <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
-          <User size={28} />
+      <div className="flex items-center gap-4 mb-6 p-4 bg-[#1c282d] border border-slate-800 rounded-xl">
+        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
+          <User size={24} />
         </div>
         <div className="min-w-0">
           <h3 className="font-black text-white text-lg leading-tight truncate">{cliente.nombre}</h3>
           <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest truncate">{cliente.contacto}</p>
         </div>
       </div>
-      <div className="space-y-8 relative">
+      <div className="space-y-5 relative">
         <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Timeline</h4>
-        <div className="absolute left-[23px] top-[48px] bottom-0 w-[2px] bg-slate-800"></div>
+        <div className="absolute left-[19px] top-[40px] bottom-0 w-[2px] bg-slate-800"></div>
         {cliente.fecha_hitos.map((h: any, i: number) => (
-          <div key={i} className="relative pl-14">
-            <div className={`absolute left-0 top-0 w-12 h-12 rounded-2xl bg-[#161f23] border-2 flex items-center justify-center z-10 ${h.tipo === 'money' ? 'border-emerald-500 text-emerald-500' : 'border-slate-800 text-slate-500'}`}>
-              {h.tipo === 'money' ? <DollarSign size={20} /> : <Calendar size={20} />}
+          <div key={i} className="relative pl-12">
+            <div className={`absolute left-0 top-0 w-10 h-10 rounded-xl bg-[#161f23] border-2 flex items-center justify-center z-10 ${h.tipo === 'money' ? 'border-emerald-500 text-emerald-500' : 'border-slate-800 text-slate-500'}`}>
+              {h.tipo === 'money' ? <DollarSign size={18} /> : <Calendar size={18} />}
             </div>
             <div>
-              <span className="text-[10px] font-black text-slate-500 uppercase">{new Date(h.fecha).toLocaleDateString()}</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase">
+                {new Date(h.fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })}
+              </span>
               <p className="text-sm font-black text-slate-200 mt-1">{h.evento}</p>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">{h.detalle}</p>
             </div>
           </div>
         ))}
-        <div className="mt-10 p-5 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl">
-          <div className="flex items-center gap-2 mb-2 text-emerald-500">
+        
+        {cliente.rol === 'Comprador' && cliente.estadoGestion === 'Señado' && onMarcarCaida && (
+          <div className="mt-5 pt-5 border-t border-slate-800">
+            <button onClick={() => onMarcarCaida(cliente.id)} className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+              Marcar Reserva Caída
+            </button>
+          </div>
+        )}
+
+        <div className="mt-6 p-4 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-xl">
+          <div className="flex items-center gap-2 mb-1.5 text-emerald-500">
+            <HandshakeIcon size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Unidad Asociada</span>
+          </div>
+          <p className="text-sm text-slate-200 font-bold">{cliente.unidadAsociada}</p>
+          
+          {cliente.contraparte && (
+            <>
+              <div className="flex items-center gap-2 mt-3 mb-1.5 text-emerald-500">
+                <UserCheck size={14} />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  {cliente.rol === 'Comprador' ? 'Dueño de la unidad' : 'Comprador / Interesado'}
+                </span>
+              </div>
+              <p className="text-sm text-slate-200 font-bold">{cliente.contraparte}</p>
+            </>
+          )}
+
+          <div className="flex items-center gap-2 mt-3 mb-1.5 text-emerald-500">
             <HandshakeIcon size={14} />
             <span className="text-[10px] font-black uppercase tracking-widest">Notas</span>
           </div>

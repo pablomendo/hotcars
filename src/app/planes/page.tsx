@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Check, Star, Shield, Clock, Crown, ChevronDown } from 'lucide-react';
+import { Check, Star, Shield, Clock, Crown } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -16,7 +16,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [founderCode, setFounderCode] = useState('');
-  const [showFounderField, setShowFounderField] = useState(false);
 
   const prices = {
     STARTER: { monthly: 45000, quarterly: 45000 * 3 * 0.75, yearly: 45000 * 12 * 0.7 },
@@ -29,14 +28,14 @@ export default function RegisterPage() {
       id: 'STARTER',
       name: 'Plan Starter',
       icon: <Shield size={32} className="text-slate-400 stroke-[1.5px]" />,
-      features: ['Pagina Web (10 unidades)', 'Dashboard de gestión', 'Gestión de inventario (12 unidades)', 'Soporte Básico']
+      features: ['Pagina Web (12 unidades)', 'Dashboard de gestión', 'Gestión de inventario (12 unidades)', 'Soporte Básico']
     },
     {
       id: 'PRO',
       name: 'Plan Pro',
       icon: <Star size={32} className="text-yellow-500 stroke-[1.5px]" />,
       features: [
-        'Pagina Web (20 unidades)',
+        'Pagina Web (25 unidades)',
         'Gestión de unidades destacadas en web',
         'Dashboard de gestión',
         'Gestión de stock inventario (25 unidades)',
@@ -88,31 +87,29 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      let isFounder = false;
+      let codeData: any = null;
 
-      if (founderCode.trim() !== '') {
-        const { data: codeData, error: codeError } = await supabase
-          .from('founder_codes')
-          .select('*')
-          .eq('code', founderCode.trim().toUpperCase())
-          .eq('used', false)
-          .single();
+      const { data: fetchedCode, error: codeError } = await supabase
+        .from('founder_codes')
+        .select('*')
+        .eq('code', founderCode.trim().toUpperCase())
+        .eq('used', false)
+        .single();
 
-        if (codeError || !codeData) {
-          setError('El código fundador es inválido o ya fue utilizado.');
-          setLoading(false);
-          return;
-        }
-
-        const now = new Date();
-        if (codeData.expires_at && new Date(codeData.expires_at) < now) {
-          setError('El código fundador ha vencido.');
-          setLoading(false);
-          return;
-        }
-
-        isFounder = true;
+      if (codeError || !fetchedCode) {
+        setError('El código de acceso es inválido o ya fue utilizado.');
+        setLoading(false);
+        return;
       }
+
+      const now = new Date();
+      if (fetchedCode.expires_at && new Date(fetchedCode.expires_at) < now) {
+        setError('El código de acceso ha vencido.');
+        setLoading(false);
+        return;
+      }
+
+      codeData = fetchedCode;
 
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -123,27 +120,26 @@ export default function RegisterPage() {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('Error al crear usuario.');
 
+      const accessDays = codeData.access_days ?? 60;
       const founderExpiresAt = new Date();
-      founderExpiresAt.setDate(founderExpiresAt.getDate() + 90);
+      founderExpiresAt.setDate(founderExpiresAt.getDate() + accessDays);
 
       const { error: profileError } = await supabase.from('usuarios').insert([{
         auth_id: authData.user.id,
         email: email,
-        full_name: email.split('@')[0],
-        plan_type: isFounder ? 'PRO' : plan,
-        plan_status: isFounder ? 'fundador' : 'pendiente',
-        billing_cycle: isFounder ? 'founder' : billingCycle,
-        ...(isFounder && { founder_expires_at: founderExpiresAt.toISOString() })
+        nombre: email.split('@')[0],
+        plan_type: plan.toLowerCase(),
+        plan_status: 'fundador',
+        billing_cycle: 'founder',
+        founder_expires_at: founderExpiresAt.toISOString()
       }]);
 
       if (profileError) throw profileError;
 
-      if (isFounder) {
-        await supabase
-          .from('founder_codes')
-          .update({ used: true, used_by: authData.user.id, used_at: new Date().toISOString() })
-          .eq('code', founderCode.trim().toUpperCase());
-      }
+      await supabase
+        .from('founder_codes')
+        .update({ used: true, used_by: authData.user.id, used_at: new Date().toISOString() })
+        .eq('code', founderCode.trim().toUpperCase());
 
       router.push('/register/confirm');
 
@@ -171,7 +167,7 @@ export default function RegisterPage() {
               alt="HotCars ISO"
               width={160}
               height={160}
-              className="object-contain md:w-[190px]"
+              className="object-contain md:w-[220px]"
             />
           </h1>
           <p className="text-slate-500 text-[10px] md:text-sm font-bold uppercase tracking-[0.2em] mt-4 opacity-70" style={{ fontFamily: 'Genos, sans-serif' }}>
@@ -241,31 +237,27 @@ export default function RegisterPage() {
                 <h3 className="text-white text-xl md:text-2xl font-black uppercase mb-2 text-center tracking-tight">{p.name}</h3>
 
                 <div className="flex flex-col mb-8 min-h-[60px] md:min-h-[70px] justify-center items-center">
-                  <div className="flex items-baseline gap-2 justify-center">
+                  <div className="flex items-baseline gap-2 justify-center blur-sm select-none opacity-50">
                     <span className={`font-black tracking-tighter ${billingCycle !== 'monthly' ? 'text-4xl md:text-5xl text-[#288b55]' : 'text-3xl md:text-4xl text-white'}`}>
                       $ {displayPrice.toLocaleString('es-AR')}
                     </span>
                   </div>
-                  <span className="text-slate-500 text-[10px] font-bold uppercase mt-1">
+                  <span className="text-slate-500 text-[10px] font-bold uppercase mt-1 blur-[2px] select-none opacity-50">
                     {billingCycle === 'monthly' && 'por mes'}
                     {billingCycle === 'quarterly' && (
-                      <>
-                        /mes · <span className="line-through">$ {priceMonthly.toLocaleString('es-AR')}</span>
-                      </>
+                      <>/mes · <span className="line-through">$ {priceMonthly.toLocaleString('es-AR')}</span></>
                     )}
                     {billingCycle === 'yearly' && (
-                      <>
-                        /mes · <span className="line-through">$ {priceMonthly.toLocaleString('es-AR')}</span>
-                      </>
+                      <>/mes · <span className="line-through">$ {priceMonthly.toLocaleString('es-AR')}</span></>
                     )}
                   </span>
                   {billingCycle === 'quarterly' && (
-                    <span className="text-slate-600 text-[9px] font-bold uppercase mt-1">
+                    <span className="text-slate-600 text-[9px] font-bold uppercase mt-1 blur-[2px] select-none opacity-50">
                       Total trimestre: $ {prices[p.id as keyof typeof prices].quarterly.toLocaleString('es-AR')}
                     </span>
                   )}
                   {billingCycle === 'yearly' && (
-                    <span className="text-slate-600 text-[9px] font-bold uppercase mt-1">
+                    <span className="text-slate-600 text-[9px] font-bold uppercase mt-1 blur-[2px] select-none opacity-50">
                       Total anual: $ {prices[p.id as keyof typeof prices].yearly.toLocaleString('es-AR')}
                     </span>
                   )}
@@ -285,17 +277,17 @@ export default function RegisterPage() {
         </div>
 
         {/* FORMULARIO */}
-        <div id="auth-form" className="w-full max-w-xl mx-auto bg-[#141b1f] border border-white/5 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden text-left mb-20">
+        <div id="auth-form" className="w-full max-w-[436px] mx-auto bg-[#141b1f] border border-white/5 rounded-[0.22rem] md:rounded-[0.27rem] p-8 md:p-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden text-left mb-20">
           <div className="relative z-10">
             <div className="flex flex-col items-center mb-10">
-              <h2 className="text-white text-xl md:text-2xl font-black uppercase tracking-tighter text-center flex items-center gap-4">
+              <h2 className="text-white text-[16px] md:text-[20px] font-black uppercase tracking-tighter text-center flex items-center gap-4">
                 Crea tu acceso
                 <Image
                   src="/logo_hotcars_allwhite_iso_suelto.png"
                   alt="HotCars ISO"
-                  width={100}
-                  height={100}
-                  className="object-contain md:w-[125px]"
+                  width={121}
+                  height={121}
+                  className="object-contain md:w-[151px]"
                 />
               </h2>
               <p className="text-slate-500 text-[9px] md:text-xs font-bold uppercase tracking-[0.3em] mt-6 bg-black/40 px-6 py-2 rounded-full border border-[#288b55]/40 shadow-[0_0_25px_rgba(40,139,85,0.3)]">
@@ -327,29 +319,16 @@ export default function RegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-              </div>
-
-              {/* CÓDIGO FUNDADOR - DISCRETO */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowFounderField(!showFounderField)}
-                  className="flex items-center gap-2 text-slate-600 hover:text-slate-400 transition-all text-[9px] font-black uppercase tracking-widest"
-                >
-                  <ChevronDown size={12} className={`transition-transform ${showFounderField ? 'rotate-180' : ''}`} />
-                  ¿Tenés un código de acceso?
-                </button>
-                {showFounderField && (
-                  <div className="mt-3">
-                    <input
-                      type="text"
-                      className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-mono font-bold text-sm tracking-widest uppercase"
-                      placeholder="FOUNDER-XXXXXX"
-                      value={founderCode}
-                      onChange={(e) => setFounderCode(e.target.value.toUpperCase())}
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2 ml-1">Código de acceso</label>
+                  <input
+                    type="text"
+                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-mono font-bold text-sm tracking-widest uppercase"
+                    placeholder="PEGAR CODIGO"
+                    value={founderCode}
+                    onChange={(e) => setFounderCode(e.target.value.toUpperCase())}
+                  />
+                </div>
               </div>
 
               {error && (
@@ -360,8 +339,8 @@ export default function RegisterPage() {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full py-5 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-2xl hover:bg-[#2ecc71] transition-all disabled:opacity-50 shadow-[0_10px_30px_rgba(40,139,85,0.3)] hover:scale-[1.02] active:scale-95 text-xs md:text-sm"
+                disabled={loading || founderCode.trim() === ''}
+                className="w-full py-5 bg-[#288b55] text-white font-black uppercase tracking-widest rounded-2xl hover:bg-[#2ecc71] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_10px_30px_rgba(40,139,85,0.3)] hover:scale-[1.02] active:scale-95 text-xs md:text-sm"
               >
                 {loading ? 'Sincronizando...' : 'Comenzar ahora'}
               </button>

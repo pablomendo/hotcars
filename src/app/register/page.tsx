@@ -18,24 +18,24 @@ export default function RegisterPage() {
   const [founderCode, setFounderCode] = useState('');
 
   const prices = {
-    FREE: { monthly: 45000, quarterly: 45000 * 3 * 0.75, yearly: 45000 * 12 * 0.7 },
+    STARTER: { monthly: 45000, quarterly: 45000 * 3 * 0.75, yearly: 45000 * 12 * 0.7 },
     PRO: { monthly: 60000, quarterly: 60000 * 3 * 0.75, yearly: 60000 * 12 * 0.7 },
     VIP: { monthly: 80000, quarterly: 80000 * 3 * 0.75, yearly: 80000 * 12 * 0.7 }
   };
 
   const plans = [
     {
-      id: 'FREE',
+      id: 'STARTER',
       name: 'Plan Starter',
       icon: <Shield size={32} className="text-slate-400 stroke-[1.5px]" />,
-      features: ['Pagina Web (10 unidades)', 'Dashboard de gestión', 'Gestión de inventario (12 unidades)', 'Soporte Básico']
+      features: ['Pagina Web (12 unidades)', 'Dashboard de gestión', 'Gestión de inventario (12 unidades)', 'Soporte Básico']
     },
     {
       id: 'PRO',
       name: 'Plan Pro',
       icon: <Star size={32} className="text-yellow-500 stroke-[1.5px]" />,
       features: [
-        'Pagina Web (20 unidades)',
+        'Pagina Web (25 unidades)',
         'Gestión de unidades destacadas en web',
         'Dashboard de gestión',
         'Gestión de stock inventario (25 unidades)',
@@ -114,7 +114,7 @@ export default function RegisterPage() {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        options: { emailRedirectTo: 'https://hotcars.com.ar/auth/callback' },
       });
 
       if (signUpError) throw signUpError;
@@ -127,8 +127,8 @@ export default function RegisterPage() {
       const { error: profileError } = await supabase.from('usuarios').insert([{
         auth_id: authData.user.id,
         email: email,
-        full_name: email.split('@')[0],
-        plan_type: 'PRO',
+        nombre: email.split('@')[0],
+        plan_type: plan.toLowerCase(),
         plan_status: 'fundador',
         billing_cycle: 'founder',
         founder_expires_at: founderExpiresAt.toISOString()
@@ -167,7 +167,7 @@ export default function RegisterPage() {
               alt="HotCars ISO"
               width={160}
               height={160}
-              className="object-contain md:w-[190px]"
+              className="object-contain md:w-[220px]"
             />
           </h1>
           <p className="text-slate-500 text-[10px] md:text-sm font-bold uppercase tracking-[0.2em] mt-4 opacity-70" style={{ fontFamily: 'Genos, sans-serif' }}>
@@ -277,17 +277,17 @@ export default function RegisterPage() {
         </div>
 
         {/* FORMULARIO */}
-        <div id="auth-form" className="w-full max-w-xl mx-auto bg-[#141b1f] border border-white/5 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden text-left mb-20">
+        <div id="auth-form" className="w-full max-w-[436px] mx-auto bg-[#141b1f] border border-white/5 rounded-[0.22rem] md:rounded-[0.27rem] p-8 md:p-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden text-left mb-20">
           <div className="relative z-10">
             <div className="flex flex-col items-center mb-10">
-              <h2 className="text-white text-xl md:text-2xl font-black uppercase tracking-tighter text-center flex items-center gap-4">
+              <h2 className="text-white text-[16px] md:text-[20px] font-black uppercase tracking-tighter text-center flex items-center gap-4">
                 Crea tu acceso
                 <Image
                   src="/logo_hotcars_allwhite_iso_suelto.png"
                   alt="HotCars ISO"
-                  width={100}
-                  height={100}
-                  className="object-contain md:w-[125px]"
+                  width={121}
+                  height={121}
+                  className="object-contain md:w-[151px]"
                 />
               </h2>
               <p className="text-slate-500 text-[9px] md:text-xs font-bold uppercase tracking-[0.3em] mt-6 bg-black/40 px-6 py-2 rounded-full border border-[#288b55]/40 shadow-[0_0_25px_rgba(40,139,85,0.3)]">
@@ -302,7 +302,7 @@ export default function RegisterPage() {
                   <input
                     type="email"
                     required
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-bold text-sm"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-bold text-sm"
                     placeholder="vendedor@hotmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -313,7 +313,7 @@ export default function RegisterPage() {
                   <input
                     type="password"
                     required
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all text-sm"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all text-sm"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -323,8 +323,8 @@ export default function RegisterPage() {
                   <label className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2 ml-1">Código de acceso</label>
                   <input
                     type="text"
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-mono font-bold text-sm tracking-widest uppercase"
-                    placeholder="FOUNDER-XXXXXX"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-mono font-bold text-sm tracking-widest uppercase"
+                    placeholder="PEGAR CODIGO"
                     value={founderCode}
                     onChange={(e) => setFounderCode(e.target.value.toUpperCase())}
                   />

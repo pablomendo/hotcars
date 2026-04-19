@@ -125,6 +125,7 @@ export default function InventoryPage() {
         senia_reserva: '',
         moneda_senia: 'ARS',
         fecha_vencimiento: '',
+        dominio: '',
         notas: ''
     });
     const [isSavingCliente, setIsSavingCliente] = useState(false);
@@ -134,10 +135,9 @@ export default function InventoryPage() {
         nombre: '',
         dni: '',
         telefono: '',
-        comision_porcentaje: '',
         precio_minimo: '',
         moneda: 'ARS',
-        vigencia_hasta: '',
+        dominio: '',
         notas: ''
     });
     const [isSavingConsignatario, setIsSavingConsignatario] = useState(false);
@@ -246,12 +246,12 @@ export default function InventoryPage() {
             const [misAutos, misFlips] = await Promise.all([
                 supabase
                     .from('inventario')
-                    .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, expires_at, created_at, owner_user_id, is_flip')
+                    .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, expires_at, created_at, owner_user_id, is_flip, dominio')
                     .eq('owner_user_id', currentUserId)
                     .order('created_at', { ascending: false }),
                 supabase
                     .from('flip_compartido')
-                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, ganancia_flipper, expires_at, created_at, owner_user_id, is_flip)')
+                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, ganancia_flipper, expires_at, created_at, owner_user_id, is_flip, dominio)')
                     .eq('vendedor_user_id', currentUserId)
                     .eq('status', 'approved')
             ]);
@@ -302,7 +302,7 @@ export default function InventoryPage() {
         try {
             const { data } = await supabase
                 .from('cliente_comprador')
-                .select('nombre, dni, contacto, forma_pago, senia_reserva, moneda_senia, fecha_vencimiento, notas')
+                .select('nombre, dni, contacto, forma_pago, senia_reserva, moneda_senia, fecha_vencimiento, notas, dominio')
                 .eq('auto_id', autoId)
                 .maybeSingle();
 
@@ -314,8 +314,19 @@ export default function InventoryPage() {
                 senia_reserva: data.senia_reserva || '',
                 moneda_senia: data.moneda_senia || 'ARS',
                 fecha_vencimiento: data.fecha_vencimiento || '',
+                dominio: data.dominio || '',
                 notas: data.notas || ''
-            } : { nombre: '', dni: '', contacto: '', forma_pago: '', senia_reserva: '', moneda_senia: 'ARS', fecha_vencimiento: '', notas: '' };
+            } : { 
+                nombre: '', 
+                dni: '', 
+                contacto: '', 
+                forma_pago: '', 
+                senia_reserva: '', 
+                moneda_senia: 'ARS', 
+                fecha_vencimiento: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+                dominio: '', 
+                notas: '' 
+            };
 
             setClienteData(loaded);
             clienteOriginalRef.current = loaded;
@@ -328,7 +339,7 @@ export default function InventoryPage() {
         try {
             const { data } = await supabase
                 .from('cliente_consignatario')
-                .select('nombre, dni, telefono, comision_porcentaje, precio_minimo, moneda, vigencia_hasta, notas')
+                .select('nombre, dni, telefono, precio_minimo, moneda, notas, dominio')
                 .eq('auto_id', autoId)
                 .maybeSingle();
 
@@ -336,12 +347,11 @@ export default function InventoryPage() {
                 nombre: data.nombre || '',
                 dni: data.dni || '',
                 telefono: data.telefono || '',
-                comision_porcentaje: data.comision_porcentaje || '',
                 precio_minimo: data.precio_minimo || '',
                 moneda: data.moneda || 'ARS',
-                vigencia_hasta: data.vigencia_hasta || '',
+                dominio: data.dominio || '',
                 notas: data.notas || ''
-            } : { nombre: '', dni: '', telefono: '', comision_porcentaje: '', precio_minimo: '', moneda: 'ARS', vigencia_hasta: '', notas: '' };
+            } : { nombre: '', dni: '', telefono: '', precio_minimo: '', moneda: 'ARS', dominio: '', notas: '' };
 
             setConsignatarioData(loaded);
             consignatarioOriginalRef.current = loaded;
@@ -390,10 +400,14 @@ export default function InventoryPage() {
                     senia_reserva: clienteData.senia_reserva ? Number(clienteData.senia_reserva) : null,
                     moneda_senia: clienteData.moneda_senia,
                     fecha_vencimiento: clienteData.fecha_vencimiento || null,
+                    dominio: clienteData.dominio,
                     notas: clienteData.notas
                 }, { onConflict: 'auto_id' });
 
             if (error) throw error;
+
+            await supabase.from('inventario').update({ dominio: clienteData.dominio }).eq('id', selectedAuto.id);
+
             clienteOriginalRef.current = { ...clienteData };
             setClienteSaved(true);
             setTimeout(() => setClienteSaved(false), 2500);
@@ -415,14 +429,16 @@ export default function InventoryPage() {
                     nombre: consignatarioData.nombre,
                     dni: consignatarioData.dni,
                     telefono: consignatarioData.telefono,
-                    comision_porcentaje: consignatarioData.comision_porcentaje ? Number(consignatarioData.comision_porcentaje) : null,
                     precio_minimo: consignatarioData.precio_minimo ? Number(consignatarioData.precio_minimo) : null,
                     moneda: consignatarioData.moneda,
-                    vigencia_hasta: consignatarioData.vigencia_hasta || null,
+                    dominio: consignatarioData.dominio,
                     notas: consignatarioData.notas
                 }, { onConflict: 'auto_id' });
 
             if (error) throw error;
+
+            await supabase.from('inventario').update({ dominio: consignatarioData.dominio }).eq('id', selectedAuto.id);
+
             consignatarioOriginalRef.current = { ...consignatarioData };
             setConsignatarioSaved(true);
             setTimeout(() => setConsignatarioSaved(false), 2500);
@@ -836,7 +852,7 @@ export default function InventoryPage() {
             {/* Modal confirmacion cierre con cambios sin guardar */}
             {showCloseConfirm && (
                 <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 text-center">
-                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white rounded-3xl p-8 max-sm w-full shadow-2xl flex flex-col items-center animate-in fade-in zoom-in duration-200">
                         <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mb-6 text-yellow-500 border border-yellow-100">
                             <AlertTriangle size={36} strokeWidth={2.5} />
                         </div>
@@ -1343,13 +1359,13 @@ export default function InventoryPage() {
                                                         <input type="text" value={consignatarioData.telefono} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, telefono: e.target.value }))} placeholder="Tel / WhatsApp" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Comision %</label>
-                                                        <input type="number" value={consignatarioData.comision_porcentaje} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, comision_porcentaje: e.target.value }))} placeholder="Ej: 5" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Dominio</label>
+                                                        <input type="text" value={consignatarioData.dominio} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, dominio: e.target.value.toUpperCase() }))} placeholder="ABC 123" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Precio minimo</label>
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Precio de compra / consigna</label>
                                                         <input type="number" value={consignatarioData.precio_minimo} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, precio_minimo: e.target.value }))} placeholder="0" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
@@ -1359,10 +1375,6 @@ export default function InventoryPage() {
                                                             <option value="USD">USD</option>
                                                         </select>
                                                     </div>
-                                                </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vigencia hasta</label>
-                                                    <input type="date" value={consignatarioData.vigencia_hasta} onChange={(e) => setConsignatarioData((p: any) => ({ ...p, vigencia_hasta: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Notas</label>
@@ -1404,6 +1416,12 @@ export default function InventoryPage() {
                                                         <input type="text" value={clienteData.contacto} onChange={(e) => setClienteData((p: any) => ({ ...p, contacto: e.target.value }))} placeholder="Tel / WhatsApp" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Dominio</label>
+                                                        <input type="text" value={clienteData.dominio} onChange={(e) => setClienteData((p: any) => ({ ...p, dominio: e.target.value.toUpperCase() }))} placeholder="ABC 123" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Forma de pago</label>
                                                         <select value={clienteData.forma_pago} onChange={(e) => setClienteData((p: any) => ({ ...p, forma_pago: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white">
                                                             <option value="">Seleccionar</option>
@@ -1414,12 +1432,6 @@ export default function InventoryPage() {
                                                             <option value="Otro">Otro</option>
                                                         </select>
                                                     </div>
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Sena</label>
-                                                        <input type="number" value={clienteData.senia_reserva} onChange={(e) => setClienteData((p: any) => ({ ...p, senia_reserva: e.target.value }))} placeholder="0" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
-                                                    </div>
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Moneda</label>
                                                         <select value={clienteData.moneda_senia} onChange={(e) => setClienteData((p: any) => ({ ...p, moneda_senia: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white">
@@ -1428,9 +1440,15 @@ export default function InventoryPage() {
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col gap-1">
-                                                    <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vencimiento de Sena</label>
-                                                    <input type="date" value={clienteData.fecha_vencimiento} onChange={(e) => setClienteData((p: any) => ({ ...p, fecha_vencimiento: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Sena</label>
+                                                        <input type="number" value={clienteData.senia_reserva} onChange={(e) => setClienteData((p: any) => ({ ...p, senia_reserva: e.target.value }))} placeholder="0" className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Vencimiento de Sena</label>
+                                                        <input type="date" value={clienteData.fecha_vencimiento} onChange={(e) => setClienteData((p: any) => ({ ...p, fecha_vencimiento: e.target.value }))} className="border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#22c55e] transition-all bg-white"/>
+                                                    </div>
                                                 </div>
                                                 <div className="flex flex-col gap-1">
                                                     <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Notas</label>

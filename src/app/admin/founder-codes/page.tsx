@@ -46,8 +46,9 @@ export default function FounderCodesPage() {
     setLoading(true);
     setError(null);
     try {
+      // Corrección de guardado: Aseguramos que la fecha sea siempre futura al momento del clic
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + expiresInDays);
+      expiresAt.setDate(expiresAt.getDate() + Number(expiresInDays));
 
       const rows = codes.map(code => ({
         code,
@@ -73,7 +74,8 @@ export default function FounderCodesPage() {
     <div className="min-h-screen bg-[#0b1114] p-8 font-sans text-white flex flex-col items-center">
       <h1 className="text-2xl font-black uppercase tracking-tighter mb-8 text-center text-[#288b55]">Generador de Códigos PRO</h1>
 
-      <div className="bg-[#141b1f] border border-white/5 rounded-2xl p-6 mb-6 space-y-4 w-full max-w-md">
+      {/* Ajuste de padding: mt-[30px] para bajar el cuadro 30px respecto al título */}
+      <div className="bg-[#141b1f] border border-white/5 rounded-2xl p-6 mb-6 mt-[30px] space-y-4 w-full max-w-md">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2">Prefijo</label>
@@ -138,6 +140,7 @@ export default function FounderCodesPage() {
               {loading ? 'Guardando...' : 'Confirmar y Guardar en Supabase'}
             </button>
           )}
+          {error && <p className="text-red-500 text-[10px] mt-4 text-center uppercase font-bold">{error}</p>}
         </div>
       )}
     </div>
