@@ -114,7 +114,7 @@ export default function RegisterPage() {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: 'https://hotcars.com.ar/auth/callback' },
+        options: { emailRedirectTo: 'https://hotcars.com.ar/auth/confirm' },
       });
 
       if (signUpError) throw signUpError;
@@ -124,7 +124,6 @@ export default function RegisterPage() {
       const founderExpiresAt = new Date();
       founderExpiresAt.setDate(founderExpiresAt.getDate() + accessDays);
 
-      // Detectamos el rol según lo que configuramos en el código (por prefijo o por columna asignada)
       const assignedRole = codeData.assigned_role || (founderCode.toUpperCase().startsWith('PAR-') ? 'particular' : 'agencia');
 
       const { error: profileError } = await supabase.from('usuarios').insert([{

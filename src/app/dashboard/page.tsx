@@ -748,6 +748,12 @@ export default function DashboardPage() {
             setIsLoading(true);
             try {
                 const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!user) {
+                    router.push('/login');
+                    return;
+                }
+
                 if (user) {
                     setUserId(user.id);
                     const [profileRes, inventoryRes, flipsRes, messagesRes, ventasRes] = await Promise.all([

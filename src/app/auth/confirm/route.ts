@@ -29,10 +29,17 @@ export async function GET(request: Request) {
       }
     )
 
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash })
+    // Desestructuramos data para sacar la sesión
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash })
     
-    if (!error) {
-      return NextResponse.redirect(new URL(next, request.url))
+    if (!error && data?.session) {
+      const redirectUrl = new URL(next, request.url)
+      
+      // Inyectamos la sesión en el hash de la URL. 
+      // Supabase en el cliente (browser) lee esto automáticamente y guarda la sesión en Local Storage.
+      redirectUrl.hash = `access_token=${data.session.access_token}&refresh_token=${data.session.refresh_token}&expires_in=${data.session.expires_in}&token_type=${data.session.token_type ?? 'bearer'}&type=${type}`
+      
+      return NextResponse.redirect(redirectUrl)
     }
   }
 
