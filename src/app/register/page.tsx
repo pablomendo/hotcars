@@ -165,7 +165,7 @@ export default function RegisterPage() {
 
         {/* HEADER */}
         <div className="flex flex-col items-center justify-center mb-8 md:mb-10">
-          <h1 className="text-white text-[27px] md:text-[27px] font-black uppercase tracking-tighter flex flex-col md:flex-row items-center gap-4 md:gap-6">
+          <h1 className="text-white text-[27px] md:text-[27px] uppercase tracking-tighter flex flex-col md:flex-row items-center gap-4 md:gap-6" style={{ fontFamily: 'Genos', fontWeight: 800 }}>
             Elegí tu plan
             <Image
               src="/logo_hotcars_blanco.png"
@@ -285,7 +285,7 @@ export default function RegisterPage() {
         <div id="auth-form" className="w-full max-w-[436px] mx-auto bg-[#141b1f] border border-white/5 rounded-[0.22rem] md:rounded-[0.27rem] p-8 md:p-12 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative overflow-hidden text-left mb-20">
           <div className="relative z-10">
             <div className="flex flex-col items-center mb-10">
-              <h2 className="text-white text-[16px] md:text-[20px] font-black uppercase tracking-tighter text-center flex items-center gap-4">
+              <h2 className="text-white text-[16px] md:text-[20px] uppercase tracking-tighter text-center flex items-center gap-4" style={{ fontFamily: 'Genos', fontWeight: 800 }}>
                 Crea tu acceso
                 <Image
                   src="/logo_hotcars_allwhite_iso_suelto.png"
