@@ -124,13 +124,19 @@ export default function RegisterPage() {
       const founderExpiresAt = new Date();
       founderExpiresAt.setDate(founderExpiresAt.getDate() + accessDays);
 
+      // Detectamos el rol según lo que configuramos en el código (por prefijo o por columna asignada)
+      const assignedRole = codeData.assigned_role || (founderCode.toUpperCase().startsWith('PAR-') ? 'particular' : 'agencia');
+
       const { error: profileError } = await supabase.from('usuarios').insert([{
         auth_id: authData.user.id,
         email: email,
         nombre: email.split('@')[0],
-        plan_type: plan.toLowerCase(),
+        role: assignedRole,
+        plan_type: assignedRole === 'particular' ? 'free' : plan.toLowerCase(),
         plan_status: 'fundador',
         billing_cycle: 'founder',
+        is_active: true,
+        email_verified: true,
         founder_expires_at: founderExpiresAt.toISOString()
       }]);
 
@@ -195,7 +201,7 @@ export default function RegisterPage() {
               }`}
             >
               Trimestral
-              <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-25%</span>
+              <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-20%</span>
             </button>
             <button
               type="button"
@@ -205,7 +211,7 @@ export default function RegisterPage() {
               }`}
             >
               Anual
-              <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-30%</span>
+              <span className="bg-black/20 text-[9px] px-1.5 py-1 rounded text-white">-30%</span>
             </button>
           </div>
         </div>

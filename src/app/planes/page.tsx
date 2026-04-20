@@ -114,7 +114,7 @@ export default function RegisterPage() {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        options: { emailRedirectTo: 'https://hotcars.com.ar/auth/callback' },
       });
 
       if (signUpError) throw signUpError;
@@ -195,7 +195,7 @@ export default function RegisterPage() {
               }`}
             >
               Trimestral
-              <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-25%</span>
+              <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-20%</span>
             </button>
             <button
               type="button"
@@ -205,7 +205,7 @@ export default function RegisterPage() {
               }`}
             >
               Anual
-              <span className="bg-black/20 text-[9px] px-1.5 py-0.5 rounded text-white">-30%</span>
+              <span className="bg-black/20 text-[9px] px-1.5 py-1 rounded text-white">-30%</span>
             </button>
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function RegisterPage() {
                   <input
                     type="email"
                     required
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-bold text-sm"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-bold text-sm"
                     placeholder="vendedor@hotmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -313,7 +313,7 @@ export default function RegisterPage() {
                   <input
                     type="password"
                     required
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all text-sm"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all text-sm"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -323,7 +323,7 @@ export default function RegisterPage() {
                   <label className="text-[9px] md:text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2 ml-1">Código de acceso</label>
                   <input
                     type="text"
-                    className="w-full bg-black/40 border border-white/5 rounded-xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-mono font-bold text-sm tracking-widest uppercase"
+                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#288b55] focus:ring-1 focus:ring-[#288b55] transition-all font-mono font-bold text-sm tracking-widest uppercase"
                     placeholder="PEGAR CODIGO"
                     value={founderCode}
                     onChange={(e) => setFounderCode(e.target.value.toUpperCase())}

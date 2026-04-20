@@ -6,7 +6,7 @@ import Link from 'next/link';
 export default function ConfirmPage() {
   return (
     <div className="min-h-screen bg-[#0b1114] flex items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full bg-[#141b1f] border border-white/5 rounded-3xl p-10 text-center shadow-2xl relative overflow-hidden">
+      <div className="max-w-md w-full bg-[#141b1f] border border-white/5 rounded-1xl p-10 text-center shadow-2xl relative overflow-hidden">
         {/* Decoración de fondo */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#288b55] opacity-5 blur-[80px]"></div>
         
@@ -15,7 +15,7 @@ export default function ConfirmPage() {
             <Mail size={40} className="text-[#288b55] animate-bounce" />
           </div>
 
-          <h1 className="text-white text-3xl font-black uppercase tracking-tighter mb-4">
+          <h1 className="text-white text-3xl font-black lowerrcase tracking-tighter mb-4">
             ¡Revisá tu <span className="text-[#288b55]">Email</span>!
           </h1>
           
