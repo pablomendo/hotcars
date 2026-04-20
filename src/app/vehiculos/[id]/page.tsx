@@ -778,6 +778,12 @@ export default function VehicleDetailPage() {
             <span className="text-[32px] font-black text-[#1e293b] tracking-tight">
               {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}
             </span>
+            {/* ─── Retira con ─── */}
+            {vehicle.anticipo && (
+              <p className="text-[#555] font-semibold mt-1" style={{ fontSize: '27px' }}>
+                Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.anticipo).toLocaleString('de-DE')}
+              </p>
+            )}
             {user !== null && profitValue && (
               <div className="flex items-center gap-1.5 text-[#00a650] mt-1 font-semibold">
                 <TrendingUp size={14} /><span className="text-[13px] uppercase">{profitLabel}: ${Number(profitValue).toLocaleString('de-DE')}</span>
@@ -931,6 +937,12 @@ export default function VehicleDetailPage() {
                       <span className="text-4xl font-black text-[#1e293b] tracking-tighter">
                         {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}
                       </span>
+                      {/* ─── Retira con ─── */}
+                      {vehicle.anticipo && (
+                        <p className="text-[#555] font-semibold mt-1" style={{ fontSize: '19px' }}>
+                          Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.anticipo).toLocaleString('de-DE')}
+                        </p>
+                      )}
                       {user !== null && profitValue && (
                         <div className="flex items-center gap-1.5 text-[#00a650] mt-2 font-semibold">
                           <TrendingUp size={16} /><span className="text-[14px] uppercase">{profitLabel}: ${Number(profitValue).toLocaleString('de-DE')}</span>

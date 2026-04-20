@@ -84,6 +84,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
   const [currency, setCurrency] = useState("ARS");
   const [pvStr, setPvStr] = useState("");
   const [pcStr, setPcStr] = useState("");
+  const [anticipoStr, setAnticipoStr] = useState("");
   const [flipperGain, setFlipperGain] = useState(0);
   const [ownerGain, setOwnerGain] = useState(0);
   const [description, setDescription] = useState("");
@@ -155,8 +156,10 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
 
         const pvNum = Number(data.pv) || 0;
         const pcNum = Number(data.pc) || 0;
+        const anticipoNum = Number(data.anticipo) || 0;
         setPvStr(pvNum > 0 ? pvNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "");
         setPcStr(pcNum > 0 ? pcNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "");
+        setAnticipoStr(anticipoNum > 0 ? anticipoNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "");
         setFlipperGain(Number(data.ganancia_flipper) || 0);
         setOwnerGain(Number(data.ganancia_dueno) || 0);
 
@@ -320,15 +323,17 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
     return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-  const handlePriceChange = (value: string, type: "pv" | "pc") => {
+  const handlePriceChange = (value: string, type: "pv" | "pc" | "anticipo") => {
     const formatted = formatPrice(value);
     const numericInput = Number(value.replace(/\D/g, ""));
     if (type === "pv") {
       setPvStr(formatted);
       calculateGains(numericInput, Number(pcStr.replace(/\D/g, "")), currency);
-    } else {
+    } else if (type === "pc") {
       setPcStr(formatted);
       calculateGains(Number(pvStr.replace(/\D/g, "")), numericInput, currency);
+    } else if (type === "anticipo") {
+      setAnticipoStr(formatted);
     }
   };
 
@@ -405,7 +410,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
     setStep(1); setSelectedCategory(""); setSelectedBrand(""); setSelectedModel("");
     setSelectedYear(""); setSelectedVersion(""); setKm(""); setMainPhoto(null);
     setVehiclePhotos([]); setExistingPhotoUrls([]);
-    setSelectedHighlights([]); setPvStr(""); setPcStr(""); setDescription(""); setIsManual(false);
+    setSelectedHighlights([]); setPvStr(""); setPcStr(""); setAnticipoStr(""); setDescription(""); setIsManual(false);
     setProvincia(""); setLocalidad(""); setShareUser("");
     setIsFlipActive(true);
     setOpenSection(null);
@@ -536,6 +541,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
             moneda: currency,
             pv: parseFloat(pvStr.replace(/\D/g, "") || "0"),
             pc: parseFloat(pcStr.replace(/\D/g, "") || "0"),
+            anticipo: parseFloat(anticipoStr.replace(/\D/g, "") || "0"),
             ganancia_flipper: flipperGain,
             ganancia_dueno: ownerGain,
             descripcion: description,
@@ -607,6 +613,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
               moneda: currency,
               pv: parseFloat(pvStr.replace(/\D/g, "") || "0"),
               pc: parseFloat(pcStr.replace(/\D/g, "") || "0"),
+              anticipo: parseFloat(anticipoStr.replace(/\D/g, "") || "0"),
               ganancia_flipper: flipperGain,
               ganancia_dueno: ownerGain,
               descripcion: description,
@@ -1029,10 +1036,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
                       <div className="bg-gray-200 text-gray-500 text-[8px] font-black px-3 py-0.5 rounded-full uppercase tracking-tighter text-center">
                         presiona el botón azul para generar descripción por IA
                       </div>
-                      {/*
-                        FIX MOBILE: se revierte a <textarea> porque contentEditable causa 
-                        efecto espejo (el cursor vuelve a 0 en cada render).
-                      */}
                       <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -1041,7 +1044,6 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
                       />
                     </div>
 
-                    {/* Botón grande y tap-friendly para mobile */}
                     <button
                       onClick={handleGenerateIA}
                       disabled={isGeneratingIA || iaAttempts === 0}
@@ -1231,7 +1233,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
               )}
 
               <h2 className="text-xl font-extrabold uppercase text-gray-900 mb-6 tracking-tight font-google">
-                {isEditMode ? "Precios y guardar cambios" : "Finalizar Publicación"}
+                {isEditMode ? "Agregar precio y guardar cambios" : "Agregar precio y finalizar publicación"}
               </h2>
               <div className="bg-white p-8 rounded-lg shadow-xl border border-gray-100 flex flex-col gap-8">
                 <div className="flex gap-2 p-1 bg-gray-100 rounded-xl w-fit">
@@ -1246,6 +1248,16 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
                     <label className="text-[10px] font-black text-gray-400 uppercase">Precio Costo (PC)</label>
                     <input type="text" className={inputClassName} placeholder="0.00" value={pcStr} onChange={(e) => handlePriceChange(e.target.value, "pc")} />
                   </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase">Anticipo</label>
+                  <input
+                    type="text"
+                    className={inputClassName}
+                    placeholder="EJ: 5.000.000 ARS"
+                    value={anticipoStr}
+                    onChange={(e) => handlePriceChange(e.target.value, "anticipo")}
+                  />
                 </div>
                 <div className="bg-gray-50 rounded-lg p-5 border border-gray-100 flex flex-col items-center">
                   <div className="grid grid-cols-2 gap-8 w-full mb-4">
