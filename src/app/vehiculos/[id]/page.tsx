@@ -780,8 +780,8 @@ export default function VehicleDetailPage() {
             </span>
             {/* ─── Retira con ─── */}
             {vehicle.anticipo && (
-              <p className="text-[#555] font-semibold mt-1" style={{ fontSize: '27px' }}>
-                Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.anticipo).toLocaleString('de-DE')}
+              <p className="text-[#555] font-black uppercase mt-1" style={{ fontSize: '27px' }}>
+                Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} <span className="font-black">{Number(vehicle.anticipo).toLocaleString('de-DE')}</span>
               </p>
             )}
             {user !== null && profitValue && (
@@ -939,8 +939,8 @@ export default function VehicleDetailPage() {
                       </span>
                       {/* ─── Retira con ─── */}
                       {vehicle.anticipo && (
-                        <p className="text-[#555] font-semibold mt-1" style={{ fontSize: '19px' }}>
-                          Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.anticipo).toLocaleString('de-DE')}
+                        <p className="text-[#555] font-black uppercase mt-1" style={{ fontSize: '19px' }}>
+                          Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} <span className="font-black">{Number(vehicle.anticipo).toLocaleString('de-DE')}</span>
                         </p>
                       )}
                       {user !== null && profitValue && (
