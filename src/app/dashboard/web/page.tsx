@@ -70,6 +70,9 @@ export default function MiWebPage() {
   const isPro = ['PRO','VIP'].includes(userData.plan_type.toUpperCase());
   const isVip = userData.plan_type.toUpperCase() === 'VIP';
 
+  // ── FIX 1: build the preview URL dynamically from the subdomain ──
+  const previewUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hotcars.com.ar'}/sub/${config.subdomain}`;
+
   const fetchWebConfig = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -366,7 +369,8 @@ export default function MiWebPage() {
             <button onClick={() => setOpenConfig(!openConfig)} className={`flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 transition-all ${openConfig ? 'bg-white/10 text-[#22c55e] border-[#22c55e]/30' : 'bg-white/5 text-slate-500 hover:text-white'}`}>
               <SettingsIcon size={16}/><span className="text-[10px] font-bold uppercase tracking-wider">Configurar mi web</span>
             </button>
-            <a href={`http://localhost:3000/sub/${config.subdomain}`} target="_blank" rel="noopener noreferrer"
+            {/* ── FIX 1: preview URL is now dynamic, not hardcoded to localhost ── */}
+            <a href={previewUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 bg-white/5 text-slate-500 hover:text-[#22c55e] hover:border-[#22c55e]/30 transition-all">
               <ExternalLink size={16}/><span className="text-[10px] font-bold uppercase tracking-wider">Preview</span>
             </a>
@@ -488,8 +492,9 @@ export default function MiWebPage() {
                   </div>
                 </ConfigCard>
 
-                <ConfigCard title="Pie de Página" description={planFeatures.footer ? 'Disponible en tu plan' : 'Solo VIP'}>
-                  <div className={`flex flex-col gap-4 ${!planFeatures.footer ? 'opacity-20 pointer-events-none' : ''}`}>
+                {/* ── FIX 2: Pie de Página ahora disponible para PRO y VIP (isPro en vez de planFeatures.footer) ── */}
+                <ConfigCard title="Pie de Página" description={isPro ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
+                  <div className={`flex flex-col gap-4 ${!isPro ? 'opacity-20 pointer-events-none' : ''}`}>
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><MapPin size={14} className="text-slate-500"/><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Dirección" value={config.direccion} onChange={e => setConfig({...config, direccion: e.target.value})}/></div>
                       <div className="flex items-center gap-2 bg-black/40 border border-white/5 rounded-lg px-3 py-2"><Clock size={14} className="text-slate-500"/><input className="bg-transparent text-[10px] text-white outline-none w-full font-bold uppercase" placeholder="Horarios" value={config.horarios} onChange={e => setConfig({...config, horarios: e.target.value})}/></div>
