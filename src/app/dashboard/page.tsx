@@ -16,7 +16,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
     TrendingUp, BarChart3, Loader2, ShoppingBag, Crown, Shield,
     Zap, AlertTriangle, GripVertical, Settings, Check,
-    ChevronLeft, ChevronRight, Maximize2, Minimize2, X,
+    ChevronLeft, ChevronRight, Maximize2, Minimize2, X, Lock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -725,6 +725,27 @@ export default function DashboardPage() {
     const [layout, setLayout] = useState<CardConfig[]>(DEFAULT_LAYOUT);
     const [ventasPage, setVentasPage] = useState(1);
     const [avisosPage, setAvisosPage] = useState(1);
+    const [profile, setProfile] = useState<any>(null);
+
+    // CAMBIO 2: useMemo para calcular estado de gracia/bloqueo basado en plan_expires_at
+    const { isExpired, isGracePeriod, isTotalBlock, expiresAt, graceEnd } = useMemo(() => {
+        if (!profile?.plan_expires_at) {
+            return { isExpired: false, isGracePeriod: false, isTotalBlock: false, expiresAt: null, graceEnd: null };
+        }
+        const now = new Date();
+        const expires = new Date(profile.plan_expires_at);
+        const grace = new Date(expires.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const expired = now > expires;
+        const inGrace = expired && now <= grace;
+        const totalBlock = expired && now > grace;
+        return {
+            isExpired: expired,
+            isGracePeriod: inGrace,
+            isTotalBlock: totalBlock,
+            expiresAt: expires,
+            graceEnd: grace,
+        };
+    }, [profile]);
 
     const DOLAR_BLUE = 1500;
 
@@ -757,7 +778,7 @@ export default function DashboardPage() {
                 if (user) {
                     setUserId(user.id);
                     const [profileRes, inventoryRes, flipsRes, messagesRes, ventasRes] = await Promise.all([
-                        supabase.from('usuarios').select('plan_type, nombre').eq('auth_id', user.id).single(),
+                        supabase.from('usuarios').select('plan_type, nombre, plan_expires_at').eq('auth_id', user.id).single(),
                         supabase.from('inventario')
                             .select('id, marca, modelo, pv, pc, inventory_status, commercial_status, created_at, moneda, owner_user_id, is_flip, ganancia_flipper, ganancia_dueno, categoria')
                             .eq('owner_user_id', user.id)
@@ -776,6 +797,7 @@ export default function DashboardPage() {
                     if (profileRes.data) {
                         setUserPlan(profileRes.data.plan_type || 'FREE');
                         setUserName(profileRes.data.nombre || '');
+                        setProfile(profileRes.data);
                     }
                     if (inventoryRes.error) throw inventoryRes.error;
 
@@ -873,7 +895,6 @@ export default function DashboardPage() {
             l: Math.round(l / total * 100),
             c: Math.round(c / total * 100),
             rCount: r, lCount: l, cCount: c,
-            rCount: r, lCount: l, cCount: c,
         };
     }, [inventory]);
 
@@ -910,6 +931,7 @@ export default function DashboardPage() {
             { id: 'reservados', title: 'Autos Reservados', value: reservedVehicles.length, badge: 'Señados', badgeType: 'neutral', subtext: 'Reservas activas' },
             { id: 'mensajes',   title: 'Mensajes', value: totalMessages, badge: unreadMessages > 0 ? `${unreadMessages} sin leer` : 'Al día', badgeType: unreadMessages > 0 ? 'down' : 'up', subtext: unreadMessages > 0 ? `${unreadMessages} pendientes` : 'Sin pendientes' },
             { id: 'buscados',   title: 'Vehículos Buscados', value: ticketsBuscados, badge: ticketsBuscados > 0 ? `${ticketsBuscados} activos` : 'Sin tickets', badgeType: ticketsBuscados > 0 ? 'up' : 'neutral', subtext: 'Tickets de la red' },
+            // CAMBIO 3: corregido la coma por dos puntos en el operador ternario de subtext
             { id: 'clavos',     title: 'Unidad Clavo', value: clavoCount, isCurrency: false, subtext: clavoCount > 0 ? `USD ${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(montoInmovilizado)} inmovilizado` : 'Sin clavos' },
             // ── NUEVO: badge muestra pendientes si los hay ──
             { id: 'flips', title: 'Flips Compartidos', value: activeFlips.length, badge: pendingFlips > 0 ? `${pendingFlips} pendientes` : activeFlips.length > 0 ? `${activeFlips.length} activos` : 'Sin flips', badgeType: pendingFlips > 0 ? 'down' : activeFlips.length > 0 ? 'up' : 'neutral', subtext: pendingFlips > 0 ? 'Requieren atención' : 'En tu inventario' },
@@ -1286,6 +1308,20 @@ export default function DashboardPage() {
     return (
         <div className="bg-[#0b1114] min-h-screen w-full font-sans">
 
+            {/* CAMBIO 4A: Banner naranja de semana de gracia */}
+            {isGracePeriod && (
+                <div className="fixed top-0 left-0 right-0 z-[200] bg-orange-500 text-white px-4 py-2.5 flex items-center justify-center gap-3 shadow-lg">
+                    <AlertTriangle size={16} className="flex-shrink-0" />
+                    <p className="text-[12px] font-black uppercase tracking-widest text-center">
+                        Tu suscripción venció. Tenés una semana para regularizarla hasta el{' '}
+                        {graceEnd?.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}.{' '}
+                        <button onClick={() => router.push('/planes')} className="underline hover:no-underline transition-all">
+                            Renovar ahora
+                        </button>
+                    </p>
+                </div>
+            )}
+
             {/* ── SUBHEADER FIJO ── */}
             <style>{`@font-face { font-family: 'Genos'; src: url('/fonts/genos/Genos-VariableFont_wght.ttf') format('truetype'); }`}</style>
             <div className="fixed top-[100px] lg:top-[80px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 px-4 py-3 lg:h-20 lg:py-0 flex items-center justify-center">
@@ -1319,49 +1355,75 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-        <div className="pt-[200px] lg:pt-44 pb-10 px-4 md:px-8 overflow-y-auto">
-            <div className="max-w-[1600px] mx-auto space-y-6">
+            {/* CAMBIO 4B: Contenedor principal con blur condicional si isTotalBlock */}
+            <div className={`pt-[200px] lg:pt-44 pb-10 px-4 md:px-8 overflow-y-auto${isTotalBlock ? ' blur-[20px] pointer-events-none select-none' : ''}`}>
+                <div className="max-w-[1600px] mx-auto space-y-6">
 
-                <DndContext sensors={kpiSensors} collisionDetection={closestCenter} onDragEnd={(e) => {
-                    if (e.active.id !== e.over?.id) {
-                        setKpiItems(prev => {
-                            const oi = prev.findIndex(i => i.id === e.active.id);
-                            const ni = prev.findIndex(i => i.id === e.over?.id);
-                            return arrayMove(prev, oi, ni);
-                        });
-                    }
-                }}>
-                    <SortableContext items={kpiItems.map(i => i.id)} strategy={horizontalListSortingStrategy}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            {kpiItems.map(item => <SortableKPI key={item.id} {...item} />)}
-                        </div>
-                    </SortableContext>
-                </DndContext>
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 auto-rows-auto">
-                    {layout.map(config => {
-                        const colClass: Record<number, string> = {
-                            1: 'col-span-1',
-                            2: 'col-span-1 lg:col-span-2',
-                            3: 'col-span-1 lg:col-span-3',
-                            4: 'col-span-1 lg:col-span-4',
-                        };
-                        const HEIGHT_CLASS: Record<string, string> = {
-                            xs: 'min-h-[120px]',
-                            sm: 'min-h-[180px]',
-                            md: 'min-h-[280px]',
-                            lg: 'min-h-[380px]',
-                            xl: 'min-h-[500px]',
-                        };
-                        return (
-                            <div key={config.id} className={`${colClass[config.colSpan]} ${HEIGHT_CLASS[config.height]} flex`}>
-                                {renderCard(config.id)}
+                    <DndContext sensors={kpiSensors} collisionDetection={closestCenter} onDragEnd={(e) => {
+                        if (e.active.id !== e.over?.id) {
+                            setKpiItems(prev => {
+                                const oi = prev.findIndex(i => i.id === e.active.id);
+                                const ni = prev.findIndex(i => i.id === e.over?.id);
+                                return arrayMove(prev, oi, ni);
+                            });
+                        }
+                    }}>
+                        <SortableContext items={kpiItems.map(i => i.id)} strategy={horizontalListSortingStrategy}>
+                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                                {kpiItems.map(item => <SortableKPI key={item.id} {...item} />)}
                             </div>
-                        );
-                    })}
+                        </SortableContext>
+                    </DndContext>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 auto-rows-auto">
+                        {layout.map(config => {
+                            const colClass: Record<number, string> = {
+                                1: 'col-span-1',
+                                2: 'col-span-1 lg:col-span-2',
+                                3: 'col-span-1 lg:col-span-3',
+                                4: 'col-span-1 lg:col-span-4',
+                            };
+                            const HEIGHT_CLASS: Record<string, string> = {
+                                xs: 'min-h-[120px]',
+                                sm: 'min-h-[180px]',
+                                md: 'min-h-[280px]',
+                                lg: 'min-h-[380px]',
+                                xl: 'min-h-[500px]',
+                            };
+                            return (
+                                <div key={config.id} className={`${colClass[config.colSpan]} ${HEIGHT_CLASS[config.height]} flex`}>
+                                    {renderCard(config.id)}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {/* CAMBIO 4C: Muro de bloqueo total */}
+            {isTotalBlock && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+                    <div className="bg-[#141b1f] border border-white/10 rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-300">
+                        <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-6 text-red-400">
+                            <Lock size={40} strokeWidth={2} />
+                        </div>
+                        <h3 className="text-2xl font-black uppercase text-white mb-2 tracking-tight">Acceso bloqueado</h3>
+                        <p className="text-gray-400 text-[14px] font-medium leading-relaxed mb-8">
+                            Tu período de gracia venció. Para volver a acceder al dashboard y tu inventario, renová tu suscripción ahora.
+                        </p>
+                        <button
+                            onClick={() => router.push('/planes')}
+                            className="w-full py-5 bg-[#288b55] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl hover:bg-[#22c55e] transition-all active:scale-95 mb-4"
+                        >
+                            Renovar suscripción
+                        </button>
+                        <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest">
+                            ¿Necesitás ayuda? Contactá soporte
+                        </p>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

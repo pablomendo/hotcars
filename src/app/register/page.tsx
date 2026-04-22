@@ -119,10 +119,9 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('Error al crear usuario.');
-
       const accessDays = codeData.access_days ?? 60;
-      const founderExpiresAt = new Date();
-      founderExpiresAt.setDate(founderExpiresAt.getDate() + accessDays);
+      const fechaExpiracion = new Date();
+      fechaExpiracion.setDate(fechaExpiracion.getDate() + accessDays);
 
       const assignedRole = codeData.assigned_role || (founderCode.toUpperCase().startsWith('PAR-') ? 'particular' : 'agencia');
 
@@ -132,12 +131,13 @@ export default function RegisterPage() {
         nombre: email.split('@')[0],
         role: assignedRole,
         plan_type: assignedRole === 'particular' ? 'free' : plan.toLowerCase(),
-        plan_status: 'fundador',
-        billing_cycle: 'founder',
+        plan_status: 'activo',
+        billing_cycle: billingCycle, // <-- Ahora guarda lo que el usuario eligió en los botones (monthly, quarterly, yearly)
         is_active: true,
         email_verified: true,
-        founder_expires_at: founderExpiresAt.toISOString()
+        plan_expires_at: fechaExpiracion.toISOString() // <-- Variable con nombre limpio que va a la columna correcta
       }]);
+      ;
 
       if (profileError) throw profileError;
 

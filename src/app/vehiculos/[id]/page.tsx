@@ -13,6 +13,38 @@ import {
 
 const ChevronRightIcon = ChevronRight;
 
+// ─── Embed helper ─────────────────────────────────────────────────────────────
+function getEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0`;
+  // TikTok
+  const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (ttMatch) return `https://www.tiktok.com/embed/v2/${ttMatch[1]}`;
+  // URL directa de video (.mp4, etc.)
+  return url;
+}
+
+function VideoEmbed({ src, poster, className }: { src: string; poster?: string; className?: string }) {
+  const embedUrl = getEmbedUrl(src);
+  const isEmbed = embedUrl?.includes('youtube.com/embed') || embedUrl?.includes('tiktok.com/embed');
+  if (isEmbed) {
+    return (
+      <iframe
+        src={embedUrl!}
+        className={className}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        style={{ border: 'none', width: '100%', height: '100%' }}
+      />
+    );
+  }
+  return (
+    <video src={src} controls muted playsInline preload="auto" poster={poster} className={className} />
+  );
+}
+
 // ─── Leaflet map con geocoding via Nominatim ──────────────────────────────────
 function VehicleMapInner({ localidad, provincia }: { localidad: string; provincia: string }) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -826,17 +858,9 @@ export default function VehicleDetailPage() {
         <div className="md:hidden -mx-4">
 
           <div className="relative bg-black overflow-hidden" style={{ aspectRatio: '4/3' }}>
-            <div className="w-full h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={() => setIsGalleryOpen(true)}>
+            <div className="w-full h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={() => !isVideoSelected && setIsGalleryOpen(true)}>
               {isVideoSelected ? (
-                <video 
-                  src={videoUrl} 
-                  controls 
-                  muted
-                  playsInline
-                  preload="auto"
-                  poster={fotos[0]}
-                  className="w-full h-full object-contain" 
-                />
+                <VideoEmbed src={videoUrl} poster={fotos[0]} className="w-full h-full object-contain" />
               ) : (
                 <img src={fotos[selectedImageIndex]} alt={`${vehicle.marca} ${vehicle.modelo}`} className="w-full h-full object-cover" />
               )}
@@ -1002,27 +1026,21 @@ export default function VehicleDetailPage() {
                   {videoUrl && (
                     <button onClick={() => setSelectedImageIndex(fotos.length)}
                       className={`flex-shrink-0 w-12 h-12 rounded border-2 overflow-hidden transition-all cursor-pointer relative ${selectedImageIndex === fotos.length ? 'border-[#3483fa]' : 'border-gray-200'}`}>
-                      <video src={videoUrl} poster={fotos[0]} className="w-full h-full object-cover" />
+                      <img src={fotos[0] || '/placeholder.jpg'} className="w-full h-full object-cover" alt="Video thumb" />
                       <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                         <Play size={20} className="text-white fill-white" />
                       </div>
-                      <img src="/reproducir_video.png" className="absolute top-0 right-0 w-6 h-6 object-contain" alt="Badge Play" />
                     </button>
                   )}
                 </div>
                 <div className="flex-1 relative flex items-center justify-center min-h-[400px] overflow-hidden cursor-crosshair"
-                  onMouseMove={handleZoomMove} onMouseLeave={() => setZoomPos(null)}>
-                  <div className="absolute inset-0 z-[5]" onClick={() => setIsGalleryOpen(true)} />
+                  onMouseMove={!isVideoSelected ? handleZoomMove : undefined}
+                  onMouseLeave={() => setZoomPos(null)}>
+                  <div className="absolute inset-0 z-[5]" onClick={() => !isVideoSelected && setIsGalleryOpen(true)} />
                   {isVideoSelected ? (
-                    <video 
-                      src={videoUrl} 
-                      controls 
-                      muted
-                      playsInline
-                      preload="auto"
-                      poster={fotos[0]}
-                      className="max-w-full max-h-full object-contain" 
-                    />
+                    <div className="w-full h-full flex items-center justify-center" style={{ minHeight: '400px' }}>
+                      <VideoEmbed src={videoUrl} poster={fotos[0]} className="max-w-full max-h-full w-full" />
+                    </div>
                   ) : (
                     <>
                       <img src={fotos[selectedImageIndex]} className="max-w-full max-h-full object-contain" alt="Principal" />
@@ -1214,16 +1232,9 @@ export default function VehicleDetailPage() {
           <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full z-[110] cursor-pointer"><X size={32} /></button>
           <button onClick={handlePrevImage} className="absolute left-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/10 rounded-full z-[110] cursor-pointer"><ChevronLeft size={32} /></button>
           {isVideoSelected ? (
-            <video 
-              src={videoUrl} 
-              controls 
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              poster={fotos[0]}
-              className="max-w-full max-h-[85vh] object-contain shadow-2xl" 
-            />
+            <div className="w-full max-w-3xl" style={{ aspectRatio: '16/9' }}>
+              <VideoEmbed src={videoUrl} poster={fotos[0]} className="w-full h-full" />
+            </div>
           ) : (
             <img src={fotos[selectedImageIndex]} alt="Gallery" className="max-w-full max-h-[85vh] object-contain shadow-2xl" />
           )}

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import hiddenData from '@/lib/tsconfig.sys.json';
 import { 
-  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle, User, Save, Send, ExternalLink
+  Search, Loader2, Trash2, PauseCircle, Play, Check, Pencil, LayoutGrid, List, X, ChevronDown, ChevronRight, DollarSign, AlertTriangle, RefreshCcw, LogOut, Zap, AlertCircle, User, Save, Send, ExternalLink, Lock
 } from 'lucide-react';
 
 // ─── Modal de Vendido ─────────────────────────────────────────────────────────
@@ -141,7 +141,8 @@ export default function InventoryPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
-    const [userPlan, setUserPlan] = useState<string>('Starter'); 
+    const [userPlan, setUserPlan] = useState<string>('Starter');
+    const [profile, setProfile] = useState<any>(null);
 
     const [selectedAuto, setSelectedAuto] = useState<any>(null);
     const [openSection, setOpenSection] = useState<string | null>(null);
@@ -187,7 +188,27 @@ export default function InventoryPage() {
     const [isSavingConsignatario, setIsSavingConsignatario] = useState(false);
     const [consignatarioSaved, setConsignatarioSaved] = useState(false);
 
-    // ── helpers de vencimiento ─────────────────────────────────────────────
+    // ── Lógica de suscripción ─────────────────────────────────────────────────
+    const { isExpired, isGracePeriod, isTotalBlock, graceEnd } = useMemo(() => {
+        if (!profile?.plan_expires_at) {
+            return { isExpired: false, isGracePeriod: false, isTotalBlock: false, expiresAt: null, graceEnd: null };
+        }
+        const now = new Date();
+        const expires = new Date(profile.plan_expires_at);
+        const grace = new Date(expires.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const expired = now > expires;
+        const inGrace = expired && now <= grace;
+        const totalBlock = expired && now > grace;
+        return {
+            isExpired: expired,
+            isGracePeriod: inGrace,
+            isTotalBlock: totalBlock,
+            expiresAt: expires,
+            graceEnd: grace,
+        };
+    }, [profile]);
+
+    // ── helpers de vencimiento de publicación ─────────────────────────────────
     const getExpiryStatus = (v: any) => {
         if (!v.expires_at || !v.isProprio || v.commercial_status === 'vendido') {
             return null;
@@ -252,15 +273,16 @@ export default function InventoryPage() {
                 if (user) {
                     setUserId(user.id);
                     
-                    const { data: profile } = await supabase
+                    const { data: profileData } = await supabase
                         .from('usuarios')
-                        .select('plan_type, nombre')
+                        .select('plan_type, nombre, plan_expires_at')
                         .eq('auth_id', user.id)
                         .maybeSingle();
 
-                    if (profile) {
-                        setUserPlan(profile.plan_type || 'starter');
-                        setUserName(profile.nombre || null);
+                    if (profileData) {
+                        setUserPlan(profileData.plan_type || 'starter');
+                        setUserName(profileData.nombre || null);
+                        setProfile(profileData);
                     }
                     
                     await fetchInventory(user.id);
@@ -862,6 +884,44 @@ export default function InventoryPage() {
                 button { cursor: pointer; }
             `}</style>
 
+            {/* ── Banner de período de gracia ── */}
+            {isGracePeriod && (
+                <div className="fixed top-0 left-0 right-0 z-[1000] bg-[#f59e0b] text-white py-3 px-4 text-center shadow-xl">
+                    <p className="text-[11px] font-black uppercase tracking-[0.1em]">
+                        Tu suscripción venció. Tenés una semana para regularizarla hasta el {graceEnd!.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}.
+                    </p>
+                </div>
+            )}
+
+            {/* ── Muro de pago (bloqueo total) ── */}
+            {isTotalBlock && (
+                <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+                    <div className="bg-[#141b1f] border border-white/10 rounded-3xl p-10 max-w-md w-full shadow-2xl flex flex-col items-center text-center">
+                        <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center mb-6 text-red-400">
+                            <Lock size={40} strokeWidth={2} />
+                        </div>
+                        <h3 className="text-2xl font-black uppercase text-white mb-2 tracking-tight">Acceso bloqueado</h3>
+                        <p className="text-gray-400 text-[14px] font-medium leading-relaxed mb-8">
+                            Tu período de gracia venció. Para volver a acceder a tu inventario, renová tu suscripción ahora.
+                        </p>
+                        <button
+                            onClick={() => router.push('/planes')}
+                            className="w-full py-5 bg-[#288b55] text-white rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl hover:bg-[#22c55e] transition-all active:scale-95 mb-3"
+                        >
+                            Renovar suscripción
+                        </button>
+                        <a
+                            href="https://wa.me/5491100000000?text=Hola%2C%20quiero%20renovar%20mi%20suscripci%C3%B3n"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-3 border border-white/10 text-gray-400 rounded-2xl font-black uppercase text-xs tracking-widest hover:border-white/20 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            Contactar por WhatsApp
+                        </a>
+                    </div>
+                </div>
+            )}
+
             {/* Modal de vendido */}
             {sellModalVehicle && (
                 <SellModal
@@ -1027,8 +1087,8 @@ export default function InventoryPage() {
                 </div>
             </div>
 
-            {/* CONTENIDO */}
-            <div className="max-w-[1600px] mx-auto px-6 pt-[225px] pb-20 lg:pt-44">
+            {/* CONTENIDO — con blur si isTotalBlock */}
+            <div className={`max-w-[1600px] mx-auto px-6 pt-[225px] pb-20 lg:pt-44${isTotalBlock ? ' blur-[20px] pointer-events-none select-none' : ''}`}>
                 <div className="flex flex-wrap items-center gap-3 mb-8">
                     <div className="flex bg-white/5 rounded-lg p-1 border border-white/10">
                         <button onClick={() => setViewMode('grid')} className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white/10 text-[#22c55e]' : 'text-slate-500'}`}>
@@ -1055,7 +1115,7 @@ export default function InventoryPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {filtered.map((v) => {
                             const expiry = getExpiryStatus(v);
-                            const isExpired = expiry?.type === 'vencida';
+                            const isExpiredPub = expiry?.type === 'vencida';
                             const isProcessing = processingId === v.id;
                             const isVendido = v.commercial_status === 'vendido';
                             const slug = getVehicleSlug(v);
@@ -1139,36 +1199,37 @@ export default function InventoryPage() {
                                     </div>
 
                                     <div className="flex border-t border-white/5 bg-black/20 divide-x divide-white/5" onClick={(e) => e.stopPropagation()}>
+                                        {/* Editar — deshabilitado si isExpired (suscripción) */}
                                         <button 
-                                            disabled={!v.isProprio}
+                                            disabled={!v.isProprio || isExpired}
                                             onClick={() => handleAction(v, 'EDIT')} 
-                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-blue-400'}`}
+                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${(!v.isProprio || isExpired) ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-blue-400'}`}
                                         >
                                             <Pencil size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Editar</span>
                                         </button>
 
-                                        {!isVendido && (isExpired ? (
+                                        {!isVendido && (isExpiredPub ? (
                                             <button 
-                                                disabled={!v.isProprio}
+                                                disabled={!v.isProprio || isExpired}
                                                 onClick={() => handleAction(v, 'RENEW')} 
-                                                className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-blue-500 bg-blue-500/5'}`}
+                                                className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${(!v.isProprio || isExpired) ? 'opacity-20 grayscale cursor-not-allowed' : 'text-blue-500 bg-blue-500/5'}`}
                                             >
                                                 <RefreshCcw size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Renovar</span>
                                             </button>
                                         ) : (
                                             v.inventory_status === 'pausado' ? (
                                                 <button 
-                                                    disabled={!v.isProprio}
+                                                    disabled={!v.isProprio || isExpired}
                                                     onClick={() => handleAction(v, 'ACTIVATE')} 
-                                                    className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-green-500 bg-green-500/5'}`}
+                                                    className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${(!v.isProprio || isExpired) ? 'opacity-20 grayscale cursor-not-allowed' : 'text-green-500 bg-green-500/5'}`}
                                                 >
                                                     <Play size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Activar</span>
                                                 </button>
                                             ) : (
                                                 <button 
-                                                    disabled={!v.isProprio}
+                                                    disabled={!v.isProprio || isExpired}
                                                     onClick={() => handleAction(v, 'PAUSE')} 
-                                                    className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-yellow-500'}`}
+                                                    className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${(!v.isProprio || isExpired) ? 'opacity-20 grayscale cursor-not-allowed' : 'text-slate-500 hover:text-yellow-500'}`}
                                                 >
                                                     <PauseCircle size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Pausar</span>
                                                 </button>
@@ -1176,17 +1237,17 @@ export default function InventoryPage() {
                                         ))}
 
                                         <button 
-                                            disabled={!v.isProprio}
+                                            disabled={!v.isProprio || isExpired}
                                             onClick={() => handleAction(v, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} 
-                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : (v.commercial_status === 'reservado' ? 'text-orange-500 bg-orange-500/5' : 'text-slate-500 hover:text-orange-500')}`}
+                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${(!v.isProprio || isExpired) ? 'opacity-20 grayscale cursor-not-allowed' : (v.commercial_status === 'reservado' ? 'text-orange-500 bg-orange-500/5' : 'text-slate-500 hover:text-orange-500')}`}
                                         >
                                             <DollarSign size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">{v.commercial_status === 'reservado' ? 'Quitar Res.' : 'Reservar'}</span>
                                         </button>
 
                                         <button 
-                                            disabled={!v.isProprio}
+                                            disabled={!v.isProprio || isExpired}
                                             onClick={() => handleAction(v, isVendido ? 'SET_AVAILABLE' : 'SELL')} 
-                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${!v.isProprio ? 'opacity-20 grayscale cursor-not-allowed' : (isVendido ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]')}`}
+                                            className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-all ${(!v.isProprio || isExpired) ? 'opacity-20 grayscale cursor-not-allowed' : (isVendido ? 'text-green-500 bg-green-500/5' : 'text-slate-500 hover:text-[#22c55e]')}`}
                                         >
                                             <Check size={13}/><span className="text-[7px] font-black uppercase tracking-tighter">Vendido</span>
                                         </button>
@@ -1217,7 +1278,7 @@ export default function InventoryPage() {
                             <tbody className="divide-y divide-white/5">
                                 {filtered.map((v) => {
                                     const expiry = getExpiryStatus(v);
-                                    const isExpired = expiry?.type === 'vencida';
+                                    const isExpiredPub = expiry?.type === 'vencida';
                                     const isProcessing = processingId === v.id;
                                     const isVendido = v.commercial_status === 'vendido';
                                     const slug = getVehicleSlug(v);
@@ -1250,44 +1311,44 @@ export default function InventoryPage() {
                                             </td>
                                             <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                                 <div className="flex justify-end gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
-                                                    {!isVendido && (isExpired ? (
+                                                    {!isVendido && (isExpiredPub ? (
                                                         <button 
-                                                            disabled={!v.isProprio}
+                                                            disabled={!v.isProprio || isExpired}
                                                             onClick={() => handleAction(v, 'RENEW')} 
-                                                            className={`text-blue-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                            className={`text-blue-500 ${(!v.isProprio || isExpired) ? 'opacity-0 pointer-events-none' : ''}`}
                                                         >
                                                             <RefreshCcw size={14}/>
                                                         </button>
                                                     ) : (
                                                         v.inventory_status === 'pausado' ? (
                                                             <button 
-                                                                disabled={!v.isProprio}
+                                                                disabled={!v.isProprio || isExpired}
                                                                 onClick={() => handleAction(v, 'ACTIVATE')} 
-                                                                className={`text-green-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                                className={`text-green-500 ${(!v.isProprio || isExpired) ? 'opacity-0 pointer-events-none' : ''}`}
                                                             >
                                                                 <Play size={14}/>
                                                             </button>
                                                         ) : (
                                                             <button 
-                                                                disabled={!v.isProprio}
+                                                                disabled={!v.isProprio || isExpired}
                                                                 onClick={() => handleAction(v, 'PAUSE')} 
-                                                                className={`text-yellow-500 ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                                className={`text-yellow-500 ${(!v.isProprio || isExpired) ? 'opacity-0 pointer-events-none' : ''}`}
                                                             >
                                                                 <PauseCircle size={14}/>
                                                             </button>
                                                         )
                                                     ))}
                                                     <button 
-                                                        disabled={!v.isProprio}
+                                                        disabled={!v.isProprio || isExpired}
                                                         onClick={() => handleAction(v, v.commercial_status === 'reservado' ? 'SET_AVAILABLE' : 'RESERVE')} 
-                                                        className={`${v.commercial_status === 'reservado' ? 'text-orange-500' : 'hover:text-orange-400'} ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                        className={`${v.commercial_status === 'reservado' ? 'text-orange-500' : 'hover:text-orange-400'} ${(!v.isProprio || isExpired) ? 'opacity-0 pointer-events-none' : ''}`}
                                                     >
                                                         <DollarSign size={14}/>
                                                     </button>
                                                     <button 
-                                                        disabled={!v.isProprio}
+                                                        disabled={!v.isProprio || isExpired}
                                                         onClick={() => handleAction(v, isVendido ? 'SET_AVAILABLE' : 'SELL')} 
-                                                        className={`${isVendido ? 'text-green-500' : 'hover:text-[#22c55e]'} ${!v.isProprio ? 'opacity-0 pointer-events-none' : ''}`}
+                                                        className={`${isVendido ? 'text-green-500' : 'hover:text-[#22c55e]'} ${(!v.isProprio || isExpired) ? 'opacity-0 pointer-events-none' : ''}`}
                                                     >
                                                         <Check size={14}/>
                                                     </button>

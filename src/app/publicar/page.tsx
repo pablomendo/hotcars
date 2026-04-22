@@ -39,7 +39,8 @@ const categories = [
 const HIGHLIGHTS_POOL = [
   "5 puertas", "3 puertas", "Caja automática", "Financiación",
   "GNC", "VTV", "Acepta permuta", "Ideal aplicaciones",
-  "Único dueño", "Service oficial", "Full", "Butacas cuero"
+  "Único dueño", "Service oficial", "Full", "Butacas cuero",
+  "CarPlay", "Techo panorámico"
 ];
 
 const YEARS = Array.from({ length: 40 }, (_, i) => (2026 - i).toString());
@@ -301,7 +302,7 @@ function AddVehicleForm({ onClose }: { onClose?: () => void }) {
     else if (selectedCategory === "Camion") {
       tags = ["Cabina Simple", "Cabina Doble", "Cabina Triple", "Volcador", "Furgon", "Caja Abierta", "Caja Cerrada", "Caja Refrigerada", "4x2", "4x4", "6x4", "8x4"];
     }
-    return tags.slice(0, 12);
+    return tags.slice(0, 14);
   }, [selectedCategory]);
 
   const toggleHighlight = (tag: string) => {
