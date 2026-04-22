@@ -7,12 +7,23 @@ import { CldUploadWidget } from 'next-cloudinary';
 import { Camera, Save, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
+// ─── Verified Badge ───────────────────────────────────────────────────────────
+function VerifiedBadge({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <path d="M12 1L15.09 7.26L22 8.27L17 13.14L18.18 20.02L12 16.77L5.82 20.02L7 13.14L2 8.27L8.91 7.26L12 1Z" fill="#1D9BF0" />
+      <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function PerfilPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -47,6 +58,7 @@ export default function PerfilPage() {
           phone: data.phone || '',
           profile_pic: data.profile_pic || ''
         });
+        setIsVerified(data.usuario_verificado === true);
       }
     } catch (err: any) {
       setError(err.message);
@@ -71,7 +83,7 @@ export default function PerfilPage() {
           full_name: formData.full_name,
           bio: formData.bio,
           phone: formData.phone,
-          profile_pic: formData.profile_pic, // Aquí se guarda la URL de Cloudinary
+          profile_pic: formData.profile_pic,
           updated_at: new Date().toISOString(),
         })
         .eq('auth_id', user.id);
@@ -103,7 +115,10 @@ export default function PerfilPage() {
           <Link href="/dashboard" className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-white">
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-xl font-black uppercase tracking-tighter">Editar Perfil</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black uppercase tracking-tighter">Editar Perfil</h1>
+            {isVerified && <VerifiedBadge size={20} />}
+          </div>
           <div className="w-10"></div>
         </div>
 
@@ -144,19 +159,29 @@ export default function PerfilPage() {
                 </div>
               )}
             </CldUploadWidget>
-            <p className="text-[9px] font-black uppercase text-slate-500 mt-3 tracking-[0.2em]">Logo de la Agencia</p>
+            <div className="flex items-center gap-1.5 mt-3">
+              <p className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">Logo de la Agencia</p>
+              {isVerified && <VerifiedBadge size={14} />}
+            </div>
           </div>
 
           {/* CAMPOS DE TEXTO */}
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest block mb-2 px-1">Nombre de la Agencia / Vendedor</label>
-              <input 
-                type="text"
-                className="w-full bg-[#141b1f] border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#288b55] transition-all"
-                value={formData.full_name}
-                onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-              />
+              <div className="relative">
+                <input 
+                  type="text"
+                  className="w-full bg-[#141b1f] border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#288b55] transition-all"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                />
+                {isVerified && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <VerifiedBadge size={16} />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -180,6 +205,14 @@ export default function PerfilPage() {
               />
             </div>
           </div>
+
+          {/* VERIFICADO INFO */}
+          {isVerified && (
+            <div className="flex items-center gap-3 p-4 bg-[#1D9BF0]/10 border border-[#1D9BF0]/20 rounded-xl">
+              <VerifiedBadge size={20} />
+              <p className="text-[#1D9BF0] text-xs font-bold uppercase tracking-wide">Cuenta verificada por HotCars</p>
+            </div>
+          )}
 
           {/* ALERTAS */}
           {error && <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs font-bold uppercase text-center">{error}</div>}

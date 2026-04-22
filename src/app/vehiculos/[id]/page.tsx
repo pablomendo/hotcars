@@ -8,7 +8,7 @@ import {
   RefreshCw, Heart, Handshake, User, ChevronLeft, ChevronRight,
   TrendingUp, X, ShieldAlert, AlertCircle,
   Loader2, MapPin, Mail, Link, Phone, CornerDownLeft, Navigation,
-  Check
+  Check, Play
 } from 'lucide-react';
 
 const ChevronRightIcon = ChevronRight;
@@ -20,9 +20,10 @@ function VehicleMapInner({ localidad, provincia }: { localidad: string; provinci
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState(false);
 
+  const address = `${localidad}, ${provincia}, Argentina`;
   const mapsUrl = coords
     ? `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${localidad}, ${provincia}, Argentina`)}`;
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
   useEffect(() => {
     const query = `${localidad}, ${provincia}, Argentina`;
@@ -75,7 +76,7 @@ function VehicleMapInner({ localidad, provincia }: { localidad: string; provinci
       mapInstanceRef.current = map;
 
       Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
 
       const marker = Leaflet.marker([coords.lat, coords.lng]).addTo(map);
@@ -106,6 +107,87 @@ function VehicleMapInner({ localidad, provincia }: { localidad: string; provinci
   );
 
   return <div ref={mapRef} style={{ height: '300px', width: '100%' }} />;
+}
+
+// ─── Acepta Permuta Badge ─────────────────────────────────────────────────────
+function AceptaPermutaBadge() {
+  return (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '8px',
+      border: '2px solid #1a7a3c',
+      borderRadius: '999px',
+      padding: '7px 18px',
+      background: 'white',
+    }}>
+      <Handshake size={18} color="#1a7a3c" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          color: '#1e293b', fontSize: '14px', fontWeight: 900,
+          textTransform: 'uppercase', letterSpacing: '0.02em',
+        }}>
+          Acepta Permuta
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Financiacion Badge ───────────────────────────────────────────────────────
+function FinanciacionBadge({ anticipo, moneda }: { anticipo: number; moneda: string }) {
+  return (
+    <div style={{
+      display: 'inline-flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      border: '2px solid #1a7a3c',
+      borderRadius: '999px',
+      padding: '5px 18px',
+      background: 'white',
+      gap: '1px',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '5px',
+        color: '#1a7a3c', fontSize: '10px', fontWeight: 900,
+        letterSpacing: '0.12em', textTransform: 'uppercase',
+      }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        Financiación
+      </div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '6px',
+        color: '#1e293b', fontSize: '14px', fontWeight: 900,
+        textTransform: 'uppercase', letterSpacing: '0.02em',
+      }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#1a7a3c" stroke="none">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z" />
+        </svg>
+        Retira con {moneda === 'USD' ? 'U$S' : '$'} {Number(anticipo).toLocaleString('de-DE')}
+      </div>
+    </div>
+  );
+}
+
+// ─── Verified Badge ───────────────────────────────────────────────────────────
+function VerifiedBadge({ size = 18 }: { size?: number }) {
+  return (
+    <svg 
+      viewBox="0 0 24 24" 
+      style={{ width: size, height: size, flexShrink: 0 }}
+      aria-label="Verificado"
+    >
+      <g>
+        <path
+          fill="#1d9bf0"
+          d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.97-.81-4.08s-2.47-1.49-3.89-1.27c-.82-1.13-2.11-1.81-3.56-1.81s-2.74.68-3.56 1.81c-1.42-.22-2.88.16-3.89 1.27s-1.27 2.69-.81 4.08c-1.31.67-2.19 1.91-2.19 3.34s.88 2.67 2.19 3.34c-.46 1.39-.2 2.97.81 4.08s2.47 1.49 3.89 1.27c.82 1.13 2.11 1.81 3.56 1.81s2.74-.68 3.56-1.81c1.42.22 2.88-.16 3.89-1.27s1.27-2.69.81-4.08c1.31-.67 2.19-1.91 2.19-3.34zm-11.71 4.2l-3.5-3.5 1.41-1.42 2.09 2.08 4.58-4.59 1.41 1.41-5.99 6.02z"
+        />
+      </g>
+    </svg>
+  );
 }
 
 // ─── WhatsApp Icon ────────────────────────────────────────────────────────────
@@ -398,7 +480,8 @@ function QASection({
 
 // ─── Mapa de ubicación ────────────────────────────────────────────────────────
 function MapSection({ localidad, provincia }: { localidad: string; provincia: string }) {
-  const mapsQuery = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${localidad}, ${provincia}, Argentina`)}`;
+  const address = `${localidad}, ${provincia}, Argentina`;
+  const mapsQuery = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(address)}`;
   return (
     <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6">
       <h3 className="text-xl font-bold mb-4 uppercase tracking-tighter text-[#333]">Ubicación del vehículo</h3>
@@ -415,7 +498,8 @@ function MapSection({ localidad, provincia }: { localidad: string; provincia: st
 }
 
 function MapSectionMobile({ localidad, provincia }: { localidad: string; provincia: string }) {
-  const mapsQuery = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${localidad}, ${provincia}, Argentina`)}`;
+  const address = `${localidad}, ${provincia}, Argentina`;
+  const mapsQuery = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(address)}`;
   return (
     <div className="bg-white mt-2 px-4 py-5 border-b border-gray-100">
       <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">Ubicación del vehículo</h3>
@@ -542,7 +626,7 @@ export default function VehicleDetailPage() {
 
       if (cv?.owner_user_id) {
         const [userRes, countRes] = await Promise.all([
-          supabase.from('usuarios').select('full_name, plan_type, phone').eq('auth_id', cv.owner_user_id).single(),
+          supabase.from('usuarios').select('full_name, plan_type, phone, usuario_verificado').eq('auth_id', cv.owner_user_id).single(),
           supabase.from('inventario').select('id', { count: 'exact', head: true }).eq('owner_user_id', cv.owner_user_id),
         ]);
         setOwnerData(userRes.data);
@@ -568,7 +652,6 @@ export default function VehicleDetailPage() {
     finally { setIsFavLoading(false); }
   };
 
-  // ─── FIX: manejo correcto de respuesta jsonb de Supabase ──────────────────
   const handleFlipAction = async () => {
     if (!user || !vehicle || flipStatus || isProcessing) return;
     setShowLoadingModal(true); setIsProcessing(true);
@@ -640,8 +723,8 @@ export default function VehicleDetailPage() {
     } catch { alert('Error al responder'); }
   };
 
-  const handlePrevImage = () => setSelectedImageIndex(i => i === 0 ? fotos.length - 1 : i - 1);
-  const handleNextImage = () => setSelectedImageIndex(i => i === fotos.length - 1 ? 0 : i + 1);
+  const handlePrevImage = () => setSelectedImageIndex(i => i === 0 ? totalItems - 1 : i - 1);
+  const handleNextImage = () => setSelectedImageIndex(i => i === totalItems - 1 ? 0 : i + 1);
   const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.changedTouches[0].screenX; };
   const handleTouchEnd = (e: React.TouchEvent) => {
     touchEndX.current = e.changedTouches[0].screenX;
@@ -657,6 +740,10 @@ export default function VehicleDetailPage() {
   if (!vehicle) return null;
 
   const fotos = vehicle.fotos || [];
+  const videoUrl = vehicle.video_url;
+  const totalItems = videoUrl ? fotos.length + 1 : fotos.length;
+  const isVideoSelected = videoUrl && selectedImageIndex === fotos.length;
+
   const isOwner = user?.id === vehicle.owner_user_id;
   const profitLabel = isOwner ? 'TU GANANCIA' : 'GANANCIA FLIPPER';
   const profitValue = isOwner ? vehicle.ganancia_dueno : vehicle.ganancia_flipper;
@@ -667,7 +754,12 @@ export default function VehicleDetailPage() {
   const whatsappMsg = encodeURIComponent(`Hola! Vi el ${vehicle.marca} ${vehicle.modelo} ${vehicle.anio} en HotCars y me interesa. ${typeof window !== 'undefined' ? window.location.href : ''}`);
   const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}?text=${whatsappMsg}` : '#';
   const ownerFirstName = ownerData?.full_name?.split(' ')[0] || 'este vendedor';
+  const ownerUsername = ownerData ? `@${ownerData.full_name?.toLowerCase().replace(/\s+/g, '')}` : '@cargando...';
+  const isOwnerVerified = ownerData?.usuario_verificado === true;
   const hasMap = !!(vehicle.localidad && vehicle.provincia);
+
+  // Badge se muestra solo cuando anticipo supera 500.000
+  const showFinanciacionBadge = vehicle.anticipo && Number(vehicle.anticipo) > 500000;
 
   const getFlipLabel = () => {
     if (isProcessing) return 'Procesando...';
@@ -735,11 +827,23 @@ export default function VehicleDetailPage() {
 
           <div className="relative bg-black overflow-hidden" style={{ aspectRatio: '4/3' }}>
             <div className="w-full h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={() => setIsGalleryOpen(true)}>
-              <img src={fotos[selectedImageIndex]} alt={`${vehicle.marca} ${vehicle.modelo}`} className="w-full h-full object-cover" />
+              {isVideoSelected ? (
+                <video 
+                  src={videoUrl} 
+                  controls 
+                  muted
+                  playsInline
+                  preload="auto"
+                  poster={fotos[0]}
+                  className="w-full h-full object-contain" 
+                />
+              ) : (
+                <img src={fotos[selectedImageIndex]} alt={`${vehicle.marca} ${vehicle.modelo}`} className="w-full h-full object-cover" />
+              )}
             </div>
-            {fotos.length > 1 && (
+            {totalItems > 1 && (
               <div className="absolute top-3 left-3 bg-black/55 text-white text-[12px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
-                {selectedImageIndex + 1} / {fotos.length}
+                {selectedImageIndex + 1} / {totalItems}
               </div>
             )}
             <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
@@ -752,15 +856,15 @@ export default function VehicleDetailPage() {
                 <Share2 size={16} className="text-gray-500" />
               </button>
             </div>
-            {fotos.length > 1 && (
+            {totalItems > 1 && (
               <>
                 <button onClick={e => { e.stopPropagation(); handlePrevImage(); }} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/85 rounded-full flex items-center justify-center shadow z-10"><ChevronLeft size={18} className="text-gray-700" /></button>
                 <button onClick={e => { e.stopPropagation(); handleNextImage(); }} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/85 rounded-full flex items-center justify-center shadow z-10"><ChevronRight size={18} className="text-gray-700" /></button>
               </>
             )}
-            {fotos.length > 1 && (
+            {totalItems > 1 && (
               <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
-                {fotos.map((_: string, idx: number) => (
+                {Array.from({ length: totalItems }).map((_, idx: number) => (
                   <button key={idx} onClick={e => { e.stopPropagation(); setSelectedImageIndex(idx); }}
                     className={`rounded-full transition-all duration-200 ${idx === selectedImageIndex ? 'w-5 h-2 bg-white' : 'w-2 h-2 bg-white/50'}`} />
                 ))}
@@ -778,11 +882,10 @@ export default function VehicleDetailPage() {
             <span className="text-[32px] font-black text-[#1e293b] tracking-tight">
               {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}
             </span>
-            {/* ─── Retira con ─── */}
-            {vehicle.anticipo && (
-              <p className="text-[#555] font-black uppercase mt-1" style={{ fontSize: '27px' }}>
-                Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} <span className="font-black">{Number(vehicle.anticipo).toLocaleString('de-DE')}</span>
-              </p>
+            {showFinanciacionBadge && (
+              <div className="mt-3">
+                <FinanciacionBadge anticipo={vehicle.anticipo} moneda={vehicle.moneda} />
+              </div>
             )}
             {user !== null && profitValue && (
               <div className="flex items-center gap-1.5 text-[#00a650] mt-1 font-semibold">
@@ -821,7 +924,10 @@ export default function VehicleDetailPage() {
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-[#f5f5f5] p-2.5 rounded-full text-[#3483fa]"><User size={20} /></div>
               <div>
-                <p className="text-[14px] font-bold text-[#333]">{ownerData ? `@${ownerData.full_name?.toLowerCase().replace(/\s+/g, '')}` : '@cargando...'}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[14px] font-bold text-[#333]">{ownerUsername}</p>
+                  {isOwnerVerified && <VerifiedBadge size={15} />}
+                </div>
                 <p className="text-[11px] text-[#2596be] font-semibold">{ownerVehicleCount} unidades publicadas</p>
               </div>
             </div>
@@ -834,16 +940,16 @@ export default function VehicleDetailPage() {
 
           <div className="bg-white mt-2 px-4 py-5 border-b border-gray-100">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Descripción</h3>
-            <div className="flex gap-2 mb-4">
-              {vehicle.acepta_permuta && (
-                <div className="py-2 px-3 rounded-lg border border-gray-300 flex items-center gap-2 bg-gray-50">
-                  <RefreshCw size={12} className="text-gray-600" /><span className="text-[10px] font-black uppercase tracking-tighter text-gray-700">Acepta Permuta</span>
-                </div>
-              )}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {vehicle.acepta_permuta && <AceptaPermutaBadge />}
               {vehicle.financiacion && (
-                <div className="py-2 px-3 rounded-lg border border-gray-300 flex items-center gap-2 bg-gray-50">
-                  <Handshake size={12} className="text-gray-600" /><span className="text-[10px] font-black uppercase tracking-tighter text-gray-700">Financiamiento</span>
-                </div>
+                showFinanciacionBadge ? (
+                  <FinanciacionBadge anticipo={vehicle.anticipo} moneda={vehicle.moneda} />
+                ) : (
+                  <div className="py-2 px-3 rounded-lg border border-gray-300 flex items-center gap-2 bg-gray-50">
+                    <Handshake size={12} className="text-gray-600" /><span className="text-[10px] font-black uppercase tracking-tighter text-gray-700">Financiamiento</span>
+                  </div>
+                )
               )}
             </div>
             <p className="text-[15px] text-[#555] leading-relaxed whitespace-pre-line font-medium">{vehicle.descripcion || 'Sin descripción adicional.'}</p>
@@ -893,20 +999,44 @@ export default function VehicleDetailPage() {
                       <img src={foto} className="w-full h-full object-cover" alt="Thumb" />
                     </button>
                   ))}
+                  {videoUrl && (
+                    <button onClick={() => setSelectedImageIndex(fotos.length)}
+                      className={`flex-shrink-0 w-12 h-12 rounded border-2 overflow-hidden transition-all cursor-pointer relative ${selectedImageIndex === fotos.length ? 'border-[#3483fa]' : 'border-gray-200'}`}>
+                      <video src={videoUrl} poster={fotos[0]} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Play size={20} className="text-white fill-white" />
+                      </div>
+                      <img src="/reproducir_video.png" className="absolute top-0 right-0 w-6 h-6 object-contain" alt="Badge Play" />
+                    </button>
+                  )}
                 </div>
                 <div className="flex-1 relative flex items-center justify-center min-h-[400px] overflow-hidden cursor-crosshair"
                   onMouseMove={handleZoomMove} onMouseLeave={() => setZoomPos(null)}>
                   <div className="absolute inset-0 z-[5]" onClick={() => setIsGalleryOpen(true)} />
-                  <img src={fotos[selectedImageIndex]} className="max-w-full max-h-full object-contain" alt="Principal" />
-                  {zoomPos && (
-                    <div className="absolute pointer-events-none z-[10] border-2 border-[#3483fa] rounded-full w-24 h-24 opacity-40"
-                      style={{ left: `calc(${zoomPos.x}% - 48px)`, top: `calc(${zoomPos.y}% - 48px)` }} />
+                  {isVideoSelected ? (
+                    <video 
+                      src={videoUrl} 
+                      controls 
+                      muted
+                      playsInline
+                      preload="auto"
+                      poster={fotos[0]}
+                      className="max-w-full max-h-full object-contain" 
+                    />
+                  ) : (
+                    <>
+                      <img src={fotos[selectedImageIndex]} className="max-w-full max-h-full object-contain" alt="Principal" />
+                      {zoomPos && (
+                        <div className="absolute pointer-events-none z-[10] border-2 border-[#3483fa] rounded-full w-24 h-24 opacity-40"
+                          style={{ left: `calc(${zoomPos.x}% - 48px)`, top: `calc(${zoomPos.y}% - 48px)` }} />
+                      )}
+                    </>
                   )}
                 </div>
               </section>
 
               <section className="col-span-4 border-l border-gray-100 p-6 flex flex-col justify-start min-h-[440px]">
-                {zoomPos ? (
+                {zoomPos && !isVideoSelected ? (
                   <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg bg-gray-50 border border-gray-100">
                     <div className="w-full h-full" style={{
                       backgroundImage: `url(${fotos[selectedImageIndex]})`,
@@ -933,15 +1063,14 @@ export default function VehicleDetailPage() {
                     <div className="flex items-center gap-1.5 text-[#2596be] text-[12px] font-bold uppercase mb-4">
                       <MapPin size={13} /> {vehicle.localidad}, {vehicle.provincia}
                     </div>
-                    <div className="mb-6">
+                    <div className="mb-4">
                       <span className="text-4xl font-black text-[#1e293b] tracking-tighter">
                         {vehicle.moneda === 'USD' ? 'U$S' : '$'} {Number(vehicle.pv).toLocaleString('de-DE')}
                       </span>
-                      {/* ─── Retira con ─── */}
-                      {vehicle.anticipo && (
-                        <p className="text-[#555] font-black uppercase mt-1" style={{ fontSize: '19px' }}>
-                          Retira con {vehicle.moneda === 'USD' ? 'U$S' : '$'} <span className="font-black">{Number(vehicle.anticipo).toLocaleString('de-DE')}</span>
-                        </p>
+                      {showFinanciacionBadge && (
+                        <div className="mt-3">
+                          <FinanciacionBadge anticipo={vehicle.anticipo} moneda={vehicle.moneda} />
+                        </div>
                       )}
                       {user !== null && profitValue && (
                         <div className="flex items-center gap-1.5 text-[#00a650] mt-2 font-semibold">
@@ -976,7 +1105,10 @@ export default function VehicleDetailPage() {
                       <div className="flex items-center gap-4 mb-4">
                         <div className="bg-[#f5f5f5] p-3 rounded-full text-[#3483fa]"><User size={24} /></div>
                         <div>
-                          <span className="text-md font-bold text-[#333] block">{ownerData ? `@${ownerData.full_name?.toLowerCase().replace(/\s+/g, '')}` : '@cargando...'}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-md font-bold text-[#333]">{ownerUsername}</span>
+                            {isOwnerVerified && <VerifiedBadge size={16} />}
+                          </div>
                           <span className="text-[12px] text-[#2596be] font-semibold">{ownerVehicleCount} unidades publicadas</span>
                         </div>
                       </div>
@@ -1003,16 +1135,16 @@ export default function VehicleDetailPage() {
 
               <div className="bg-white p-8 rounded-md shadow-sm border border-gray-200">
                 <h3 className="text-xl font-bold mb-4 uppercase tracking-tighter">Descripción</h3>
-                <div className="flex gap-2 mb-6">
-                  {vehicle.acepta_permuta && (
-                    <div className="py-2 px-4 rounded-lg border border-gray-300 flex items-center gap-2 bg-gray-50">
-                      <RefreshCw size={14} className="text-gray-600" /><span className="text-[11px] font-black uppercase tracking-tighter text-gray-700">Acepta Permuta</span>
-                    </div>
-                  )}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {vehicle.acepta_permuta && <AceptaPermutaBadge />}
                   {vehicle.financiacion && (
-                    <div className="py-2 px-4 rounded-lg border border-gray-300 flex items-center gap-2 bg-gray-50">
-                      <Handshake size={14} className="text-gray-600" /><span className="text-[11px] font-black uppercase tracking-tighter text-gray-700">Financiamiento Disponible</span>
-                    </div>
+                    showFinanciacionBadge ? (
+                      <FinanciacionBadge anticipo={vehicle.anticipo} moneda={vehicle.moneda} />
+                    ) : (
+                      <div className="py-2 px-4 rounded-lg border border-gray-300 flex items-center gap-2 bg-gray-50">
+                        <Handshake size={14} className="text-gray-600" /><span className="text-[11px] font-black uppercase tracking-tighter text-gray-700">Financiamiento Disponible</span>
+                      </div>
+                    )
                   )}
                 </div>
                 <p className="text-[16px] text-[#666] leading-relaxed whitespace-pre-line font-medium">{vehicle.descripcion || 'Sin descripción adicional.'}</p>
@@ -1081,9 +1213,22 @@ export default function VehicleDetailPage() {
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-sm">
           <button onClick={() => setIsGalleryOpen(false)} className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full z-[110] cursor-pointer"><X size={32} /></button>
           <button onClick={handlePrevImage} className="absolute left-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/10 rounded-full z-[110] cursor-pointer"><ChevronLeft size={32} /></button>
-          <img src={fotos[selectedImageIndex]} alt="Gallery" className="max-w-full max-h-[85vh] object-contain shadow-2xl" />
+          {isVideoSelected ? (
+            <video 
+              src={videoUrl} 
+              controls 
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              poster={fotos[0]}
+              className="max-w-full max-h-[85vh] object-contain shadow-2xl" 
+            />
+          ) : (
+            <img src={fotos[selectedImageIndex]} alt="Gallery" className="max-w-full max-h-[85vh] object-contain shadow-2xl" />
+          )}
           <button onClick={handleNextImage} className="absolute right-4 top-1/2 -translate-y-1/2 text-white p-2 hover:bg-white/10 rounded-full z-[110] cursor-pointer"><ChevronRight size={32} /></button>
-          <div className="absolute bottom-6 text-white/60 text-sm font-bold">{selectedImageIndex + 1} / {fotos.length}</div>
+          <div className="absolute bottom-6 text-white/60 text-sm font-bold">{selectedImageIndex + 1} / {totalItems}</div>
         </div>
       )}
     </main>

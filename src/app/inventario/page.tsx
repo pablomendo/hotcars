@@ -86,6 +86,50 @@ function SellModal({
   );
 }
 
+// ─── Input Autosave para Video ───────────────────────────────────────────────
+function VideoLinkInput({ vehicleId, initialValue, isProprio }: { vehicleId: string, initialValue: string, isProprio: boolean }) {
+    const [url, setUrl] = useState(initialValue || '');
+    const [isSaving, setIsSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+
+    useEffect(() => {
+        setUrl(initialValue || '');
+    }, [initialValue]);
+
+    if (!isProprio) return <div className="w-32" />;
+
+    const handleBlur = async () => {
+        if (url === initialValue) return;
+        setIsSaving(true);
+        try {
+            const { error } = await supabase.from('inventario').update({ video_url: url }).eq('id', vehicleId);
+            if (error) throw error;
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (err) {
+            console.error("Error saving video:", err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-1 relative w-32 group" onClick={e => e.stopPropagation()}>
+            <Play size={10} className="text-slate-600 group-focus-within:text-[#22c55e] transition-colors" />
+            <input
+                type="text"
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                onBlur={handleBlur}
+                placeholder="URL TikTok / YouTube"
+                className="w-full bg-transparent border-b border-white/10 hover:border-white/30 text-[9px] text-slate-300 px-1 py-0.5 outline-none focus:border-[#22c55e] transition-all placeholder:text-slate-600"
+            />
+            {isSaving && <Loader2 size={10} className="animate-spin text-slate-400 absolute right-1" />}
+            {!isSaving && saved && <Check size={10} className="text-[#22c55e] absolute right-1" />}
+        </div>
+    );
+}
+
 export default function InventoryPage() {
     const router = useRouter();
     const [inv, setInv] = useState<any[]>([]);
@@ -246,12 +290,12 @@ export default function InventoryPage() {
             const [misAutos, misFlips] = await Promise.all([
                 supabase
                     .from('inventario')
-                    .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, expires_at, created_at, owner_user_id, is_flip, dominio')
+                    .select('id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, expires_at, created_at, owner_user_id, is_flip, dominio, video_url')
                     .eq('owner_user_id', currentUserId)
                     .order('created_at', { ascending: false }),
                 supabase
                     .from('flip_compartido')
-                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, ganancia_flipper, expires_at, created_at, owner_user_id, is_flip, dominio)')
+                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, ganancia_flipper, expires_at, created_at, owner_user_id, is_flip, dominio, video_url)')
                     .eq('vendedor_user_id', currentUserId)
                     .eq('status', 'approved')
             ]);
@@ -282,6 +326,7 @@ export default function InventoryPage() {
                     inventory_status: (v.inventory_status || 'activo').toLowerCase(),
                     commercial_status: (v.commercial_status || 'disponible').toLowerCase(),
                     isProprio: isProprio,
+                    video_url: v.video_url || '',
                     prices: {
                         purchasePrice: pcValue,
                         salePrice: pvValue,
@@ -1056,7 +1101,8 @@ export default function InventoryPage() {
                                         </div>
 
                                         {/* ── Botón Ver publicación alineado a la derecha ── */}
-                                        <div className="mb-2 flex justify-end" onClick={e => e.stopPropagation()}>
+                                        <div className="mb-2 flex justify-between items-center" onClick={e => e.stopPropagation()}>
+                                            <VideoLinkInput vehicleId={v.id} initialValue={v.video_url} isProprio={v.isProprio} />
                                             <a
                                                 href={`/vehiculos/${slug}`}
                                                 target="_blank"
