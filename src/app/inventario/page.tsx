@@ -317,18 +317,28 @@ export default function InventoryPage() {
                     .order('created_at', { ascending: false }),
                 supabase
                     .from('flip_compartido')
-                    .select('auto_id, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, ganancia_flipper, expires_at, created_at, owner_user_id, is_flip, dominio, video_url)')
+                    .select('auto_id, flip_created_at:created_at, inventario:auto_id(id, marca, modelo, anio, km, fotos, provincia, localidad, inventory_status, commercial_status, moneda, pv, pc, ganancia_dueno, ganancia_flipper, expires_at, created_at, owner_user_id, is_flip, dominio, video_url)')
                     .eq('vendedor_user_id', currentUserId)
                     .eq('status', 'approved')
+                    .order('created_at', { ascending: false })
             ]);
 
-            const propios = misAutos.data || [];
+            const propios = (misAutos.data || []).map((v: any) => ({
+                ...v,
+                _sort_date: v.created_at,
+            }));
+            // Para los flips usamos el created_at de flip_compartido (cuándo llegó el flip)
+            // no el created_at del inventario (cuándo se publicó el auto)
             const terceros = (misFlips.data || [])
-                .map((f: any) => f.inventario)
-                .filter((i: any) => i !== null);
+                .filter((f: any) => f.inventario !== null)
+                .map((f: any) => ({
+                    ...f.inventario,
+                    _sort_date: f.flip_created_at, // fecha en que te compartieron el flip
+                }));
 
-            const allData = [...propios, ...terceros].sort((a, b) => 
-                new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            // ── Mezclar y ordenar por _sort_date DESC: último en llegar = primero arriba a la izquierda ──
+            const allData = [...propios, ...terceros].sort((a, b) =>
+                new Date(b._sort_date).getTime() - new Date(a._sort_date).getTime()
             );
 
             const mappedData = allData.map(v => {
@@ -801,6 +811,7 @@ export default function InventoryPage() {
         return `${base}-${v.id}`;
     };
 
+    // ── filtered: respeta el orden de inv (ya ordenado por created_at DESC) ──
     const filtered = useMemo(() => {
         return inv.filter(v => {
             const searchMatch = (v.brand?.toLowerCase() || "").includes(search.toLowerCase()) || 
@@ -1112,6 +1123,7 @@ export default function InventoryPage() {
                 </div>
 
                 {viewMode === 'grid' ? (
+                    // ── 5 columnas en pantallas grandes, igual que MiWebPage ──
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {filtered.map((v) => {
                             const expiry = getExpiryStatus(v);

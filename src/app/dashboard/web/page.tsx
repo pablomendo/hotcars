@@ -70,7 +70,6 @@ export default function MiWebPage() {
   const isPro = ['PRO','VIP'].includes(userData.plan_type.toUpperCase());
   const isVip = userData.plan_type.toUpperCase() === 'VIP';
 
-  // ── FIX 1: build the preview URL dynamically from the subdomain ──
   const previewUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hotcars.com.ar'}/sub/${config.subdomain}`;
 
   const fetchWebConfig = async () => {
@@ -214,12 +213,21 @@ export default function MiWebPage() {
       const { data: { user } } = await supabase.auth.getUser();
       const id = uid || user?.id; if (!id) return;
       const [propRes, flipRes] = await Promise.all([
-        supabase.from('inventario').select('*').eq('created_by_user_id', id).order('web_order', { ascending: true }),
-        supabase.from('flip_compartido').select('auto_id, inventario:auto_id(*)').eq('vendedor_user_id', id).eq('status', 'approved')
+        supabase.from('inventario').select('*').eq('created_by_user_id', id).order('created_at', { ascending: false }),
+        supabase.from('flip_compartido').select('auto_id, flip_created_at:created_at, inventario:auto_id(*)').eq('vendedor_user_id', id).eq('status', 'approved').order('created_at', { ascending: false })
       ]);
-      const propios  = propRes.data || [];
-      const terceros = (flipRes.data || []).map((f: any) => f.inventario).filter(Boolean);
-      const all      = [...propios, ...terceros].sort((a, b) => (a.web_order || 0) - (b.web_order || 0));
+      const propios = (propRes.data || []).map((v: any) => ({ ...v, _sort_date: v.created_at }));
+      // Para flips usamos created_at de flip_compartido (cuándo llegó el flip),
+      // no el created_at del inventario (cuándo se publicó el auto)
+      const terceros = (flipRes.data || [])
+        .filter((f: any) => f.inventario !== null)
+        .map((f: any) => ({ ...f.inventario, _sort_date: f.flip_created_at }));
+
+      // ── Mezclar y ordenar por _sort_date DESC: último en llegar = primero arriba a la izquierda ──
+      const all = [...propios, ...terceros].sort((a, b) =>
+        new Date(b._sort_date).getTime() - new Date(a._sort_date).getTime()
+      );
+
       setInv(all.map(v => {
         const status = (v.inventory_status || 'activo').toLowerCase();
         const shouldShow = status !== 'pausado' && !!v.show_on_web;
@@ -275,6 +283,7 @@ export default function MiWebPage() {
     NUEVOS:     inv.filter(v => v.show && v.isNew && v.inventory_status !== 'pausado').length,
   }), [inv]);
 
+  // ── filtered: respeta el orden de inv (ya ordenado por created_at DESC) ──
   const filtered = useMemo(() => inv.filter(v => {
     if (v.inventory_status === 'pausado') return false;
     const sm = (v.brand?.toLowerCase() || '').includes(search.toLowerCase()) || (v.model?.toLowerCase() || '').includes(search.toLowerCase());
@@ -369,7 +378,6 @@ export default function MiWebPage() {
             <button onClick={() => setOpenConfig(!openConfig)} className={`flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 transition-all ${openConfig ? 'bg-white/10 text-[#22c55e] border-[#22c55e]/30' : 'bg-white/5 text-slate-500 hover:text-white'}`}>
               <SettingsIcon size={16}/><span className="text-[10px] font-bold uppercase tracking-wider">Configurar mi web</span>
             </button>
-            {/* ── FIX 1: preview URL is now dynamic, not hardcoded to localhost ── */}
             <a href={previewUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-md border border-white/10 bg-white/5 text-slate-500 hover:text-[#22c55e] hover:border-[#22c55e]/30 transition-all">
               <ExternalLink size={16}/><span className="text-[10px] font-bold uppercase tracking-wider">Preview</span>
@@ -492,7 +500,6 @@ export default function MiWebPage() {
                   </div>
                 </ConfigCard>
 
-                {/* ── FIX 2: Pie de Página ahora disponible para PRO y VIP (isPro en vez de planFeatures.footer) ── */}
                 <ConfigCard title="Pie de Página" description={isPro ? 'Disponible en tu plan' : 'Solo PRO y VIP'}>
                   <div className={`flex flex-col gap-4 ${!isPro ? 'opacity-20 pointer-events-none' : ''}`}>
                     <div className="flex flex-col gap-2">
@@ -530,7 +537,8 @@ export default function MiWebPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* ── Grid de 5 columnas en xl, igual que InventoryPage ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {!loading && filtered.map((v, index) => (
               <div key={v.id} className={`bg-[#141b1f] border rounded-xl overflow-hidden transition-all ${v.show ? 'border-white/5' : 'border-red-900/40'}`}>
                 <div className="p-4 flex flex-col gap-3">

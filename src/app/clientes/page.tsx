@@ -18,20 +18,24 @@ import {
   Plus,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  PhoneCall,
+  Check
 } from 'lucide-react';
 
 interface ClienteUnificado {
   id: string;
   nombre: string;
   contacto: string;
-  rol: 'Comprador' | 'Consignatario';
+  rol: 'Comprador' | 'Consignatario' | 'Interesado';
   unidadAsociada: string;
   estadoGestion: string;
   ultimaAccion: string;
   notas: string;
   fecha_hitos: any[];
   contraparte?: string | null;
+  proxima_llamada?: string | null;
+  vendedor?: string | null;
 }
 
 // ── Modal Nuevo Cliente ──────────────────────────────────────────────────────
@@ -40,9 +44,10 @@ function NuevoClienteModal({ onCreated, onClose }: { onCreated: () => void; onCl
   const [form, setForm] = useState({
     nombre: '',
     contacto: '',
-    rol: 'Comprador',
+    rol: 'Comprador' as 'Comprador' | 'Consignatario' | 'Interesado',
     notas: '',
-    dominio: ''
+    dominio: '',
+    vendedor: ''
   });
 
   const handleSubmit = async () => {
@@ -52,13 +57,17 @@ function NuevoClienteModal({ onCreated, onClose }: { onCreated: () => void; onCl
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const tabla = form.rol === 'Comprador' ? 'cliente_comprador' : 'cliente_consignatario';
+      let tabla = '';
+      if (form.rol === 'Comprador') tabla = 'cliente_comprador';
+      else if (form.rol === 'Consignatario') tabla = 'cliente_consignatario';
+      else tabla = 'cliente_interesado';
       
       const payload: any = { 
         user_id: user.id, 
         nombre: form.nombre, 
         notas: form.notas,
-        dominio: form.dominio.toUpperCase()
+        dominio: form.dominio.toUpperCase(),
+        vendedor: form.vendedor.trim() || null
       };
 
       if (form.rol === 'Comprador') {
@@ -92,19 +101,23 @@ function NuevoClienteModal({ onCreated, onClose }: { onCreated: () => void; onCl
           <button onClick={onClose} className="text-white/40 hover:text-white"><X size={18} /></button>
         </div>
         <div className="p-5 space-y-4">
-          <div className="flex bg-white/5 rounded-xl p-1 border border-white/5">
-            {['Comprador', 'Consignatario'].map(r => (
+          <div className="flex bg-white/5 rounded-xl p-1 border border-white/5 overflow-x-auto">
+            {['Comprador', 'Consignatario', 'Interesado'].map(r => (
               <button key={r} onClick={() => setForm(p => ({ ...p, rol: r as any }))}
-                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${form.rol === r ? 'bg-[#288b55] text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>
+                className={`flex-1 py-2 px-2 rounded-lg text-[9px] font-black uppercase transition-all whitespace-nowrap ${form.rol === r ? 'bg-[#288b55] text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>
                 {r}
               </button>
             ))}
           </div>
           <input className={inputCls} placeholder="Nombre completo *" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
+          
           <div className="grid grid-cols-2 gap-3">
             <input className={inputCls} placeholder="Teléfono / Contacto *" value={form.contacto} onChange={e => setForm(p => ({ ...p, contacto: e.target.value }))} />
             <input className={inputCls} placeholder="Dominio (Patente)" value={form.dominio} onChange={e => setForm(p => ({ ...p, dominio: e.target.value.toUpperCase() }))} />
           </div>
+
+          <input className={inputCls} placeholder="Vendedor a cargo (Ej. Ezequiel) - Opcional" value={form.vendedor} onChange={e => setForm(p => ({ ...p, vendedor: e.target.value }))} />
+          
           <textarea className={inputCls + " resize-none"} placeholder="Notas adicionales..." rows={3} value={form.notas} onChange={e => setForm(p => ({ ...p, notas: e.target.value }))} />
           <button onClick={handleSubmit} disabled={loading || !form.nombre.trim()}
             className="w-full py-3 bg-[#288b55] hover:bg-[#1e6e42] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-40">
@@ -130,6 +143,9 @@ const ClientesPage = () => {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Ahora el estado guarda los objetos completos para poder listar los nombres
+  const [pendientesLlamada, setPendientesLlamada] = useState<ClienteUnificado[]>([]);
 
   const fetchClientesReal = async () => {
     setLoading(true);
@@ -137,9 +153,10 @@ const ClientesPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [resConsignatarios, resCompradores, resVentas, resInventario] = await Promise.all([
+      const [resConsignatarios, resCompradores, resInteresados, resVentas, resInventario] = await Promise.all([
         supabase.from('cliente_consignatario').select('*').eq('user_id', user.id),
         supabase.from('cliente_comprador').select('*').eq('user_id', user.id),
+        supabase.from('cliente_interesado').select('*').eq('user_id', user.id),
         supabase.from('ventas').select('*').eq('owner_user_id', user.id),
         supabase.from('inventario').select('id, marca, modelo, version, anio, dominio')
       ]);
@@ -155,7 +172,6 @@ const ClientesPage = () => {
         });
       }
 
-      // Mapas para encontrar el parentesco por dominio y por auto_id
       const consigPorDominio = new Map();
       const consigPorAutoId = new Map();
       (resConsignatarios.data || []).forEach(c => {
@@ -185,7 +201,8 @@ const ClientesPage = () => {
           detalle: `Precio mínimo: ${c.moneda} ${c.precio_minimo}`,
           tipo: 'status'
         }],
-        contraparte: (c.auto_id && compPorAutoId.get(c.auto_id)) || (c.dominio ? compPorDominio.get(c.dominio.toUpperCase()) : null)
+        contraparte: (c.auto_id && compPorAutoId.get(c.auto_id)) || (c.dominio ? compPorDominio.get(c.dominio.toUpperCase()) : null),
+        vendedor: c.vendedor || null
       }));
 
       const listaCompradores = (resCompradores.data || []).map((c: any) => {
@@ -206,11 +223,41 @@ const ClientesPage = () => {
           ultimaAccion: c.fecha_venta ? `Vendido el ${c.fecha_venta}` : 'En seguimiento',
           notas: c.notas || '',
           fecha_hitos: hitos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()),
-          contraparte: (c.auto_id && consigPorAutoId.get(c.auto_id)) || (c.dominio ? consigPorDominio.get(c.dominio.toUpperCase()) : null)
+          contraparte: (c.auto_id && consigPorAutoId.get(c.auto_id)) || (c.dominio ? consigPorDominio.get(c.dominio.toUpperCase()) : null),
+          vendedor: c.vendedor || null
         };
       });
 
-      setClientes([...listaConsignatarios, ...listaCompradores]);
+      const ahora = new Date();
+      const listadoPendientesTemp: ClienteUnificado[] = [];
+
+      const listaInteresados = (resInteresados.data || []).map((c: any) => {
+        const fechaLlamada = c.fecha_proxima_llamada ? new Date(c.fecha_proxima_llamada) : null;
+        
+        const interesadoFormateado: ClienteUnificado = {
+          id: c.id,
+          nombre: c.nombre || 'Sin nombre',
+          contacto: c.telefono || 'Sin contacto',
+          rol: 'Interesado' as const,
+          unidadAsociada: inventarioMap.get(c.auto_id) || (c.dominio ? inventarioPorDominio.get(c.dominio.toUpperCase()) || `Consultó: ${c.dominio}` : 'Interés general'),
+          estadoGestion: fechaLlamada && fechaLlamada <= ahora ? 'Llamada Pendiente' : 'Lead Caliente',
+          ultimaAccion: c.fecha_proxima_llamada ? `Llamar el ${new Date(c.fecha_proxima_llamada).toLocaleDateString()}` : 'Pendiente de contacto',
+          notas: c.notas || '',
+          fecha_hitos: [{ fecha: c.created_at, evento: 'Nueva Consulta', detalle: 'Ingresó como interesado', tipo: 'user' }],
+          proxima_llamada: c.fecha_proxima_llamada,
+          contraparte: null,
+          vendedor: c.vendedor || null
+        };
+
+        if (fechaLlamada && fechaLlamada <= ahora) {
+          listadoPendientesTemp.push(interesadoFormateado);
+        }
+
+        return interesadoFormateado;
+      });
+
+      setPendientesLlamada(listadoPendientesTemp);
+      setClientes([...listaConsignatarios, ...listaCompradores, ...listaInteresados]);
     } catch (err) {
       console.error("Error HotCars:", err);
     } finally {
@@ -254,12 +301,14 @@ const ClientesPage = () => {
       const idsArray = Array.from(selectedIds);
       await Promise.all([
         supabase.from('cliente_comprador').delete().in('id', idsArray),
-        supabase.from('cliente_consignatario').delete().in('id', idsArray)
+        supabase.from('cliente_consignatario').delete().in('id', idsArray),
+        supabase.from('cliente_interesado').delete().in('id', idsArray)
       ]);
       setClientes(prev => prev.filter(c => !selectedIds.has(c.id)));
       setSelectedIds(new Set());
       setSelectedCliente(null);
       setShowLegajo(false);
+      fetchClientesReal(); 
     } catch (err) {
       console.error("Error al borrar:", err);
     } finally {
@@ -271,7 +320,8 @@ const ClientesPage = () => {
     const matchesTab = filter === 'Todos' || c.rol === filter;
     const matchesSearch = c.nombre.toLowerCase().includes(search.toLowerCase()) || 
                           c.contacto.toLowerCase().includes(search.toLowerCase()) ||
-                          c.unidadAsociada.toLowerCase().includes(search.toLowerCase());
+                          c.unidadAsociada.toLowerCase().includes(search.toLowerCase()) ||
+                          (c.vendedor && c.vendedor.toLowerCase().includes(search.toLowerCase()));
     return matchesTab && matchesSearch;
   });
 
@@ -294,11 +344,17 @@ const ClientesPage = () => {
 
       <div className="fixed top-[90px] lg:top-[80px] left-0 right-0 z-[40] bg-[#1c2e38] backdrop-blur-md border-b border-white/5 flex flex-col items-center justify-center px-3 py-5 lg:h-20">
         <div className="max-w-[1600px] mx-auto w-full flex flex-col items-center justify-center gap-2">
-          <div className="grid grid-cols-3 lg:flex items-center gap-1 p-1 bg-black/20 rounded-lg border border-white/5 w-full lg:w-fit">
-            {['Todos', 'Consignatario', 'Comprador'].map((l) => (
+          <div className="grid grid-cols-4 lg:flex items-center gap-1 p-1 bg-black/20 rounded-lg border border-white/5 w-full lg:w-fit">
+            {['Todos', 'Consignatario', 'Comprador', 'Interesado'].map((l) => (
               <button key={l} onClick={() => { setFilter(l); setCurrentPage(1); }}
-                className={`px-3 py-1.5 rounded-lg text-[10px] lg:text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap ${filter === l ? 'bg-[#134e4d] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-                {l === 'Todos' ? l : l === 'Consignatario' ? 'Consignatarios' : 'Compradores'}
+                className={`relative px-3 py-1.5 rounded-lg text-[9px] lg:text-[11px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap ${filter === l ? 'bg-[#134e4d] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                {l === 'Todos' ? l : l === 'Consignatario' ? 'Consignatarios' : l === 'Comprador' ? 'Compradores' : 'Interesados'}
+                
+                {l === 'Interesado' && pendientesLlamada.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-purple-600 text-white text-[9px] font-black flex items-center justify-center rounded-full border border-[#1c2e38] shadow-lg animate-pulse">
+                    {pendientesLlamada.length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -307,6 +363,31 @@ const ClientesPage = () => {
       </div>
 
       <div className="max-w-[1600px] mx-auto">
+        {pendientesLlamada.length > 0 && filter !== 'Comprador' && filter !== 'Consignatario' && (
+          <div className="w-full mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="bg-[#1c282d] border-l-4 border-purple-500 p-4 rounded-r-xl flex items-center justify-between shadow-lg">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-400 flex-shrink-0 mt-1">
+                  <PhoneCall size={20} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-white">Recordatorio de Gestión</p>
+                  <div className="space-y-1">
+                    {pendientesLlamada.map(p => (
+                      <p key={p.id} className="text-sm text-slate-400">
+                        Vendedor <span className="text-purple-400 font-bold">{p.vendedor || 'General'}</span> debe llamar a <span className="text-white font-bold">{p.nombre}</span>.
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => { setFilter('Interesado'); setCurrentPage(1); }} className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all h-fit self-center">
+                Ver Interesados
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col items-start w-full mb-4">
           <div className="flex items-center gap-3 w-full max-w-2xl">
             <button onClick={() => setShowAddModal(true)}
@@ -315,7 +396,7 @@ const ClientesPage = () => {
             </button>
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input type="text" placeholder="Buscar por nombre, contacto o dominio..." value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
+              <input type="text" placeholder="Buscar por nombre, contacto, dominio o vendedor..." value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
                 className="bg-white/5 border border-white/10 rounded-md pl-10 pr-4 py-2.5 text-sm w-full outline-none focus:border-[#288b55]/50 transition-all text-white" />
             </div>
           </div>
@@ -340,7 +421,7 @@ const ClientesPage = () => {
                     <th className="px-4 md:px-6 py-5 w-10"></th>
                     <th className="px-3 md:px-4 py-5">Cliente</th>
                     <th className="px-4 md:px-6 py-5 text-center hidden sm:table-cell">Rol</th>
-                    <th className="px-4 md:px-6 py-5 hidden md:table-cell">Unidad Asociada</th>
+                    <th className="px-4 md:px-6 py-5 hidden md:table-cell">Unidad / Vendedor</th>
                     <th className="px-4 md:px-6 py-5 text-center hidden lg:table-cell">Estado</th>
                     <th className="px-4 md:px-6 py-5 hidden lg:table-cell">Última Acción</th>
                     <th className="px-4 md:px-6 py-5 text-center">WA</th>
@@ -366,16 +447,19 @@ const ClientesPage = () => {
                             </div>
                             <div className="min-w-0">
                               <span className="font-bold text-slate-100 text-sm block truncate max-w-[120px] md:max-w-none">{c.nombre}</span>
-                              <span className={`sm:hidden text-[9px] px-2 py-0.5 rounded font-black uppercase border inline-block mt-1 ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
+                              <span className={`sm:hidden text-[9px] px-2 py-0.5 rounded font-black uppercase border inline-block mt-1 ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : c.rol === 'Interesado' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
                             </div>
                           </div>
                         </td>
                         <td className="px-4 md:px-6 py-4 text-center hidden sm:table-cell">
-                          <span className={`text-[10px] px-2.5 py-1 rounded-lg font-black uppercase border inline-block ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
+                          <span className={`text-[10px] px-2.5 py-1 rounded-lg font-black uppercase border inline-block ${c.rol === 'Comprador' ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : c.rol === 'Interesado' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{c.rol}</span>
                         </td>
-                        <td className="px-4 md:px-6 py-4 text-sky-400 font-bold text-sm truncate max-w-[200px] hidden md:table-cell">{c.unidadAsociada}</td>
+                        <td className="px-4 md:px-6 py-4 hidden md:table-cell">
+                          <p className="text-sky-400 font-bold text-sm truncate max-w-[200px]">{c.unidadAsociada}</p>
+                          {c.vendedor && <p className="text-[10px] text-slate-500 mt-1 uppercase font-black tracking-widest flex items-center gap-1"><User size={10}/> Vend: {c.vendedor}</p>}
+                        </td>
                         <td className="px-4 md:px-6 py-4 text-center hidden lg:table-cell">
-                          <span className={`text-[11px] font-bold px-2 py-1 rounded inline-block ${c.estadoGestion === 'Reserva Caída' ? 'text-red-400 bg-red-500/10 border border-red-500/20' : 'text-slate-400 bg-slate-800/50'}`}>{c.estadoGestion}</span>
+                          <span className={`text-[11px] font-bold px-2 py-1 rounded inline-block ${c.estadoGestion === 'Reserva Caída' ? 'text-red-400 bg-red-500/10 border border-red-500/20' : c.estadoGestion === 'Llamada Pendiente' ? 'text-purple-400 border border-purple-500/50 bg-purple-500/10 animate-pulse' : c.rol === 'Interesado' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' : 'text-slate-400 bg-slate-800/50'}`}>{c.estadoGestion}</span>
                         </td>
                         <td className="px-4 md:px-6 py-4 text-[11px] text-slate-400 font-medium max-w-[180px] hidden lg:table-cell">{c.ultimaAccion}</td>
                         <td className="px-4 md:px-6 py-4 text-center">
@@ -427,7 +511,12 @@ const ClientesPage = () => {
 
           {selectedCliente && (
             <div className="hidden md:block w-[380px] bg-[#161f23] border border-slate-800 rounded-xl p-5 sticky top-8 shadow-2xl animate-in slide-in-from-right-4 duration-500 text-left font-sans flex-shrink-0">
-              <LegajoContent cliente={selectedCliente} onClose={() => { setSelectedCliente(null); setShowLegajo(false); }} onMarcarCaida={marcarReservaCaida} />
+              <LegajoContent 
+                cliente={selectedCliente} 
+                onClose={() => { setSelectedCliente(null); setShowLegajo(false); }} 
+                onMarcarCaida={marcarReservaCaida}
+                onLlamadaAgendada={fetchClientesReal} 
+              />
             </div>
           )}
         </div>
@@ -436,17 +525,46 @@ const ClientesPage = () => {
   );
 };
 
-function LegajoContent({ cliente, onClose, onMarcarCaida }: { cliente: ClienteUnificado; onClose: () => void; onMarcarCaida?: (id: string) => void }) {
+function LegajoContent({ cliente, onClose, onMarcarCaida, onLlamadaAgendada }: { cliente: ClienteUnificado; onClose: () => void; onMarcarCaida?: (id: string) => void; onLlamadaAgendada?: () => void; }) {
+  const [fechaLlamada, setFechaLlamada] = useState(cliente.proxima_llamada || '');
+  const [savingLlamada, setSavingLlamada] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
+
+  useEffect(() => {
+    setFechaLlamada(cliente.proxima_llamada || '');
+    setSuccessMsg(false);
+  }, [cliente.id, cliente.proxima_llamada]);
+
+  const guardarProgramacion = async () => {
+    if (!fechaLlamada) return;
+    setSavingLlamada(true);
+    try {
+      const { error } = await supabase
+        .from('cliente_interesado')
+        .update({ fecha_proxima_llamada: fechaLlamada })
+        .eq('id', cliente.id);
+      if (error) throw error;
+      
+      setSuccessMsg(true);
+      setTimeout(() => setSuccessMsg(false), 3000); 
+      if(onLlamadaAgendada) onLlamadaAgendada(); 
+    } catch (err: any) {
+      alert("Error: " + err.message); 
+    } finally {
+      setSavingLlamada(false);
+    }
+  };
+
   return (
     <>
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-xl font-black text-white tracking-tighter uppercase flex items-center gap-3">
-          <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>Legajo
+          <span className={`w-1.5 h-6 rounded-full ${cliente.rol === 'Interesado' ? 'bg-purple-500' : 'bg-emerald-500'}`}></span>Legajo
         </h2>
         <button onClick={onClose} className="p-2 text-slate-500 hover:text-white transition-colors"><X size={20}/></button>
       </div>
       <div className="flex items-center gap-4 mb-6 p-4 bg-[#1c282d] border border-slate-800 rounded-xl">
-        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 flex-shrink-0">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${cliente.rol === 'Interesado' ? 'bg-purple-500/10 border border-purple-500/20 text-purple-500' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-500'}`}>
           <User size={24} />
         </div>
         <div className="min-w-0">
@@ -454,13 +572,43 @@ function LegajoContent({ cliente, onClose, onMarcarCaida }: { cliente: ClienteUn
           <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest truncate">{cliente.contacto}</p>
         </div>
       </div>
+
       <div className="space-y-5 relative">
+        {cliente.rol === 'Interesado' && (
+          <div className="mb-4 p-4 bg-purple-500/5 border border-purple-500/20 rounded-xl space-y-3">
+            <div className="flex items-center gap-2 text-purple-400">
+              <PhoneCall size={14} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Agendar Llamada</span>
+            </div>
+            <input 
+              type="datetime-local" 
+              value={fechaLlamada}
+              onChange={(e) => {
+                setFechaLlamada(e.target.value);
+                setSuccessMsg(false);
+              }}
+              className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-[11px] font-bold text-white outline-none focus:border-purple-500"
+            />
+            <button 
+              onClick={guardarProgramacion}
+              disabled={savingLlamada || !fechaLlamada || successMsg}
+              className={`w-full py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2
+                ${successMsg 
+                  ? 'bg-emerald-500 text-white' 
+                  : 'bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-40'
+                }`}
+            >
+              {savingLlamada ? <Loader2 size={14} className="animate-spin" /> : successMsg ? <><Check size={14} /> Agendado</> : "Confirmar Seguimiento"}
+            </button>
+          </div>
+        )}
+
         <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Timeline</h4>
         <div className="absolute left-[19px] top-[40px] bottom-0 w-[2px] bg-slate-800"></div>
         {cliente.fecha_hitos.map((h: any, i: number) => (
           <div key={i} className="relative pl-12">
             <div className={`absolute left-0 top-0 w-10 h-10 rounded-xl bg-[#161f23] border-2 flex items-center justify-center z-10 ${h.tipo === 'money' ? 'border-emerald-500 text-emerald-500' : 'border-slate-800 text-slate-500'}`}>
-              {h.tipo === 'money' ? <DollarSign size={18} /> : <Calendar size={18} />}
+               {h.tipo === 'money' ? <DollarSign size={18} /> : <Calendar size={18} />}
             </div>
             <div>
               <span className="text-[10px] font-black text-slate-500 uppercase">
@@ -486,6 +634,16 @@ function LegajoContent({ cliente, onClose, onMarcarCaida }: { cliente: ClienteUn
             <span className="text-[10px] font-black uppercase tracking-widest">Unidad Asociada</span>
           </div>
           <p className="text-sm text-slate-200 font-bold">{cliente.unidadAsociada}</p>
+
+          {cliente.vendedor && (
+            <div className="mt-3">
+              <div className="flex items-center gap-2 mb-1.5 text-emerald-500">
+                <UserCheck size={14} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Vendedor Asignado</span>
+              </div>
+              <p className="text-sm text-slate-200 font-bold">{cliente.vendedor}</p>
+            </div>
+          )}
           
           {cliente.contraparte && (
             <>
