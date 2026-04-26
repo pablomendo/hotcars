@@ -144,7 +144,6 @@ const ClientesPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Ahora el estado guarda los objetos completos para poder listar los nombres
   const [pendientesLlamada, setPendientesLlamada] = useState<ClienteUnificado[]>([]);
 
   const fetchClientesReal = async () => {
@@ -547,9 +546,31 @@ function LegajoContent({ cliente, onClose, onMarcarCaida, onLlamadaAgendada }: {
       
       setSuccessMsg(true);
       setTimeout(() => setSuccessMsg(false), 3000); 
-      if(onLlamadaAgendada) onLlamadaAgendada(); 
+      if (onLlamadaAgendada) onLlamadaAgendada(); 
     } catch (err: any) {
       alert("Error: " + err.message); 
+    } finally {
+      setSavingLlamada(false);
+    }
+  };
+
+  // ── Marca la llamada como realizada: limpia fecha_proxima_llamada en la BD ──
+  const finalizarGestion = async () => {
+    setSavingLlamada(true);
+    try {
+      const { error } = await supabase
+        .from('cliente_interesado')
+        .update({ fecha_proxima_llamada: null })
+        .eq('id', cliente.id);
+      
+      if (error) throw error;
+      
+      setFechaLlamada('');
+      setSuccessMsg(true);
+      setTimeout(() => setSuccessMsg(false), 3000);
+      if (onLlamadaAgendada) onLlamadaAgendada();
+    } catch (err: any) {
+      alert("Error: " + err.message);
     } finally {
       setSavingLlamada(false);
     }
@@ -599,6 +620,15 @@ function LegajoContent({ cliente, onClose, onMarcarCaida, onLlamadaAgendada }: {
                 }`}
             >
               {savingLlamada ? <Loader2 size={14} className="animate-spin" /> : successMsg ? <><Check size={14} /> Agendado</> : "Confirmar Seguimiento"}
+            </button>
+
+            {/* ── Marcar llamada como realizada: limpia el recordatorio ── */}
+            <button 
+              onClick={finalizarGestion}
+              disabled={savingLlamada}
+              className="w-full py-2 bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-40"
+            >
+              Marcar Llamada como Realizada
             </button>
           </div>
         )}
